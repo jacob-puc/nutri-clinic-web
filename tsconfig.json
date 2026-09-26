@@ -1,4 +1,18 @@
 {
+  /* El CLI de shadcn lee ESTE archivo (no tsconfig.app.json) para resolver los
+     aliases de components.json. Con el vacio no encuentra "@/components",
+     inventa una carpeta literal "@" e instala un paquete "cn" falso de npm.
+
+     baseUrl sigue siendo necesario para esa resolucion aunque TS 6 lo marque
+     como deprecado: sin el, el CLI no logra localizar "@/lib/utils" y cae
+     otra vez en el paquete equivocado. El flag solo silencia el aviso. */
+  "compilerOptions": {
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },

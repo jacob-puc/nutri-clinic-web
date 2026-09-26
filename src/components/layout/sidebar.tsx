@@ -6,10 +6,6 @@ import { SidebarFooter, SidebarNav } from "@/components/layout/sidebar-nav";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/layout/sidebar-context";
 
-/**
- * Barra lateral fija en escritorio. Se pliega a solo iconos para liberar
- * espacio cuando la tabla de pacientes necesita el ancho.
- */
 export function Sidebar() {
   const { collapsed, toggle } = useSidebar();
 

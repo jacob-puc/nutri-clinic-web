@@ -13,16 +13,9 @@ export const apiClient = axios.create({
   },
 });
 
-/**
- * Un interceptor unico para toda la app: convierte cualquier fallo en un
- * `ApiError`. Los hooks de react-query reciben siempre el mismo tipo, asi que
- * las vistas no tienen que distinguir entre "fallo de red" y "error de
- * validacion" en cada pantalla.
- */
 apiClient.interceptors.response.use(
   (respuesta) => respuesta,
   (error: unknown) => {
-    // Sin respuesta: backend apagado, CORS, DNS, timeout.
     if (axios.isAxiosError(error) && !error.response) {
       return Promise.reject(
         new ApiError("No hay conexion con el servidor de la API.", {

@@ -8,10 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-/**
- * Barra superior. En movil sustituye a la lateral (solo marca + menu), en
- * escritorio aporta el buscador global y el selector de tema.
- */
 export function Topbar() {
   const { setMobileOpen } = useSidebar();
   const navigate = useNavigate();

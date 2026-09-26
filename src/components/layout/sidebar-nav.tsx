@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/tooltip";
 
 interface SidebarNavProps {
-  /** Al plegar, los iconos quedan solos y el texto se oculta. */
   collapsed: boolean;
   onNavigate?: () => void;
 }
@@ -35,7 +34,6 @@ function SidebarLink({
       : "text-sidebar-muted-foreground hover:bg-sidebar-muted hover:text-sidebar-foreground",
   );
 
-  // Modulo sin backend: no es un enlace, es un estado deshabilitado.
   if (!modulo.activo) {
     const contenido = (
       <>

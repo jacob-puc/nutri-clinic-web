@@ -1,24 +1,7 @@
-/**
- * Tipos que reflejan EXACTAMENTE el contrato del backend .NET.
- *
- * Reglas que hay que respetar al escrever:
- *  - Los enums viajan como TEXTO, no como numero (JsonStringEnumConverter).
- *  - LosGuid son string en JSON.
- *  - Los decimal de C# llegan como number, no como string.
- *  - `DateOnly?` (FechaNacimiento) llega como "YYYY-MM-DD", no ISO completo.
- *  - `DateTime` / `DateTime?` llegan como ISO-8601 UTC con sufijo Z.
- *
- * Cuando el backend cambie, el cambio se hace aqui y el compilador avisa de
- * todos los usos affected. No redeclarar interfaces de domain en cada feature.
- */
 
 export type Guid = string;
 export type DateOnlyString = string;
 export type DateTimeString = string;
-
-/* -------------------------------------------------------------------------- */
-/* Enums                                                                       */
-/* -------------------------------------------------------------------------- */
 
 export type Sexo = 'M' | 'F' | 'Otro';
 
@@ -39,10 +22,6 @@ export type TipoDocumento =
   | 'EstudioClinico'
   | 'RecetaMedica'
   | 'Otro';
-
-/* -------------------------------------------------------------------------- */
-/* Pacientes                                                                   */
-/* -------------------------------------------------------------------------- */
 
 export interface Paciente {
   id: Guid;
@@ -67,10 +46,6 @@ export interface CrearPacienteDto {
 
 export type ActualizarPacienteDto = Partial<CrearPacienteDto>;
 
-/* -------------------------------------------------------------------------- */
-/* Nutricionistas                                                              */
-/* -------------------------------------------------------------------------- */
-
 export interface Nutricionista {
   id: Guid;
   nombreCompleto: string;
@@ -89,10 +64,6 @@ export interface CrearNutricionistaDto {
   numeroColegiatura?: string | null;
   especialidad?: string | null;
 }
-
-/* -------------------------------------------------------------------------- */
-/* Citas (agenda)                                                              */
-/* -------------------------------------------------------------------------- */
 
 export interface Cita {
   id: Guid;
@@ -131,10 +102,6 @@ export interface CambiarEstadoCitaDto {
   motivo?: string | null;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Consultas (encuentro clinico)                                              */
-/* -------------------------------------------------------------------------- */
-
 export interface Consulta {
   id: Guid;
   pacienteId: Guid;
@@ -172,10 +139,6 @@ export interface ConsultaFiltro {
   hasta?: DateTimeString;
   soloSinCierre?: boolean;
 }
-
-/* -------------------------------------------------------------------------- */
-/* Registros clinicos                                                          */
-/* -------------------------------------------------------------------------- */
 
 export interface MedidaAntropometrica {
   id: Guid;
@@ -239,20 +202,12 @@ export interface CrearDocumentoDto {
   consultaId?: Guid | null;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Expediente agregado                                                         */
-/* -------------------------------------------------------------------------- */
-
 export interface HistorialClinico {
   id: Guid;
   pacienteId: Guid;
-  Diagnostico: string | null;
-  antecedentesFamiliares: string | null;
-  antecedentesPersonales: string | null;
-  medications: string | null;
-  alergias: string | null;
-  observaciones: string | null;
-  fechaActualizacion: DateTimeString | null;
+  alergias: string[];
+  alimentosFavoritos: string[];
+  alimentosNoFavoritos: string[];
 }
 
 export interface ExpedienteCompleto {

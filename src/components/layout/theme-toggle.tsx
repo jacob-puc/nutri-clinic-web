@@ -10,11 +10,6 @@ import {
 import { useTheme } from "@/hooks/use-theme";
 import type { ThemePreference } from "@/hooks/use-theme";
 
-/**
- * Selector de tema. Se eligio un menu de tres opciones en vez de un simple
- * toggle porque "automatico" es una expectativa real: quien configuro su
- * sistema en oscuro espera que la app lo siga.
- */
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, preference, setTheme } = useTheme();
 

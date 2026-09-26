@@ -19,14 +19,9 @@ export default defineConfig({
   },
   build: {
     /**
-     * El bundle de la app (\`index\`) rondaba los 590 kB sin dividir, por lo
-     * que superaba el aviso de Vite. Se separa lo que cambia poco (vendor) de
-     * lo que cambia en cada entrega (codigo de la app) para que el navegador
-     * no vuelva a descargar 500 kB de librerias en cada despliegue.
-     *
-     * El umbral sube a 700 kB porque el aviso por defecto (500 kB) ya no
-     * describe el problema real: con el vendor separado, la parte pesada es
-     * cacheable de forma estable.
+     * El bundle sin dividir pasaba los 590 kB y Vite avisaba. Con el vendor
+     * separado en chunks cacheables, la parte pesada deja de cambiar en cada
+     * entrega, asi que 700 kB ya no describe un problema real.
      */
     chunkSizeWarningLimit: 700,
     rolldownOptions: {

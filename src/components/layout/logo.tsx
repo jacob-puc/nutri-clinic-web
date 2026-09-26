@@ -6,11 +6,6 @@ interface LogoProps {
   className?: string;
 }
 
-/**
- * Marca: una hoja cruzada con el degradado de la identidad. Se reconoce sin
- * depender del texto y funciona igual sobre la barra oscura que sobre
- * superficies claras.
- */
 export function LogoNutriClinica({ className }: LogoProps) {
   return (
     <span
@@ -25,7 +20,6 @@ export function LogoNutriClinica({ className }: LogoProps) {
   );
 }
 
-/** Marca con texto, para el encabezado movil donde no hay barra lateral. */
 export function LogoConTexto({ className }: { className?: string }) {
   return (
     <span className={cn("flex items-center gap-2.5", className)}>

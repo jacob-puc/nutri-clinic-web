@@ -5,6 +5,7 @@ import { useSearchParams } from "react-router-dom";
 
 import { AccionesPaciente } from "@/features/pacientes/components/acciones-paciente";
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
+import { DialogoPaciente } from "@/features/pacientes/components/dialogo-paciente";
 import { usePacientes } from "@/features/pacientes/hooks/use-pacientes";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,17 +15,10 @@ import { mensajeDeError } from "@/lib/api-error";
 import { etiquetaSexo, formatearFechaCorta, normalizar } from "@/lib/formatters";
 import type { Paciente } from "@/types/api";
 
-/**
- * Listado de pacientes. Es la primera pantalla real, asi que cubre los cinco
- * estados que necesita: cargando, error, vacio por filtro, vacio por catalogo
- * y listado con datos.
- *
- * La busqueda y el orden son de cliente porque la API devuelve la lista
- * completa sin paginacion ni orden estable.
- */
 export function PacientesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [ascendente, setAscendente] = useState(true);
+  const [altaAbierta, setAltaAbierta] = useState(false);
 
   const busqueda = searchParams.get("busqueda") ?? "";
   const cambiarBusqueda = (valor: string) => {
@@ -49,8 +43,6 @@ export function PacientesPage() {
       ? lista.filter((paciente) => normalizar(paciente.nombreCompleto).includes(termino))
       : lista;
 
-    // Copia antes de ordenar: `data` viene de la cache de react-query y
-    // mutarlo en el sitio romperia el cache del resto de la app.
     return [...filtrados].sort((a, b) => {
       const comparacion = a.nombreCompleto.localeCompare(
         b.nombreCompleto,
@@ -65,7 +57,9 @@ export function PacientesPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
-      <EncabezadoPacientes total={data?.length ?? 0} />
+      <EncabezadoPacientes total={data?.length ?? 0} onNuevo={() => setAltaAbierta(true)} />
+
+      <DialogoPaciente abierto={altaAbierta} onOpenChange={setAltaAbierta} />
 
       <Card className="mt-6">
         <CardContent className="px-4 py-4 md:px-6">
@@ -151,9 +145,13 @@ export function PacientesPage() {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-
-function EncabezadoPacientes({ total }: { total: number }) {
+function EncabezadoPacientes({
+  total,
+  onNuevo,
+}: {
+  total: number;
+  onNuevo: () => void;
+}) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
@@ -172,16 +170,10 @@ function EncabezadoPacientes({ total }: { total: number }) {
         <Badge variant="secondary" className="tabular-nums">
           {total} {total === 1 ? "registro" : "registros"}
         </Badge>
-        {/* El alta de paciente entra en la siguiente iteracion. Se deja el
-            boton visible y deshabilitado para que la intencion de la pantalla
-            sea evidente sin prometer un formulario que aun no existe. */}
-        <Button
-          disabled
-          title="Disponible en la siguiente iteracion"
-          aria-label="Nuevo paciente"
-        >
+        <Button onClick={onNuevo}>
           <UserPlus className="size-4" />
           <span className="hidden sm:inline">Nuevo paciente</span>
+          <span className="sm:hidden">Nuevo</span>
         </Button>
       </div>
     </div>
@@ -232,14 +224,6 @@ function TablaPacientes({ pacientes }: { pacientes: Paciente[] }) {
   );
 }
 
-/**
- * La fila navega a la ficha del paciente. Antes era solo texto: sin esta
- * accion no habia forma de llegar al historial desde el listado.
- *
- * Se usa un <Link> que ocupa toda la celda en vez de hacer la <tr> clicable
- * a mano: el <tr> no admite onClick, y un manejador manual dejaria la fila
- * fuera del orden de tabulacion, es decir, inaccesible con teclado.
- */
 function FilaPaciente({ paciente }: { paciente: Paciente }) {
   return (
     <tr className="hover:bg-accent transition-colors">

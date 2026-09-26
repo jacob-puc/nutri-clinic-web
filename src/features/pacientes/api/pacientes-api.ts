@@ -6,14 +6,6 @@ import type {
   Paciente,
 } from "@/types/api";
 
-/**
- * Endpoints de pacientes.
- *
- * Nota: la API no expone paginacion ni orden. `GET /api/pacientes` devuelve
- * solo los pacientes activos (IsActive = true) en el orden que Postgres
- * entregue, que no es estable entre llamadas. Por eso el ordenamiento por
- * nombre se hace en el cliente, en la vista, no aqui.
- */
 export const pacientesApi = {
   listar: async (): Promise<Paciente[]> => {
     const { data } = await apiClient.get<Paciente[]>("/api/pacientes");
@@ -25,7 +17,6 @@ export const pacientesApi = {
     return data;
   },
 
-  /** Vista agregada: historial + medidas + fotos + documentos en una llamada. */
   obtenerExpediente: async (id: Guid): Promise<ExpedienteCompleto> => {
     const { data } = await apiClient.get<ExpedienteCompleto>(
       `/api/pacientes/${id}/expediente`,
@@ -36,5 +27,21 @@ export const pacientesApi = {
   crear: async (paciente: CrearPacienteDto): Promise<Paciente> => {
     const { data } = await apiClient.post<Paciente>("/api/pacientes", paciente);
     return data;
+  },
+
+  actualizar: async (
+    id: Guid,
+    cambios: Partial<CrearPacienteDto>,
+  ): Promise<Paciente> => {
+    const { data } = await apiClient.put<Paciente>(
+      `/api/pacientes/${id}`,
+      cambios,
+    );
+    return data;
+  },
+
+  /** Baja logica: el backend marca `IsActive = false` y conserva el historial. */
+  darDeBaja: async (id: Guid): Promise<void> => {
+    await apiClient.delete(`/api/pacientes/${id}`);
   },
 };

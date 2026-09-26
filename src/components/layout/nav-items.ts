@@ -12,11 +12,6 @@ export interface ModuloNav {
   label: string;
   href: string;
   icon: LucideIcon;
-  /**
-   * `false` = el modulo todavia no tiene backend. Se muestra deshabilitado
-   * para que la arquitectura de navegacion se vea completa y el usuario sepa
-   * hacia donde va la app, en vez de que desaparezca sin aviso.
-   */
   activo: boolean;
   descripcion: string;
 }

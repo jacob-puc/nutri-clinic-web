@@ -4,15 +4,6 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { PacienteDetallePage } from "@/features/pacientes/pages/paciente-detalle-page";
 import { PacientesPage } from "@/features/pacientes/pages/pacientes-page";
 
-/**
- * Rutas de la aplicacion.
- *
- * Pacientes es el unico modulo con backend completo, asi que es el unico con
- * vista de listado y vista de detalle. Los modulos futuros (Agenda,
- * Consultas) ya salen en la lateral deshabilitados y sus rutas redirigen a
- * Pacientes: si alguien llega por URL o por un enlace guardado, aterriza en
- * algo util en vez de ver una pantalla en blanco.
- */
 export const router = createBrowserRouter([
   {
     path: "/",

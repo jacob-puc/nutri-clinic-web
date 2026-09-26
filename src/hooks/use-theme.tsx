@@ -15,16 +15,6 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-/**
- * Resuelve el tema inicial en este orden:
- *  1. Eleccion guardada del usuario.
- *  2. Preferencia del sistema operativo.
- *  3. Claro.
- *
- * Se aplica la clase en <html> porque los tokens de Tailwind viven en
- * `.dark`; se hace antes del primer pintado para evitar el parpadeo blanco
- * (ver el script inline en index.html).
- */
 function leerPreferenciaInicial(): ThemePreference {
   if (typeof window === "undefined") return "system";
 

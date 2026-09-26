@@ -1,22 +1,3 @@
-/**
- * Error de API normalizado.
- *
- * El backend devuelve DOS formatos distintos de error y el frontend necesita
- * uno solo:
- *
- *   1. Excepciones de dominio (KeyNotFound / Validation / Conflict / DbUpdate),
- *      generadas por GlobalExceptionMiddleware:
- *      { codigo, mensaje, errores: [{ campo, mensaje }] }
- *
- *   2. Fallos de validacion automaticos de ASP.NET (model binding, rutas,
- *      [ApiController]), que se saltan el middleware:
- *      { type, title, status, errors: { Campo: ["mensaje"] } }
- *
- * Este modulo convierte ambos en un unico `ApiError` con la misma forma, para
- * que la UI no tenga que conocer la particularidad de cada uno.
- */
-
-/** Codigos que emite GlobalExceptionMiddleware. */
 export type ApiErrorCode =
   | "NO_ENCONTRADO"
   | "VALIDACION"
@@ -62,7 +43,6 @@ export class ApiError extends Error {
     this.detalles = options.detalles ?? [];
   }
 
-  /** Mensaje listo para mostrar bajo un campo de formulario. */
   get primerDetalle(): string | undefined {
     return this.detalles[0]?.mensaje;
   }
@@ -82,16 +62,10 @@ const CODIGOS_VALIDOS: ReadonlySet<string> = new Set<ApiErrorCode>([
   "ERROR_DESCONOCIDO",
 ]);
 
-/**
- * Type guard. `error instanceof ApiError` no compila cuando el valor puede
- * ser `null` (react-query entrega `Error | null`), y un `as ApiError` mente
- * sobre el tipo. Con este guard el estrechamiento es real.
- */
 export function esApiError(error: unknown): error is ApiError {
   return error instanceof ApiError;
 }
 
-/** Convierte el cuerpo de FluentValidation/ASP.NET a una lista plana de campos. */
 function extraerDetallesDeAspNet(
   errors: unknown,
 ): ApiErrorDetail[] {
@@ -111,7 +85,6 @@ function aCadena(valor: unknown): string | null {
   return typeof valor === "string" && valor.trim().length > 0 ? valor : null;
 }
 
-/** Interpreta el cuerpo de error del backend y devuelve un ApiError. */
 export function construirApiError(status: number, cuerpo: unknown): ApiError {
   if (cuerpo === null || cuerpo === undefined) {
     return new ApiError(`Error ${status} sin cuerpo de respuesta.`, {
@@ -123,7 +96,6 @@ export function construirApiError(status: number, cuerpo: unknown): ApiError {
   if (typeof cuerpo === "object") {
     const cuerpoMedio = cuerpo as MiddlewareErrorBody & AspNetValidationBody;
 
-    // Formato 1: middleware del proyecto.
     const codigo = aCadena(cuerpoMedio.codigo);
     if (codigo && CODIGOS_VALIDOS.has(codigo)) {
       const detalles = Array.isArray(cuerpoMedio.errores)
@@ -146,7 +118,6 @@ export function construirApiError(status: number, cuerpo: unknown): ApiError {
       );
     }
 
-    // Formato 2: validacion automatica de ASP.NET.
     if (cuerpoMedio.errors !== undefined) {
       const detalles = extraerDetallesDeAspNet(cuerpoMedio.errors);
       return new ApiError(
@@ -169,7 +140,6 @@ export function construirApiError(status: number, cuerpo: unknown): ApiError {
   });
 }
 
-/** Mensaje corto y legible para la UI. */
 export function mensajeDeError(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.esRed) {

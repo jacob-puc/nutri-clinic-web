@@ -1,7 +1,26 @@
-import { CalendarPlus, ClipboardPlus, MoreHorizontal, Pencil, UserRound } from "lucide-react";
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  CalendarPlus,
+  ClipboardPlus,
+  MoreHorizontal,
+  Pencil,
+  UserRound,
+  UserX,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,80 +28,151 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Paciente } from "@/types/api";
-
-/**
- * Menu de acciones por paciente.
- *
- * Decision de alcance: los items son visibles y tienen hover real, pero
- * todavia no hacen nada. En vez de dejarlos en gris (que se lee como
- * deshabilitado de forma permanente), al pulsarlos avisan con un toast de
- * "proximamente". Asi se puede revisar el diseno del menu sin que un click
- * parezca fallido.
- *
- * Ningun item navega ni llama a la API en esta iteracion.
- */
-
-const AVISO = "Disponible en la siguiente iteracion";
+import { DialogoPaciente } from "@/features/pacientes/components/dialogo-paciente";
+import { pacientesApi } from "@/features/pacientes/api/pacientes-api";
+import { pacientesKeys } from "@/features/pacientes/hooks/use-pacientes";
+import { mensajeDeError } from "@/lib/api-error";
+import type { Guid, Paciente } from "@/types/api";
 
 interface AccionesPacienteProps {
   paciente: Paciente;
+  onDarbaja?: () => void;
 }
 
-export function AccionesPaciente({ paciente }: AccionesPacienteProps) {
+const AVISO = "Disponible en la siguiente iteracion";
+
+export function AccionesPaciente({ paciente, onDarbaja }: AccionesPacienteProps) {
+  const [editando, setEditando] = useState(false);
+  const [confirmandoBaja, setConfirmandoBaja] = useState(false);
+
   const avisar = (accion: string) =>
     toast.info(`${accion} · ${AVISO}`, {
       description: paciente.nombreCompleto,
     });
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-muted-foreground data-[state=open]:bg-accent"
-          // Sin esto el boton repetido N veces no tendria nombre accesible:
-          // un lector de pantalla diria "boton" N veces sin decir de quien.
-          aria-label={`Acciones de ${paciente.nombreCompleto}`}
-        >
-          <MoreHorizontal className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground data-[state=open]:bg-accent"
+            aria-label={`Acciones de ${paciente.nombreCompleto}`}
+          >
+            <MoreHorizontal className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuItem onSelect={() => avisar("Ver expediente")}>
-          <UserRound />
-          Ver expediente
-        </DropdownMenuItem>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuItem onSelect={() => avisar("Ver expediente")}>
+            <UserRound />
+            Ver expediente
+          </DropdownMenuItem>
 
-        <DropdownMenuItem onSelect={() => avisar("Editar datos")}>
-          <Pencil />
-          Editar datos
-        </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setEditando(true)}>
+            <Pencil />
+            Editar datos
+          </DropdownMenuItem>
 
-        <DropdownMenuItem onSelect={() => avisar("Registrar medida")}>
-          <ClipboardPlus />
-          Registrar medida
-        </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => avisar("Registrar medida")}>
+            <ClipboardPlus />
+            Registrar medida
+          </DropdownMenuItem>
 
-        <DropdownMenuItem onSelect={() => avisar("Agendar cita")}>
-          <CalendarPlus />
-          Agendar cita
-        </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => avisar("Agendar cita")}>
+            <CalendarPlus />
+            Agendar cita
+          </DropdownMenuItem>
 
-        <DropdownMenuSeparator />
+          <DropdownMenuSeparator />
 
-        {/* "Dar de baja" y no "Eliminar": DELETE /api/pacientes/{id} hace
-            baja logica (IsActive = false). El nombre prometeria un borrado
-            definitivo que el backend no hace. */}
-        <DropdownMenuItem
-          variant="destructive"
-          onSelect={() => avisar("Dar de baja")}
-        >
-          Dar de baja
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuItem
+            variant="destructive"
+            onSelect={() => setConfirmandoBaja(true)}
+          >
+            <UserX />
+            Dar de baja
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DialogoPaciente
+        abierto={editando}
+        onOpenChange={setEditando}
+        paciente={paciente}
+      />
+
+      <ConfirmarBaja
+        abierto={confirmandoBaja}
+        onOpenChange={setConfirmandoBaja}
+        paciente={paciente}
+        onConfirmado={onDarbaja}
+      />
+    </>
+  );
+}
+
+function ConfirmarBaja({
+  abierto,
+  onOpenChange,
+  paciente,
+  onConfirmado,
+}: {
+  abierto: boolean;
+  onOpenChange: (abierto: boolean) => void;
+  paciente: Paciente;
+  onConfirmado?: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const [error, setError] = useState<string | null>(null);
+
+  const baja = useMutation({
+    mutationFn: (id: Guid) => pacientesApi.darDeBaja(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: pacientesKeys.lista() });
+      toast.success("Paciente dado de baja", {
+        description: paciente.nombreCompleto,
+      });
+      onOpenChange(false);
+      onConfirmado?.();
+    },
+    onError: (fallo) => {
+      setError(mensajeDeError(fallo));
+    },
+  });
+
+  return (
+    <AlertDialog open={abierto} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Dar de baja a {paciente.nombreCompleto}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            El paciente dejara de aparecer en el listado y no podra volver a
+            entrar por la aplicacion. Su historial clinico se conserva intacto.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        {error && (
+          <p role="alert" className="text-destructive text-sm">
+            {error}
+          </p>
+        )}
+
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={baja.isPending}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={baja.isPending}
+            onClick={(evento) => {
+              evento.preventDefault();
+              setError(null);
+              baja.mutate(paciente.id);
+            }}
+          >
+            {baja.isPending ? "Dando de baja..." : "Dar de baja"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

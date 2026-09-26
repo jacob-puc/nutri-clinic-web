@@ -12,16 +12,10 @@ const TONES = [
 
 interface AvatarPacienteProps {
   nombre: string;
-  /** Se usa para derivar un color estable por paciente. */
   id: string;
   className?: string;
 }
 
-/**
- * Avatar con iniciales. No se usa una foto: el backend todavia no expone
- * imagen de paciente y un avatar de texto es honesto, mientras que una
- * silueta gris repetida en 200 filas se lee como un bug.
- */
 export function AvatarPaciente({ nombre, id, className }: AvatarPacienteProps) {
   return (
     <span

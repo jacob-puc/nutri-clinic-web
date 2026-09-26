@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 interface SidebarContextValue {
   collapsed: boolean;
   toggle: () => void;
-  /** Estado del drawer movil, independiente del colapso de escritorio. */
   mobileOpen: boolean;
   setMobileOpen: (open: boolean) => void;
 }

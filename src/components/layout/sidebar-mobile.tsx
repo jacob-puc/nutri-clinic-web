@@ -9,11 +9,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-/**
- * Menu lateral en movil. Se usa un Sheet (cajon lateral) en vez de un burger
- * que despliega un menu flotante: en pantallas pequenas un drawer de ancho
- * completo deja espacio real para labels largos como "Nutricionistas".
- */
 export function SidebarMobile() {
   const { mobileOpen, setMobileOpen } = useSidebar();
 

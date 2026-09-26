@@ -8,18 +8,12 @@ import { ThemeProvider, useTheme } from "@/hooks/use-theme";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 
-/**
- * Se crea fuera del componente para que el cliente de react-query no se
- * destruya y se reconstruya en cada render.
- */
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 30_000,
       refetchOnWindowFocus: false,
       retry: (intentos, error) => {
-        // Reintentar un 404 o un 400 no cambia el resultado: solo alarga la
-        // espera del usuario. Los fallos de red si valen un reintento.
         if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
           return false;
         }
@@ -29,8 +23,6 @@ const queryClient = new QueryClient({
   },
 });
 
-/** Los providers se montan aqui para que el toast y los tooltips puedan
- * leer el contexto de tema. */
 function Proveedores() {
   useTheme();
 

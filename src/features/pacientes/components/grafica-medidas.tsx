@@ -14,14 +14,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { categoriaImc, formatearFechaCorta } from "@/lib/formatters";
 import type { MedidaAntropometrica } from "@/types/api";
 
-/**
- * Grafica de evolucion de peso e IMC.
- *
- * El backend ya calcula el IMC, asi que no se recalcula aqui: la grafica
- * solo lo representa. Lo que si hace esta capa es decidir que la grafica
- * tenga sentido: con una sola medicion una linea es un punto suelto que no
- * comunica nada, y en ese caso se cae a la tabla.
- */
 const MINIMO_PUNTOS = 2;
 
 interface GraficaMedidasProps {

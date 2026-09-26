@@ -1,23 +1,5 @@
-/* ==========================================================================
-   NutriClinica — Sistema de diseno
-   --------------------------------------------------------------------------
-   Paleta construida en OKLCH: perceptualmente uniforme, lo que permite que
-   los mismos pasos de luminosidad conserven la misma "apariencia" en toda la
-   rampa y que los contrastes entre tonos sean predecibles.
 
-   Identidad: duo de temperatura.
-     - Teal profundo  = salud, confianza, base clinica (serio, calmado)
-     - Terracota      = energia, progreso, calor humano (evita el gris medico)
-   El gris de superficies esta templado hacia el teal (nunca gris puro), lo que
-   hace que toda la app se sienta de una sola pieza.
-   ========================================================================== */
-
-/* --------------------------------------------------------------------------
-   1. Rampas de marca
-   -------------------------------------------------------------------------- */
 :root {
-  /* --- Teal clinico (primaria) -------------------------------------------
-     600 ~ #00685f, el color que ya venia usando el sistema de diseno previo. */
   --brand-50: oklch(0.971 0.017 178);
   --brand-100: oklch(0.935 0.036 177);
   --brand-200: oklch(0.878 0.058 177);
@@ -30,8 +12,6 @@
   --brand-900: oklch(0.283 0.038 180);
   --brand-950: oklch(0.203 0.028 181);
 
-  /* --- Terracota (acento calido) ------------------------------------------
-     El contrapunto calido. Marca progreso, energia y lo humano. */
   --accent-50: oklch(0.974 0.014 62);
   --accent-100: oklch(0.940 0.032 60);
   --accent-200: oklch(0.889 0.061 57);
@@ -43,7 +23,6 @@
   --accent-800: oklch(0.402 0.092 42);
   --accent-900: oklch(0.330 0.070 43);
 
-  /* --- Salvia (secundario calmado) ---------------------------------------- */
   --sage-100: oklch(0.941 0.019 163);
   --sage-200: oklch(0.885 0.035 163);
   --sage-300: oklch(0.806 0.049 164);
@@ -52,8 +31,6 @@
   --sage-600: oklch(0.516 0.040 167);
   --sage-700: oklch(0.421 0.033 168);
 
-  /* --- Neutros templados al teal ------------------------------------------
-     El matiz 180-190 los mantiene "vivos" sin que se perciban verdes. */
   --neutral-0: oklch(1 0 0);
   --neutral-50: oklch(0.988 0.002 190);
   --neutral-100: oklch(0.968 0.004 190);
@@ -68,15 +45,9 @@
   --neutral-950: oklch(0.148 0.007 190);
 }
 
-/* --------------------------------------------------------------------------
-   2. Variables semanticas (formato shadcn)
-   Tailwind 4 las expone via @theme inline. Los componentes generados por
-   shadcn consumen estas, asi que pintar la marca es solo editar este bloque.
-   -------------------------------------------------------------------------- */
 :root {
   --radius: 0.625rem;
 
-  /* Superficies -------------------------------------------------- */
   --background: var(--neutral-50);
   --foreground: var(--neutral-950);
 
@@ -89,14 +60,12 @@
   --surface-subtle: var(--neutral-100);
   --surface-muted: var(--neutral-200);
 
-  /* Marca -------------------------------------------------------- */
   --primary: var(--brand-700);
   --primary-foreground: var(--neutral-0);
   --primary-hover: var(--brand-800);
   --primary-soft: var(--brand-50);
   --primary-soft-foreground: var(--brand-800);
 
-  /* Acento calido ------------------------------------------------ */
   /* OJO, este NO es el color de marca. En la convencion de shadcn, --accent
      es la SUPERFICIE de hover/focus: lo usan la fila de la tabla, el hover
      de los botones secondary/outline, el focus de cada item del dropdown y
@@ -111,14 +80,12 @@
   --accent-soft: var(--accent-50);
   --accent-soft-foreground: var(--accent-800);
 
-  /* Neutro de apoyo ---------------------------------------------- */
   --secondary: var(--sage-200);
   --secondary-foreground: var(--sage-700);
 
   --muted: var(--neutral-200);
   --muted-foreground: var(--neutral-600);
 
-  /* Semanticos --------------------------------------------------- */
   --success: oklch(0.586 0.126 152);
   --success-foreground: var(--neutral-0);
   --success-soft: oklch(0.941 0.044 152);
@@ -139,20 +106,17 @@
   --destructive-soft: oklch(0.951 0.043 20);
   --destructive-soft-foreground: oklch(0.404 0.152 26);
 
-  /* Controles ---------------------------------------------------- */
   --border: var(--neutral-200);
   --border-strong: var(--neutral-300);
   --input: var(--neutral-300);
   --ring: var(--brand-500);
 
-  /* Graficos (ordenados por contraste entre si, no por tono) ----- */
   --chart-1: var(--brand-600);
   --chart-2: var(--accent-500);
   --chart-3: var(--sage-500);
   --chart-4: oklch(0.632 0.116 250);
   --chart-5: var(--accent-300);
 
-  /* Barra lateral ------------------------------------------------ */
   --sidebar: oklch(0.212 0.028 195);
   --sidebar-foreground: oklch(0.945 0.008 185);
   --sidebar-muted: oklch(0.322 0.026 192);
@@ -164,7 +128,6 @@
   --sidebar-border: oklch(0.316 0.026 192);
   --sidebar-ring: var(--brand-400);
 
-  /* Degradados de marca ------------------------------------------- */
   --gradient-brand: linear-gradient(
     135deg,
     var(--brand-700) 0%,
@@ -178,13 +141,6 @@
   );
 }
 
-/* --------------------------------------------------------------------------
-   3. Modo oscuro
-   No es un simple inverso: en oscuro la marca sube de tono para mantener el
-   mismo peso visual, y las superficies bajan de luminosidad para no
-   deslumbrar. Las superficies "elevadas" (popover/card) son MAS claras que
-   el fondo, al reves de la intuicion habitual.
-   -------------------------------------------------------------------------- */
 .dark {
   color-scheme: dark;
 
@@ -271,11 +227,6 @@
   );
 }
 
-/* --------------------------------------------------------------------------
-   4. Exposicion a Tailwind 4
-   @theme inline: los valores se resuelven en tiempo de compilacion contra las
-   variables de :root, asi que el cambio claro/oscuro no necesita recompilar.
-   -------------------------------------------------------------------------- */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -363,9 +314,6 @@
     0 4px 8px -4px oklch(0.21 0.008 190 / 0.08);
 }
 
-/* --------------------------------------------------------------------------
-   5. Base
-   -------------------------------------------------------------------------- */
 @layer base {
   * {
     border-color: var(--border);
@@ -398,9 +346,6 @@
   }
 }
 
-/* --------------------------------------------------------------------------
-   6. Utilidades propias
-   -------------------------------------------------------------------------- */
 @utility gradient-brand {
   background-image: var(--gradient-brand);
 }

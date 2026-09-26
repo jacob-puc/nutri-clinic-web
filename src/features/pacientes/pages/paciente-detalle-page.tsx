@@ -1,19 +1,25 @@
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   CalendarPlus,
   ClipboardPlus,
+  Download,
   FileText,
-  ImageIcon,
   Mail,
   MapPin,
+  Pencil,
   Phone,
-  Ruler,
   Stethoscope,
+  Trash2,
+  TrendingDown,
+  TrendingUp,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
+import { DialogoPaciente } from "@/features/pacientes/components/dialogo-paciente";
 import { GraficaMedidas } from "@/features/pacientes/components/grafica-medidas";
 import { useExpediente, usePaciente } from "@/features/pacientes/hooks/use-expediente";
 import { Badge } from "@/components/ui/badge";
@@ -30,23 +36,22 @@ import {
   formatearFechaCorta,
   formatearFechaHora,
 } from "@/lib/formatters";
-import type { DocumentoPaciente, FotoSeguimiento, MedidaAntropometrica } from "@/types/api";
+import type {
+  DocumentoPaciente,
+  FotoSeguimiento,
+  HistorialClinico,
+  MedidaAntropometrica,
+} from "@/types/api";
 
-/**
- * Ficha del paciente. Las cuatro pestañas salen de UNA sola llamada
- * (GET /api/pacientes/{id}/expediente), asi que abrir la ficha no escala con
- * el numero de pestanas: se piden datos una vez y las tabs leen la misma
- * entrada de cache.
- */
 export function PacienteDetallePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [editando, setEditando] = useState(false);
 
   const { data: paciente, isPending: cargandoPaciente, isError: errorPaciente } =
     usePaciente(id);
   const { data: expediente, isPending: cargandoExpediente } = useExpediente(id);
 
-  // 404 real del backend: "este paciente no existe / esta dado de baja".
   if (esApiError(errorPaciente) && errorPaciente.status === 404) {
     return <EstadoNoEncontrado nombre={paciente?.nombreCompleto} />;
   }
@@ -81,12 +86,21 @@ export function PacienteDetallePage() {
         Volver al listado
       </Button>
 
-      <EncabezadoFicha paciente={paciente} />
+      <EncabezadoFicha paciente={paciente} onEditar={() => setEditando(true)} />
+
+      <DialogoPaciente
+        abierto={editando}
+        onOpenChange={setEditando}
+        paciente={paciente}
+      />
 
       <Tabs defaultValue="resumen" className="mt-6">
-        <TabsList className="w-full justify-start overflow-x-auto sm:w-auto">
+        <TabsList className="w-full justify-start">
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
-          <TabsTrigger value="medidas">Medidas</TabsTrigger>
+          <TabsTrigger value="medidas">
+            Medidas
+            {medidas.length > 0 && <Contador>{medidas.length}</Contador>}
+          </TabsTrigger>
           <TabsTrigger value="fotos">
             Fotos
             {fotos.length > 0 && (
@@ -105,12 +119,7 @@ export function PacienteDetallePage() {
           {cargandoExpediente ? (
             <ContenidoSkeleton />
           ) : (
-            <TabResumen
-              historial={historial}
-              medidas={medidas}
-              fotos={fotos}
-              documentos={documentos}
-            />
+            <TabResumen historial={historial} medidas={medidas} />
           )}
         </TabsContent>
 
@@ -142,11 +151,13 @@ export function PacienteDetallePage() {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Encabezado                                                                  */
-/* -------------------------------------------------------------------------- */
-
-function EncabezadoFicha({ paciente }: { paciente: NonNullable<ReturnType<typeof usePaciente>["data"]> }) {
+function EncabezadoFicha({
+  paciente,
+  onEditar,
+}: {
+  paciente: NonNullable<ReturnType<typeof usePaciente>["data"]>;
+  onEditar: () => void;
+}) {
   const avisar = (accion: string) =>
     toast.info(`${accion} · Disponible en la siguiente iteracion`, {
       description: paciente.nombreCompleto,
@@ -204,7 +215,7 @@ function EncabezadoFicha({ paciente }: { paciente: NonNullable<ReturnType<typeof
           </div>
 
           <div className="flex shrink-0 gap-2">
-            <Button variant="outline" size="sm" onClick={() => avisar("Editar datos")}>
+            <Button variant="outline" size="sm" onClick={onEditar}>
               Editar
             </Button>
             <Button size="sm" onClick={() => avisar("Agendar cita")}>
@@ -218,6 +229,33 @@ function EncabezadoFicha({ paciente }: { paciente: NonNullable<ReturnType<typeof
   );
 }
 
+function BotonAccion({
+  icono: Icono,
+  etiqueta,
+  destructivo,
+}: {
+  icono: LucideIcon;
+  etiqueta: string;
+  destructivo?: boolean;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      disabled
+      title={`${etiqueta} · Proximamente`}
+      aria-label={etiqueta}
+      className={
+        destructivo
+          ? "text-muted-foreground hover:text-destructive"
+          : "text-muted-foreground"
+      }
+    >
+      <Icono className="size-4" aria-hidden />
+    </Button>
+  );
+}
+
 function Contador({ children }: { children: React.ReactNode }) {
   return (
     <span className="bg-primary/12 text-primary ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">
@@ -226,198 +264,284 @@ function Contador({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Tab: Resumen                                                                */
-/* -------------------------------------------------------------------------- */
-
 function TabResumen({
   historial,
   medidas,
-  fotos,
-  documentos,
 }: {
-  historial: ExpedienteHistorial;
+  historial: HistorialClinico | null;
   medidas: MedidaAntropometrica[];
-  fotos: FotoSeguimiento[];
-  documentos: DocumentoPaciente[];
 }) {
-  const ultima = medidas.at(-1);
-
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      <div className="space-y-4 lg:col-span-2">
-        <Card>
-          <CardContent className="px-4 py-5 md:px-6">
-            <h2 className="text-foreground flex items-center gap-2 text-sm font-semibold">
-              <Stethoscope className="text-primary size-4" aria-hidden />
-              Historial clinico
-            </h2>
-            <Separator className="my-4" />
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="px-4 py-5 md:px-6">
+          <h2 className="text-foreground flex items-center gap-2 text-sm font-semibold">
+            <Stethoscope className="text-primary size-4" aria-hidden />
+            Historial clinico
+          </h2>
+          <Separator className="my-4" />
 
-            {!historial ? (
-              <p className="text-muted-foreground text-sm">
-                Sin historial registrado. Este es el estado mas comun: la mayoria
-                de los pacientes aun no tienen historia clinica capturada.
-              </p>
-            ) : (
-              <dl className="grid gap-4 sm:grid-cols-2">
-                {historial.Diagnostico && (
-                  <CampoHistorial etiqueta="Diagnostico" valor={historial.Diagnostico} />
-                )}
-                {historial.alergias && (
-                  <CampoHistorial etiqueta="Alergias" valor={historial.alergias} />
-                )}
-                {historial.antecedentesPersonales && (
-                  <CampoHistorial
-                    etiqueta="Antecedentes personales"
-                    valor={historial.antecedentesPersonales}
-                  />
-                )}
-                {historial.antecedentesFamiliares && (
-                  <CampoHistorial
-                    etiqueta="Antecedentes familiares"
-                    valor={historial.antecedentesFamiliares}
-                  />
-                )}
-                {historial.medications && (
-                  <CampoHistorial etiqueta="Medicamentos" valor={historial.medications} />
-                )}
-                {historial.observaciones && (
-                  <CampoHistorial etiqueta="Observaciones" valor={historial.observaciones} />
-                )}
-              </dl>
-            )}
-          </CardContent>
-        </Card>
+          {!historial ? (
+            <p className="text-muted-foreground text-sm">
+              Sin historial registrado. Este es el estado mas comun: la mayoria
+              de los pacientes aun no tienen historia clinica capturada.
+            </p>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-3">
+              <ListaHistorial
+                etiqueta="Alergias"
+                items={historial.alergias}
+                vacio="Sin alergias registradas"
+                variante="alerta"
+              />
+              <ListaHistorial
+                etiqueta="Alimentos favoritos"
+                items={historial.alimentosFavoritos}
+                vacio="Sin alimentos favoritos"
+              />
+              <ListaHistorial
+                etiqueta="Alimentos no favoritos"
+                items={historial.alimentosNoFavoritos}
+                vacio="Sin alimentos no favoritos"
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-        {ultima && <UltimaMedida medida={ultima} />}
-      </div>
-
-      <div className="space-y-4">
-        <Card>
-          <CardContent className="px-4 py-5">
-            <h2 className="text-foreground text-sm font-semibold">Actividad</h2>
-            <Separator className="my-4" />
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-center justify-between gap-2">
-                <span className="text-muted-foreground flex items-center gap-2">
-                  <Ruler className="size-3.5" aria-hidden />
-                  Medidas
-                </span>
-                <span className="font-medium tabular-nums">{medidas.length}</span>
-              </li>
-              <li className="flex items-center justify-between gap-2">
-                <span className="text-muted-foreground flex items-center gap-2">
-                  <ImageIcon className="size-3.5" aria-hidden />
-                  Fotos
-                </span>
-                <span className="font-medium tabular-nums">{fotos.length}</span>
-              </li>
-              <li className="flex items-center justify-between gap-2">
-                <span className="text-muted-foreground flex items-center gap-2">
-                  <FileText className="size-3.5" aria-hidden />
-                  Documentos
-                </span>
-                <span className="font-medium tabular-nums">{documentos.length}</span>
-              </li>
-            </ul>
-
-            {medidas.length > 0 && (
-              <>
-                <Separator className="my-4" />
-                <p className="text-muted-foreground text-xs">
-                  Ultima medicion: {formatearFechaHora(ultima?.fechaMedicion ?? null)}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() =>
-            toast.info("Registrar medida · Disponible en la siguiente iteracion")
-          }
-        >
-          <ClipboardPlus className="size-4" />
-          Registrar medida
-        </Button>
-      </div>
+      <UltimasMedidas medidas={medidas} />
     </div>
   );
 }
 
-type ExpedienteHistorial = {
-  Diagnostico: string | null;
-  antecedentesFamiliares: string | null;
-  antecedentesPersonales: string | null;
-  medications: string | null;
-  alergias: string | null;
-  observaciones: string | null;
-  fechaActualizacion: string | null;
-} | null;
-
-function CampoHistorial({ etiqueta, valor }: { etiqueta: string; valor: string }) {
+function ListaHistorial({
+  etiqueta,
+  items,
+  vacio,
+  variante,
+}: {
+  etiqueta: string;
+  items: string[];
+  vacio: string;
+  variante?: "alerta";
+}) {
   return (
     <div>
-      <dt className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+      <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
         {etiqueta}
-      </dt>
-      <dd className="mt-1 text-sm">{valor}</dd>
+      </p>
+
+      {items.length === 0 ? (
+        <p className="text-muted-foreground mt-2 text-sm">{vacio}</p>
+      ) : (
+        <ul className="mt-2 flex flex-wrap gap-1.5">
+          {items.map((item) => (
+            <li
+              key={item}
+              className={
+                variante === "alerta"
+                  ? "bg-destructive/10 text-destructive ring-destructive/20 rounded-full px-2 py-0.5 text-xs ring-1"
+                  : "bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs"
+              }
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
 
-function UltimaMedida({ medida }: { medida: MedidaAntropometrica }) {
-  const imc = Number(medida.imc.toFixed(1));
-  const categoria = categoriaImc(imc);
+const MAX_MEDIDAS_RESUMEN = 3;
+
+function UltimasMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
+  if (medidas.length === 0) {
+    return (
+      <Card>
+        <CardContent className="px-4 py-5 md:px-6">
+          <EncabezadoMediciones total={0} />
+          <Separator className="my-4" />
+          <p className="text-muted-foreground text-sm">
+            Aun no se ha registrado ninguna medida antropometrica para este
+            paciente.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const recientes = [...medidas]
+    .sort((a, b) => b.fechaMedicion.localeCompare(a.fechaMedicion))
+    .slice(0, MAX_MEDIDAS_RESUMEN);
+
+  const [principal, ...previas] = recientes;
+
+  if (!principal) return null;
 
   return (
     <Card>
       <CardContent className="px-4 py-5 md:px-6">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-foreground text-sm font-semibold">Ultima medicion</h2>
-          <span className="text-muted-foreground text-xs">
-            {formatearFechaHora(medida.fechaMedicion)}
-          </span>
-        </div>
+        <EncabezadoMediciones
+          total={medidas.length}
+          fechaReciente={principal.fechaMedicion}
+        />
         <Separator className="my-4" />
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Dato titulo="Peso" valor={`${medida.peso} kg`} />
-          <Dato titulo="Estatura" valor={`${medida.estatura} m`} />
-          <Dato titulo="IMC" valor={String(imc)} />
+          <Dato titulo="Peso" valor={`${principal.peso} kg`} />
+          <Dato titulo="Estatura" valor={`${principal.estatura} m`} />
+          <Dato titulo="IMC" valor={String(Number(principal.imc.toFixed(1)))} />
           <div>
             <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
               Categoria
             </p>
             <div className="mt-1.5">
-              <Badge
-                variant="outline"
-                className={
-                  categoria.tono === "destructive"
-                    ? "border-destructive/40 text-destructive"
-                    : categoria.tono === "warning"
-                      ? "border-warning/40 text-warning"
-                      : categoria.tono === "success"
-                        ? "border-success/40 text-success"
-                        : "border-info/40 text-info"
-                }
-              >
-                {categoria.etiqueta}
-              </Badge>
+              <BadgeCategoria imc={principal.imc} />
             </div>
           </div>
         </div>
 
-        {medida.notasObservaciones && (
-          <p className="text-muted-foreground mt-4 border-t border-border pt-3 text-sm">
-            {medida.notasObservaciones}
-          </p>
+        {previas.length > 0 && (
+          <div className="border-border mt-5 border-t pt-4">
+            <p className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
+              Anteriores mediciones
+            </p>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-muted-foreground text-xs">
+                  <th scope="col" className="pb-2 text-left font-semibold">
+                    Fecha
+                  </th>
+                  <th scope="col" className="pb-2 text-right font-semibold">
+                    Peso
+                  </th>
+                  <th scope="col" className="pb-2 text-right font-semibold">
+                    Estatura
+                  </th>
+                  <th scope="col" className="pb-2 text-right font-semibold">
+                    IMC
+                  </th>
+                  <th scope="col" className="pb-2 text-right font-semibold">
+                    Variacion
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {previas.map((medida, indice) => (
+                  <tr key={medida.id}>
+                    <td className="py-2.5">
+                      {formatearFechaCorta(medida.fechaMedicion)}
+                    </td>
+                    <td className="py-2.5 text-right tabular-nums">
+                      {medida.peso} kg
+                    </td>
+                    <td className="text-muted-foreground py-2.5 text-right tabular-nums">
+                      {medida.estatura} m
+                    </td>
+                    <td className="py-2.5 text-right font-medium tabular-nums">
+                      {Number(medida.imc.toFixed(1))}
+                    </td>
+                    <td className="py-2.5 text-right">
+                      <VariacionPeso
+                        delta={
+                          recientes[indice]
+                            ? medida.peso - recientes[indice].peso
+                            : 0
+                        }
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Cambio de peso contra la medida siguiente. En nutricion clinica perder peso
+ * suele ser el objetivo, asi que la bajada se lee como avance y la subida
+ * como algo a revisar.
+ */
+function VariacionPeso({ delta }: { delta: number }) {
+  if (Math.abs(delta) < 0.05) {
+    return <span className="text-muted-foreground">sin cambio</span>;
+  }
+
+  const subio = delta > 0;
+  const Icono = subio ? TrendingUp : TrendingDown;
+
+  return (
+    <span
+      className={
+        subio
+          ? "text-warning inline-flex items-center justify-end gap-1 font-medium tabular-nums"
+          : "text-primary inline-flex items-center justify-end gap-1 font-medium tabular-nums"
+      }
+    >
+      <Icono className="size-3.5" aria-hidden />
+      {Math.abs(delta).toFixed(1)} kg
+    </span>
+  );
+}
+
+function EncabezadoMediciones({
+  total,
+  fechaReciente,
+}: {
+  total: number;
+  fechaReciente?: string;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-baseline gap-x-2">
+        <h2 className="text-foreground text-sm font-semibold">
+          {total === 1 ? "Ultima medicion" : "Ultimas mediciones"}
+        </h2>
+        {total > 0 && (
+          <span className="text-muted-foreground text-xs">
+            {total} {total === 1 ? "registrada" : "registradas"}
+            {fechaReciente && ` · ${formatearFechaCorta(fechaReciente)}`}
+          </span>
+        )}
+      </div>
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() =>
+          toast.info("Registrar medida · Disponible en la siguiente iteracion")
+        }
+      >
+        <ClipboardPlus className="size-4" />
+        Registrar medida
+      </Button>
+    </div>
+  );
+}
+
+function BadgeCategoria({ imc }: { imc: number }) {
+  const categoria = categoriaImc(Number(imc.toFixed(1)));
+
+  return (
+    <Badge
+      variant="outline"
+      className={
+        categoria.tono === "destructive"
+          ? "border-destructive/40 text-destructive"
+          : categoria.tono === "warning"
+            ? "border-warning/40 text-warning"
+            : categoria.tono === "success"
+              ? "border-success/40 text-success"
+              : "border-info/40 text-info"
+      }
+    >
+      {categoria.etiqueta}
+    </Badge>
   );
 }
 
@@ -431,10 +555,6 @@ function Dato({ titulo, valor }: { titulo: string; valor: string }) {
     </div>
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/* Tab: Medidas                                                                */
-/* -------------------------------------------------------------------------- */
 
 function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
   if (medidas.length === 0) {
@@ -463,7 +583,11 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
                   <th scope="col" className="text-muted-foreground pb-2 text-right text-xs font-semibold tracking-wide uppercase">Peso</th>
                   <th scope="col" className="text-muted-foreground hidden pb-2 text-right text-xs font-semibold tracking-wide uppercase sm:table-cell">Estatura</th>
                   <th scope="col" className="text-muted-foreground pb-2 text-right text-xs font-semibold tracking-wide uppercase">IMC</th>
-                  <th scope="col" className="text-muted-foreground hidden pb-2 text-left text-xs font-semibold tracking-wide uppercase md:table-cell">Categoria</th>
+                  <th scope="col" className="text-muted-foreground hidden pb-2 pl-4 text-left text-xs font-semibold tracking-wide uppercase md:table-cell">Categoria</th>
+                  <th scope="col" className="text-muted-foreground hidden pb-2 pl-6 text-left text-xs font-semibold tracking-wide uppercase lg:table-cell">Observaciones</th>
+                  <th scope="col" className="text-muted-foreground pb-2 pl-4 text-right text-xs font-semibold tracking-wide uppercase">
+                    <span className="sr-only">Acciones</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -479,8 +603,24 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
                         {medida.estatura} m
                       </td>
                       <td className="py-2.5 text-right font-medium tabular-nums">{imc}</td>
-                      <td className="text-muted-foreground hidden py-2.5 md:table-cell">
+                      <td className="text-muted-foreground hidden py-2.5 pl-4 md:table-cell">
                         {categoriaImc(imc).etiqueta}
+                      </td>
+                      <td
+                        className="text-muted-foreground hidden truncate py-2.5 pl-6 lg:table-cell"
+                        title={medida.notasObservaciones ?? undefined}
+                      >
+                        {medida.notasObservaciones ?? "—"}
+                      </td>
+                      <td className="py-2.5 pl-4">
+                        <div className="flex items-center justify-end gap-1">
+                          <BotonAccion icono={Pencil} etiqueta="Editar medida" />
+                          <BotonAccion
+                            icono={Trash2}
+                            etiqueta="Eliminar medida"
+                            destructivo
+                          />
+                        </div>
                       </td>
                     </tr>
                   );
@@ -493,10 +633,6 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
     </div>
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/* Tab: Fotos                                                                  */
-/* -------------------------------------------------------------------------- */
 
 function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
   if (fotos.length === 0) {
@@ -517,10 +653,20 @@ function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
           </div>
           <CardContent className="px-4 py-3">
             <div className="flex items-center justify-between gap-2">
-              <Badge variant="outline">{foto.tipo}</Badge>
-              <span className="text-muted-foreground text-xs">
-                {formatearFechaCorta(foto.fechaSubida)}
-              </span>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">{foto.tipo}</Badge>
+                <span className="text-muted-foreground text-xs">
+                  {formatearFechaCorta(foto.fechaSubida)}
+                </span>
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                <BotonAccion icono={Download} etiqueta="Descargar foto" />
+                <BotonAccion
+                  icono={Trash2}
+                  etiqueta="Eliminar foto"
+                  destructivo
+                />
+              </div>
             </div>
             {foto.notas && (
               <p className="text-muted-foreground mt-2 text-sm">{foto.notas}</p>
@@ -531,10 +677,6 @@ function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
     </div>
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/* Tab: Documentos                                                             */
-/* -------------------------------------------------------------------------- */
 
 function TabDocumentos({ documentos }: { documentos: DocumentoPaciente[] }) {
   if (documentos.length === 0) {
@@ -563,21 +705,25 @@ function TabDocumentos({ documentos }: { documentos: DocumentoPaciente[] }) {
                 <p className="mt-1.5 text-sm">{documento.observaciones}</p>
               )}
             </div>
-            <Button variant="ghost" size="sm" asChild className="shrink-0">
-              <a href={documento.urlDocumento} target="_blank" rel="noreferrer">
-                Abrir
-              </a>
-            </Button>
+            <div className="flex shrink-0 items-center gap-1">
+              <BotonAccion icono={Pencil} etiqueta="Editar documento" />
+              <BotonAccion
+                icono={Trash2}
+                etiqueta="Eliminar documento"
+                destructivo
+              />
+              <Button variant="ghost" size="sm" asChild>
+                <a href={documento.urlDocumento} target="_blank" rel="noreferrer">
+                  Abrir
+                </a>
+              </Button>
+            </div>
           </div>
         ))}
       </CardContent>
     </Card>
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/* Estados                                                                     */
-/* -------------------------------------------------------------------------- */
 
 function Vacio({ titulo, descripcion }: { titulo: string; descripcion: string }) {
   return (

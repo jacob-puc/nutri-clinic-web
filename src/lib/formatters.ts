@@ -1,26 +1,16 @@
 import type { Sexo } from "@/types/api";
 
-/* -------------------------------------------------------------------------- */
-/* Fechas                                                                      */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Formatea un "YYYY-MM-DD" (C# DateOnly) sin pasar por `new Date(string)`.
- *
- * `new Date("1990-05-14")` se interpreta como UTC y en zonas horarias
- * negativas se muestra como el dia anterior. Se parsea a mano para que la
- * fecha de nacimiento siempre sea la que el usuario eligio.
- */
 export function formatearFechaCorta(fecha: string | null | undefined): string {
   if (!fecha) return "—";
 
-  const [anio, mes, dia] = fecha.split("-");
+  // `split("-")` sin recortar se lleva la hora dentro del dia en las fechas
+  // con hora, y terminaba mostrando "26/09/26T03:24:17.18278Z".
+  const [anio, mes, dia] = fecha.slice(0, 10).split("-");
   if (!anio || !mes || !dia) return "—";
 
   return `${dia}/${mes}/${anio}`;
 }
 
-/** Formatea un ISO-8601 UTC como dd/mm/aaaa. */
 export function formatearFecha(iso: string | null | undefined): string {
   if (!iso) return "—";
   const fecha = new Date(iso);
@@ -47,7 +37,6 @@ export function formatearFechaHora(iso: string | null | undefined): string {
   });
 }
 
-/** "hace 3 dias", "en 2 horas". Caido en valor si la fecha no parsea. */
 export function formatearTiempoRelativo(iso: string | null | undefined): string {
   if (!iso) return "—";
   const fecha = new Date(iso);
@@ -72,14 +61,6 @@ export function formatearTiempoRelativo(iso: string | null | undefined): string 
   return formatter.format(Math.round(segundos), "second");
 }
 
-/* -------------------------------------------------------------------------- */
-/* Texto                                                                       */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Quita acentos y pasa a minusculas para que la busqueda tolere
- * "jose" -> "Jose" y "Munoz" -> "munoz".
- */
 export function normalizar(texto: string): string {
   return texto
     .normalize("NFD")
@@ -87,26 +68,15 @@ export function normalizar(texto: string): string {
     .toLowerCase()
     .trim();
 }
-/**
- * Iniciales para el avatar. Con nombres compuestos toma la decision de usar
- * el primer nombre y el ULTIMO token como apellido, para que
- * "Maria de los Angeles Lopez" rinda "ML" y no "MA" como haria un
- * first+second ingenuo.
- */
 export function iniciales(nombre: string): string {
   const partes = nombre.trim().split(/\s+/).filter(Boolean);
   if (partes.length === 0) return "?";
   if (partes.length === 1) return (partes[0]?.slice(0, 2) ?? "?").toUpperCase();
 
   const nombrePropio = partes[0]?.[0] ?? "";
-  // "Maria de los Angeles Lopez" -> el ultimo token es el apellido real.
   const apellido = partes[partes.length - 1]?.[0] ?? "";
   return (nombrePropio + apellido).toUpperCase();
 }
-
-/* -------------------------------------------------------------------------- */
-/* Dominio                                                                     */
-/* -------------------------------------------------------------------------- */
 
 export const ETIQUETA_SEXO: Record<Sexo, string> = {
   M: "Masculino",
@@ -119,7 +89,6 @@ export function etiquetaSexo(sexo: Sexo | null | undefined): string {
   return ETIQUETA_SEXO[sexo] ?? sexo;
 }
 
-/** IMC: OMS pondera por rango. El backend lo calcula, esto solo etiqueta. */
 export function categoriaImc(imc: number): {
   etiqueta: string;
   tono: "success" | "info" | "warning" | "destructive";
@@ -130,10 +99,6 @@ export function categoriaImc(imc: number): {
   return { etiqueta: "Obesidad", tono: "destructive" };
 }
 
-/**
- * Color de avatar estable derivado del id. El mismo paciente conserva su
- * color entre recargas, lo que ayuda a reconocerlo en una lista larga.
- */
 export function tonoDesdeId(id: string): number {
   let hash = 0;
   for (let i = 0; i < id.length; i++) {
