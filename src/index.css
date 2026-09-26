@@ -1,0 +1,58 @@
+/* Orden obligatorio en Tailwind 4: los @import van primero, antes de
+   cualquier regla, y el orden entre ellos importa. theme.css define las
+   variables :root/.dark que @theme inline lee, por eso se importa antes que
+   la entrada de Tailwind. */
+@import "./styles/theme.css";
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    /* Evita el rebote de scroll en iOS dentro de los contenedores internos. */
+    overscroll-behavior-y: none;
+  }
+
+  /* Foco visible solo cuando el usuario navega con teclado. */
+  :focus-visible {
+    @apply outline-ring outline-2 outline-offset-2;
+  }
+}
+
+@layer components {
+  /* Utilidad de esqueleto: un pulso suave, sin alterar el layout. */
+  .skeleton {
+    @apply bg-muted animate-pulse;
+  }
+}
+
+@layer utilities {
+  /* Barra de scroll discreta para las tablas con scroll horizontal. */
+  .scrollbar-slim {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+}

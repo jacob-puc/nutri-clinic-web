@@ -1,0 +1,17 @@
+# Normaliza los fines de linea para que el diff no cambie segun el sistema que
+# hizo el checkout. Sin esto, en Windows cada archivo aparece modificado si se
+# editó en Linux (y al reves), y los diffs reales se pierden entre ruido de
+# CRLF/LF.
+* text=auto eol=lf
+
+# Los archivos generados por el package manager deben llevar LF de verdad.
+package-lock.json text eol=lf
+
+# Binarios: Git no debe intentar convertirlos.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

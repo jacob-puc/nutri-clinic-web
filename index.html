@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="NutriClinica: sistema de consulta clinica y nutricional."
+    />
+    <meta name="theme-color" content="#0f3b39" />
+    <title>NutriClinica · Consulta nutricional</title>
+
+    <!--
+      Se resuelve el tema ANTES del primer pintado. Si se hiciera en React, el
+      navegador pintaria primero el tema claro y luego saltaria a oscuro: un
+      parpadeo blanco en cada carga y en cada recarga. Este script es
+      sincronico y bloqueante a proposito, y es la razon por la que la clase
+      inicial del <html> es "dark" (un valor por defecto que este script
+      corrige de inmediato).
+    -->
+    <script>
+      (function () {
+        try {
+          var guardado = localStorage.getItem("nutriclinica-theme");
+          var oscuro = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var tema = guardado === "light" || guardado === "dark"
+            ? guardado
+            : (oscuro ? "dark" : "light");
+          var raiz = document.documentElement;
+          raiz.classList.toggle("dark", tema === "dark");
+          raiz.style.colorScheme = tema;
+        } catch (e) {
+          /* localStorage puede estar bloqueado: se usa el tema por defecto. */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

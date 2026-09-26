@@ -1,0 +1,457 @@
+/* ==========================================================================
+   NutriClinica — Sistema de diseno
+   --------------------------------------------------------------------------
+   Paleta construida en OKLCH: perceptualmente uniforme, lo que permite que
+   los mismos pasos de luminosidad conserven la misma "apariencia" en toda la
+   rampa y que los contrastes entre tonos sean predecibles.
+
+   Identidad: duo de temperatura.
+     - Teal profundo  = salud, confianza, base clinica (serio, calmado)
+     - Terracota      = energia, progreso, calor humano (evita el gris medico)
+   El gris de superficies esta templado hacia el teal (nunca gris puro), lo que
+   hace que toda la app se sienta de una sola pieza.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Rampas de marca
+   -------------------------------------------------------------------------- */
+:root {
+  /* --- Teal clinico (primaria) -------------------------------------------
+     600 ~ #00685f, el color que ya venia usando el sistema de diseno previo. */
+  --brand-50: oklch(0.971 0.017 178);
+  --brand-100: oklch(0.935 0.036 177);
+  --brand-200: oklch(0.878 0.058 177);
+  --brand-300: oklch(0.803 0.076 177);
+  --brand-400: oklch(0.700 0.089 177);
+  --brand-500: oklch(0.601 0.092 177);
+  --brand-600: oklch(0.508 0.083 177);
+  --brand-700: oklch(0.428 0.069 178);
+  --brand-800: oklch(0.353 0.053 179);
+  --brand-900: oklch(0.283 0.038 180);
+  --brand-950: oklch(0.203 0.028 181);
+
+  /* --- Terracota (acento calido) ------------------------------------------
+     El contrapunto calido. Marca progreso, energia y lo humano. */
+  --accent-50: oklch(0.974 0.014 62);
+  --accent-100: oklch(0.940 0.032 60);
+  --accent-200: oklch(0.889 0.061 57);
+  --accent-300: oklch(0.817 0.093 52);
+  --accent-400: oklch(0.735 0.120 48);
+  --accent-500: oklch(0.657 0.140 45);
+  --accent-600: oklch(0.573 0.135 43);
+  --accent-700: oklch(0.487 0.116 42);
+  --accent-800: oklch(0.402 0.092 42);
+  --accent-900: oklch(0.330 0.070 43);
+
+  /* --- Salvia (secundario calmado) ---------------------------------------- */
+  --sage-100: oklch(0.941 0.019 163);
+  --sage-200: oklch(0.885 0.035 163);
+  --sage-300: oklch(0.806 0.049 164);
+  --sage-400: oklch(0.706 0.052 165);
+  --sage-500: oklch(0.612 0.047 166);
+  --sage-600: oklch(0.516 0.040 167);
+  --sage-700: oklch(0.421 0.033 168);
+
+  /* --- Neutros templados al teal ------------------------------------------
+     El matiz 180-190 los mantiene "vivos" sin que se perciban verdes. */
+  --neutral-0: oklch(1 0 0);
+  --neutral-50: oklch(0.988 0.002 190);
+  --neutral-100: oklch(0.968 0.004 190);
+  --neutral-200: oklch(0.926 0.006 190);
+  --neutral-300: oklch(0.866 0.008 190);
+  --neutral-400: oklch(0.680 0.010 190);
+  --neutral-500: oklch(0.556 0.011 190);
+  --neutral-600: oklch(0.452 0.011 190);
+  --neutral-700: oklch(0.371 0.010 190);
+  --neutral-800: oklch(0.279 0.009 190);
+  --neutral-900: oklch(0.208 0.008 190);
+  --neutral-950: oklch(0.148 0.007 190);
+}
+
+/* --------------------------------------------------------------------------
+   2. Variables semanticas (formato shadcn)
+   Tailwind 4 las expone via @theme inline. Los componentes generados por
+   shadcn consumen estas, asi que pintar la marca es solo editar este bloque.
+   -------------------------------------------------------------------------- */
+:root {
+  --radius: 0.625rem;
+
+  /* Superficies -------------------------------------------------- */
+  --background: var(--neutral-50);
+  --foreground: var(--neutral-950);
+
+  --card: var(--neutral-0);
+  --card-foreground: var(--neutral-950);
+
+  --popover: var(--neutral-0);
+  --popover-foreground: var(--neutral-950);
+
+  --surface-subtle: var(--neutral-100);
+  --surface-muted: var(--neutral-200);
+
+  /* Marca -------------------------------------------------------- */
+  --primary: var(--brand-700);
+  --primary-foreground: var(--neutral-0);
+  --primary-hover: var(--brand-800);
+  --primary-soft: var(--brand-50);
+  --primary-soft-foreground: var(--brand-800);
+
+  /* Acento calido ------------------------------------------------ */
+  /* OJO, este NO es el color de marca. En la convencion de shadcn, --accent
+     es la SUPERFICIE de hover/focus: lo usan la fila de la tabla, el hover
+     de los botones secondary/outline, el focus de cada item del dropdown y
+     el skeleton. Poner aqui un color saturado pinta de naranja toda la
+     interaccion sutil de la app.
+
+     Por eso --accent es un neutro templado al teal, apenas mas oscuro que la
+     superficie, y la terracota vive en --accent-soft para los casos donde si
+     se quiere color calido (badges, acentos pequenos). */
+  --accent: var(--neutral-100);
+  --accent-foreground: var(--neutral-900);
+  --accent-soft: var(--accent-50);
+  --accent-soft-foreground: var(--accent-800);
+
+  /* Neutro de apoyo ---------------------------------------------- */
+  --secondary: var(--sage-200);
+  --secondary-foreground: var(--sage-700);
+
+  --muted: var(--neutral-200);
+  --muted-foreground: var(--neutral-600);
+
+  /* Semanticos --------------------------------------------------- */
+  --success: oklch(0.586 0.126 152);
+  --success-foreground: var(--neutral-0);
+  --success-soft: oklch(0.941 0.044 152);
+  --success-soft-foreground: oklch(0.375 0.081 152);
+
+  --warning: oklch(0.712 0.150 68);
+  --warning-foreground: oklch(0.279 0.070 60);
+  --warning-soft: oklch(0.958 0.055 82);
+  --warning-soft-foreground: oklch(0.402 0.105 62);
+
+  --info: oklch(0.578 0.128 238);
+  --info-foreground: var(--neutral-0);
+  --info-soft: oklch(0.938 0.041 238);
+  --info-soft-foreground: oklch(0.372 0.092 240);
+
+  --destructive: oklch(0.545 0.204 26);
+  --destructive-foreground: var(--neutral-0);
+  --destructive-soft: oklch(0.951 0.043 20);
+  --destructive-soft-foreground: oklch(0.404 0.152 26);
+
+  /* Controles ---------------------------------------------------- */
+  --border: var(--neutral-200);
+  --border-strong: var(--neutral-300);
+  --input: var(--neutral-300);
+  --ring: var(--brand-500);
+
+  /* Graficos (ordenados por contraste entre si, no por tono) ----- */
+  --chart-1: var(--brand-600);
+  --chart-2: var(--accent-500);
+  --chart-3: var(--sage-500);
+  --chart-4: oklch(0.632 0.116 250);
+  --chart-5: var(--accent-300);
+
+  /* Barra lateral ------------------------------------------------ */
+  --sidebar: oklch(0.212 0.028 195);
+  --sidebar-foreground: oklch(0.945 0.008 185);
+  --sidebar-muted: oklch(0.322 0.026 192);
+  --sidebar-muted-foreground: oklch(0.762 0.014 188);
+  --sidebar-accent: oklch(0.276 0.030 194);
+  --sidebar-accent-foreground: var(--neutral-0);
+  --sidebar-primary: var(--brand-400);
+  --sidebar-primary-foreground: var(--brand-950);
+  --sidebar-border: oklch(0.316 0.026 192);
+  --sidebar-ring: var(--brand-400);
+
+  /* Degradados de marca ------------------------------------------- */
+  --gradient-brand: linear-gradient(
+    135deg,
+    var(--brand-700) 0%,
+    var(--brand-500) 55%,
+    var(--sage-500) 100%
+  );
+  --gradient-accent: linear-gradient(
+    135deg,
+    var(--accent-500) 0%,
+    var(--accent-400) 100%
+  );
+}
+
+/* --------------------------------------------------------------------------
+   3. Modo oscuro
+   No es un simple inverso: en oscuro la marca sube de tono para mantener el
+   mismo peso visual, y las superficies bajan de luminosidad para no
+   deslumbrar. Las superficies "elevadas" (popover/card) son MAS claras que
+   el fondo, al reves de la intuicion habitual.
+   -------------------------------------------------------------------------- */
+.dark {
+  color-scheme: dark;
+
+  --background: oklch(0.168 0.011 195);
+  --foreground: oklch(0.958 0.005 185);
+
+  --card: oklch(0.216 0.013 194);
+  --card-foreground: oklch(0.958 0.005 185);
+
+  --popover: oklch(0.216 0.013 194);
+  --popover-foreground: oklch(0.958 0.005 185);
+
+  --surface-subtle: oklch(0.258 0.014 193);
+  --surface-muted: oklch(0.301 0.015 192);
+
+  /* En oscuro el teal se aclara: #00685f sobre fondo oscuro no se leeria. */
+  --primary: var(--brand-300);
+  --primary-foreground: var(--brand-950);
+  --primary-hover: var(--brand-200);
+  --primary-soft: oklch(0.288 0.038 180);
+  --primary-soft-foreground: var(--brand-200);
+
+  /* En oscuro el hover tiene que ser una superficie MAS CLARA que la tarjeta,
+     no una mas oscura: sobre --card (0.216) un valor de 0.258 se percibe
+     como un velo apagado en vez de como iluminacion. */
+  --accent: oklch(0.281 0.014 193);
+  --accent-foreground: var(--neutral-100);
+  --accent-soft: oklch(0.298 0.048 45);
+  --accent-soft-foreground: var(--accent-200);
+
+  --secondary: oklch(0.315 0.028 165);
+  --secondary-foreground: var(--sage-200);
+
+  --muted: oklch(0.288 0.014 193);
+  --muted-foreground: oklch(0.735 0.012 188);
+
+  --success: oklch(0.706 0.142 152);
+  --success-foreground: oklch(0.168 0.011 195);
+  --success-soft: oklch(0.302 0.056 152);
+  --success-soft-foreground: oklch(0.855 0.108 152);
+
+  --warning: oklch(0.790 0.145 76);
+  --warning-foreground: oklch(0.216 0.055 62);
+  --warning-soft: oklch(0.318 0.062 72);
+  --warning-soft-foreground: oklch(0.882 0.118 82);
+
+  --info: oklch(0.686 0.128 238);
+  --info-foreground: oklch(0.168 0.011 195);
+  --info-soft: oklch(0.302 0.056 240);
+  --info-soft-foreground: oklch(0.845 0.104 238);
+
+  --destructive: oklch(0.652 0.192 24);
+  --destructive-foreground: oklch(0.168 0.011 195);
+  --destructive-soft: oklch(0.312 0.078 24);
+  --destructive-soft-foreground: oklch(0.855 0.104 24);
+
+  --border: oklch(0.302 0.015 192);
+  --border-strong: oklch(0.382 0.017 191);
+  --input: oklch(0.352 0.016 192);
+  --ring: var(--brand-400);
+
+  --chart-1: var(--brand-400);
+  --chart-2: var(--accent-400);
+  --chart-3: var(--sage-300);
+  --chart-4: oklch(0.712 0.112 250);
+  --chart-5: var(--accent-200);
+
+  --sidebar: oklch(0.198 0.020 196);
+  --sidebar-foreground: oklch(0.945 0.008 185);
+  --sidebar-muted: oklch(0.268 0.024 193);
+  --sidebar-muted-foreground: oklch(0.742 0.014 188);
+  --sidebar-accent: oklch(0.312 0.030 192);
+  --sidebar-accent-foreground: var(--neutral-0);
+  --sidebar-primary: var(--brand-300);
+  --sidebar-primary-foreground: var(--brand-950);
+  --sidebar-border: oklch(0.288 0.022 193);
+  --sidebar-ring: var(--brand-300);
+
+  --gradient-brand: linear-gradient(
+    135deg,
+    var(--brand-500) 0%,
+    var(--brand-400) 55%,
+    var(--sage-400) 100%
+  );
+}
+
+/* --------------------------------------------------------------------------
+   4. Exposicion a Tailwind 4
+   @theme inline: los valores se resuelven en tiempo de compilacion contra las
+   variables de :root, asi que el cambio claro/oscuro no necesita recompilar.
+   -------------------------------------------------------------------------- */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-surface-muted: var(--surface-muted);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-foreground: var(--primary-soft-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-foreground: var(--accent-soft-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-success-soft-foreground: var(--success-soft-foreground);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-soft-foreground: var(--warning-soft-foreground);
+
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-soft: var(--info-soft);
+  --color-info-soft-foreground: var(--info-soft-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-destructive-soft-foreground: var(--destructive-soft-foreground);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-muted-foreground: var(--sidebar-muted-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-sans: "Public Sans Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Public Sans Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --shadow-subtle: 0 1px 2px 0 oklch(0.21 0.008 190 / 0.05);
+  --shadow-card: 0 1px 3px 0 oklch(0.21 0.008 190 / 0.06),
+    0 1px 2px -1px oklch(0.21 0.008 190 / 0.06);
+  --shadow-raised: 0 4px 12px -2px oklch(0.21 0.008 190 / 0.10),
+    0 2px 4px -2px oklch(0.21 0.008 190 / 0.06);
+  --shadow-overlay: 0 12px 32px -8px oklch(0.21 0.008 190 / 0.18),
+    0 4px 8px -4px oklch(0.21 0.008 190 / 0.08);
+}
+
+/* --------------------------------------------------------------------------
+   5. Base
+   -------------------------------------------------------------------------- */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv11", "ss01";
+    font-variation-settings: "opsz" 32;
+  }
+
+  /* Foco visible solo por teclado: accesible y no ensucia el click. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Los numeros de medidas/IMC deben alinearse en columna. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   6. Utilidades propias
+   -------------------------------------------------------------------------- */
+@utility gradient-brand {
+  background-image: var(--gradient-brand);
+}
+
+@utility gradient-accent {
+  background-image: var(--gradient-accent);
+}
+
+/* Texto con degradado, para el logo y titulos de marca. */
+@utility text-gradient-brand {
+  background-image: var(--gradient-brand);
+  background-clip: text;
+  color: transparent;
+}
+
+/* Superficie elevada coherente entre claro y oscuro. */
+@utility surface-card {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+}
+
+@utility surface-subtle {
+  background-color: var(--surface-subtle);
+}
+
+/* Scrollbar discreto que no compite con el contenido. */
+@utility scrollbar-subtle {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--border-strong);
+    border-radius: 9999px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* Respeta la preferencia del sistema y la eleccion del usuario. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
