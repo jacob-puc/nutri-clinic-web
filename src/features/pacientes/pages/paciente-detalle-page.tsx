@@ -1,15 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   CalendarPlus,
+  Contact,
   ClipboardPlus,
   Download,
   FileText,
-  Mail,
-  MapPin,
   Pencil,
-  Phone,
   Stethoscope,
   Trash2,
   TrendingDown,
@@ -19,6 +17,8 @@ import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
+import { DialogoMedida } from "@/features/pacientes/components/dialogo-medida";
+import { LineaObjetivo } from "@/features/pacientes/components/linea-objetivo";
 import { DialogoPaciente } from "@/features/pacientes/components/dialogo-paciente";
 import { GraficaMedidas } from "@/features/pacientes/components/grafica-medidas";
 import { useExpediente, usePaciente } from "@/features/pacientes/hooks/use-expediente";
@@ -34,6 +34,7 @@ import {
   etiquetaSexo,
   formatearFecha,
   formatearFechaCorta,
+  formatearEstatura,
   formatearFechaHora,
 } from "@/lib/formatters";
 import type {
@@ -41,12 +42,15 @@ import type {
   FotoSeguimiento,
   HistorialClinico,
   MedidaAntropometrica,
+  Paciente,
+  TipoFoto,
 } from "@/types/api";
 
 export function PacienteDetallePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [editando, setEditando] = useState(false);
+  const [registrandoMedida, setRegistrandoMedida] = useState(false);
 
   const { data: paciente, isPending: cargandoPaciente, isError: errorPaciente } =
     usePaciente(id);
@@ -73,6 +77,8 @@ export function PacienteDetallePage() {
   const fotos = expediente?.fotos ?? [];
   const documentos = expediente?.documentos ?? [];
   const historial = expediente?.historialClinico ?? null;
+  const estaturaUltima = [...medidas]
+    .sort((a, b) => b.fechaMedicion.localeCompare(a.fechaMedicion))[0]?.estatura;
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-8">
@@ -86,7 +92,11 @@ export function PacienteDetallePage() {
         Volver al listado
       </Button>
 
-      <EncabezadoFicha paciente={paciente} onEditar={() => setEditando(true)} />
+      <EncabezadoFicha
+        paciente={paciente}
+        medidas={medidas}
+        onEditar={() => setEditando(true)}
+      />
 
       <DialogoPaciente
         abierto={editando}
@@ -94,13 +104,23 @@ export function PacienteDetallePage() {
         paciente={paciente}
       />
 
+      {id && (
+        <DialogoMedida
+          abierto={registrandoMedida}
+          onOpenChange={setRegistrandoMedida}
+          pacienteId={id}
+          estaturaSugerida={estaturaUltima}
+        />
+      )}
+
       <Tabs defaultValue="resumen" className="mt-6">
         <TabsList className="w-full justify-start">
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
           <TabsTrigger value="medidas">
-            Medidas
+            Progreso/Medidas
             {medidas.length > 0 && <Contador>{medidas.length}</Contador>}
           </TabsTrigger>
+          <TabsTrigger value="planes">Planes</TabsTrigger>
           <TabsTrigger value="fotos">
             Fotos
             {fotos.length > 0 && (
@@ -119,7 +139,12 @@ export function PacienteDetallePage() {
           {cargandoExpediente ? (
             <ContenidoSkeleton />
           ) : (
-            <TabResumen historial={historial} medidas={medidas} />
+            <TabResumen
+              historial={historial}
+              medidas={medidas}
+              onRegistrarMedida={() => setRegistrandoMedida(true)}
+              paciente={paciente}
+            />
           )}
         </TabsContent>
 
@@ -129,6 +154,10 @@ export function PacienteDetallePage() {
           ) : (
             <TabMedidas medidas={medidas} />
           )}
+        </TabsContent>
+
+        <TabsContent value="planes" className="mt-4">
+          <p className="text-muted-foreground text-sm">En construccion</p>
         </TabsContent>
 
         <TabsContent value="fotos" className="mt-4">
@@ -153,9 +182,11 @@ export function PacienteDetallePage() {
 
 function EncabezadoFicha({
   paciente,
+  medidas,
   onEditar,
 }: {
   paciente: NonNullable<ReturnType<typeof usePaciente>["data"]>;
+  medidas: MedidaAntropometrica[];
   onEditar: () => void;
 }) {
   const avisar = (accion: string) =>
@@ -164,54 +195,28 @@ function EncabezadoFicha({
     });
 
   return (
-    <Card>
-      <CardContent className="px-4 py-5 md:px-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+    <Card className="py-0">
+      <CardContent className="px-4 py-4 md:px-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <AvatarPaciente
             nombre={paciente.nombreCompleto}
             id={paciente.id}
-            className="size-14 text-base"
+            className="size-16 text-lg"
           />
 
-          <div className="min-w-0 flex-1">
-            <h1 className="text-foreground text-xl font-bold tracking-tight md:text-2xl">
+          <div className="min-w-0 flex-1 text-center">
+            <h1 className="text-foreground text-lg font-bold tracking-tight md:text-xl">
               {paciente.nombreCompleto}
             </h1>
-            <div className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-              <span>{etiquetaSexo(paciente.sexo)}</span>
-              {paciente.edad !== null && (
-                <>
-                  <span aria-hidden>·</span>
-                  <span>{paciente.edad} anos</span>
-                </>
-              )}
-              <span aria-hidden>·</span>
-              <span>Alta {formatearFecha(paciente.fechaRegistro)}</span>
-            </div>
 
-            <dl className="mt-3 flex flex-col gap-1.5 text-sm">
-              {paciente.correoElectronico && (
-                <div className="flex items-center gap-2">
-                  <Mail className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
-                  <dt className="sr-only">Correo</dt>
-                  <dd className="truncate">{paciente.correoElectronico}</dd>
-                </div>
-              )}
-              {paciente.telefono && (
-                <div className="flex items-center gap-2">
-                  <Phone className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
-                  <dt className="sr-only">Telefono</dt>
-                  <dd className="tabular-nums">{paciente.telefono}</dd>
-                </div>
-              )}
-              {paciente.direccion && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
-                  <dt className="sr-only">Direccion</dt>
-                  <dd className="truncate">{paciente.direccion}</dd>
-                </div>
-              )}
-            </dl>
+            <p className="text-muted-foreground mt-0.5 text-sm tabular-nums">
+              {paciente.edad !== null && <>{paciente.edad} anos | </>}
+              Tel: {paciente.telefono}
+            </p>
+
+            <div className="mt-1 flex flex-col items-center gap-1">
+              <LineaObjetivo paciente={paciente} medidas={medidas} />
+            </div>
           </div>
 
           <div className="flex shrink-0 gap-2">
@@ -267,24 +272,29 @@ function Contador({ children }: { children: React.ReactNode }) {
 function TabResumen({
   historial,
   medidas,
+  onRegistrarMedida,
+  paciente,
 }: {
   historial: HistorialClinico | null;
   medidas: MedidaAntropometrica[];
+  onRegistrarMedida: () => void;
+  paciente: Paciente;
 }) {
   return (
     <div className="space-y-4">
-      <Card>
-        <CardContent className="px-4 py-5 md:px-6">
+      <CardInformacionGeneral paciente={paciente} />
+
+      <Card className="py-0">
+        <CardContent className="px-4 pt-2 pb-5 md:px-6">
           <h2 className="text-foreground flex items-center gap-2 text-sm font-semibold">
             <Stethoscope className="text-primary size-4" aria-hidden />
             Historial clinico
           </h2>
-          <Separator className="my-4" />
+          <Separator className="my-2" />
 
           {!historial ? (
-            <p className="text-muted-foreground text-sm">
-              Sin historial registrado. Este es el estado mas comun: la mayoria
-              de los pacientes aun no tienen historia clinica capturada.
+            <p className="text-muted-foreground text-sm text-center py-6">
+              Sin historial clinico capturado. Completalo en la primera consulta.
             </p>
           ) : (
             <div className="grid gap-5 sm:grid-cols-3">
@@ -309,7 +319,63 @@ function TabResumen({
         </CardContent>
       </Card>
 
-      <UltimasMedidas medidas={medidas} />
+      <UltimasMedidas
+        medidas={medidas}
+        onRegistrarMedida={onRegistrarMedida}
+      />
+    </div>
+  );
+}
+
+function CardInformacionGeneral({ paciente }: { paciente: Paciente }) {
+  return (
+    <Card className="py-0">
+      <CardContent className="px-4 pt-2 pb-5 md:px-6">
+        <h2 className="text-foreground flex items-center gap-2 text-sm font-semibold">
+          <Contact className="text-primary size-4" aria-hidden />
+          Informacion general
+        </h2>
+        <Separator className="my-2" />
+
+        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+          <DatoGeneral etiqueta="Sexo" valor={etiquetaSexo(paciente.sexo)} />
+          <DatoGeneral
+            etiqueta="Fecha de nacimiento"
+            valor={
+              paciente.fechaNacimiento
+                ? formatearFecha(paciente.fechaNacimiento)
+                : null
+            }
+          />
+          <DatoGeneral
+            etiqueta="Correo electronico"
+            valor={paciente.correoElectronico}
+          />
+          <DatoGeneral etiqueta="Telefono" valor={paciente.telefono} />
+          <DatoGeneral etiqueta="Direccion" valor={paciente.direccion} />
+          <DatoGeneral
+            etiqueta="Fecha de alta"
+            valor={formatearFecha(paciente.fechaRegistro)}
+          />
+        </dl>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DatoGeneral({
+  etiqueta,
+  valor,
+}: {
+  etiqueta: string;
+  valor: string | null;
+}) {
+  return (
+    <div className="pl-4 sm:pl-6">
+      <dt className="text-muted-foreground text-xs">{etiqueta}</dt>
+      <dd className="text-foreground text-sm break-words">
+        {valor ?? <span className="text-muted-foreground/70">Sin registro</span>}
+      </dd>
     </div>
   );
 }
@@ -355,14 +421,20 @@ function ListaHistorial({
 
 const MAX_MEDIDAS_RESUMEN = 3;
 
-function UltimasMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
+function UltimasMedidas({
+  medidas,
+  onRegistrarMedida,
+}: {
+  medidas: MedidaAntropometrica[];
+  onRegistrarMedida: () => void;
+}) {
   if (medidas.length === 0) {
     return (
-      <Card>
-        <CardContent className="px-4 py-5 md:px-6">
-          <EncabezadoMediciones total={0} />
-          <Separator className="my-4" />
-          <p className="text-muted-foreground text-sm">
+      <Card className="py-0">
+        <CardContent className="px-4 pt-2 pb-5 md:px-6">
+          <EncabezadoMediciones total={0} onRegistrarMedida={onRegistrarMedida} />
+          <Separator className="my-2" />
+          <p className="text-muted-foreground text-sm text-center py-6">
             Aun no se ha registrado ninguna medida antropometrica para este
             paciente.
           </p>
@@ -371,26 +443,30 @@ function UltimasMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
     );
   }
 
-  const recientes = [...medidas]
-    .sort((a, b) => b.fechaMedicion.localeCompare(a.fechaMedicion))
-    .slice(0, MAX_MEDIDAS_RESUMEN);
-
+  const porFecha = [...medidas].sort((a, b) =>
+    a.fechaMedicion.localeCompare(b.fechaMedicion),
+  );
+  const recientes = [...porFecha].reverse().slice(0, MAX_MEDIDAS_RESUMEN);
   const [principal, ...previas] = recientes;
+
+  // La primera medicion jamas registrada no tiene contra que compararse.
+  const sinPrecedente = new Set([porFecha[0]?.id]);
 
   if (!principal) return null;
 
   return (
-    <Card>
-      <CardContent className="px-4 py-5 md:px-6">
+    <Card className="py-0">
+      <CardContent className="px-4 pt-2 pb-5 md:px-6">
         <EncabezadoMediciones
           total={medidas.length}
           fechaReciente={principal.fechaMedicion}
+          onRegistrarMedida={onRegistrarMedida}
         />
-        <Separator className="my-4" />
+        <Separator className="my-2" />
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Dato titulo="Peso" valor={`${principal.peso} kg`} />
-          <Dato titulo="Estatura" valor={`${principal.estatura} m`} />
+          <Dato titulo="Estatura" valor={formatearEstatura(principal.estatura)} />
           <Dato titulo="IMC" valor={String(Number(principal.imc.toFixed(1)))} />
           <div>
             <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
@@ -437,7 +513,7 @@ function UltimasMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
                       {medida.peso} kg
                     </td>
                     <td className="text-muted-foreground py-2.5 text-right tabular-nums">
-                      {medida.estatura} m
+                      {formatearEstatura(medida.estatura)}
                     </td>
                     <td className="py-2.5 text-right font-medium tabular-nums">
                       {Number(medida.imc.toFixed(1))}
@@ -445,9 +521,9 @@ function UltimasMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
                     <td className="py-2.5 text-right">
                       <VariacionPeso
                         delta={
-                          recientes[indice]
-                            ? medida.peso - recientes[indice].peso
-                            : 0
+                          sinPrecedente.has(medida.id) || !recientes[indice]
+                            ? null
+                            : medida.peso - recientes[indice].peso
                         }
                       />
                     </td>
@@ -462,12 +538,12 @@ function UltimasMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
   );
 }
 
-/**
- * Cambio de peso contra la medida siguiente. En nutricion clinica perder peso
- * suele ser el objetivo, asi que la bajada se lee como avance y la subida
- * como algo a revisar.
- */
-function VariacionPeso({ delta }: { delta: number }) {
+/** En nutricion clinica bajar de peso suele ser el objetivo: baja = avance. */
+function VariacionPeso({ delta }: { delta: number | null }) {
+  if (delta === null) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+
   if (Math.abs(delta) < 0.05) {
     return <span className="text-muted-foreground">sin cambio</span>;
   }
@@ -492,9 +568,11 @@ function VariacionPeso({ delta }: { delta: number }) {
 function EncabezadoMediciones({
   total,
   fechaReciente,
+  onRegistrarMedida,
 }: {
   total: number;
   fechaReciente?: string;
+  onRegistrarMedida: () => void;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -510,13 +588,7 @@ function EncabezadoMediciones({
         )}
       </div>
 
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() =>
-          toast.info("Registrar medida · Disponible en la siguiente iteracion")
-        }
-      >
+      <Button variant="outline" size="sm" onClick={onRegistrarMedida}>
         <ClipboardPlus className="size-4" />
         Registrar medida
       </Button>
@@ -600,7 +672,7 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
                       </td>
                       <td className="py-2.5 text-right tabular-nums">{medida.peso} kg</td>
                       <td className="text-muted-foreground hidden py-2.5 text-right tabular-nums sm:table-cell">
-                        {medida.estatura} m
+                        {formatearEstatura(medida.estatura)}
                       </td>
                       <td className="py-2.5 text-right font-medium tabular-nums">{imc}</td>
                       <td className="text-muted-foreground hidden py-2.5 pl-4 md:table-cell">
@@ -635,45 +707,159 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
 }
 
 function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
+  const [modoComparacion, setModoComparacion] = useState(false);
+  const [tipoSeleccionado, setTipoSeleccionado] = useState<TipoFoto>(() => {
+    const unicos = [...new Set(fotos.map((f) => f.tipo))];
+    return (unicos[0] ?? "Frente") as TipoFoto;
+  });
+  const [fotoA, setFotoA] = useState<string | null>(null);
+  const [fotoB, setFotoB] = useState<string | null>(null);
+
   if (fotos.length === 0) {
-    return <Vacio titulo="Sin fotos" descripcion="No hay fotos de seguimiento registradas para este paciente." />;
+    return (
+      <Vacio
+        titulo="Sin fotos"
+        descripcion="No hay fotos de seguimiento registradas para este paciente."
+      />
+    );
+  }
+
+  const tiposDisponibles = [...new Set(fotos.map((f) => f.tipo))] as TipoFoto[];
+
+  const fotosDelTipo = fotos
+    .filter((f) => f.tipo === tipoSeleccionado)
+    .sort((a, b) => a.fechaSubida.localeCompare(b.fechaSubida));
+
+  useEffect(() => {
+    setFotoA(null);
+    setFotoB(null);
+  }, [tipoSeleccionado]);
+
+  const imgA = fotos.find((f) => f.id === (fotoA ?? fotosDelTipo[0]?.id));
+  const imgB = fotos.find((f) => f.id === (fotoB ?? fotosDelTipo[fotosDelTipo.length - 1]?.id));
+
+  if (!modoComparacion) {
+    return (
+      <div>
+        <div className="flex justify-end mb-2">
+          <Button variant="outline" size="sm" onClick={() => setModoComparacion(true)}>
+            Comparar
+          </Button>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {fotos.map((foto) => (
+            <Card key={foto.id} className="overflow-hidden">
+              <div className="bg-muted aspect-4/3 w-full overflow-hidden">
+                <img
+                  src={foto.urlFoto}
+                  alt={foto.notas ?? `Foto de seguimiento (${foto.tipo})`}
+                  loading="lazy"
+                  className="size-full object-cover"
+                />
+              </div>
+              <CardContent className="px-4 py-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">{foto.tipo}</Badge>
+                    <span className="text-muted-foreground text-xs">
+                      {formatearFechaCorta(foto.fechaSubida)}
+                    </span>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <BotonAccion icono={Download} etiqueta="Descargar foto" />
+                    <BotonAccion icono={Trash2} etiqueta="Eliminar foto" destructivo />
+                  </div>
+                </div>
+                {foto.notas && (
+                  <p className="text-muted-foreground mt-2 text-sm">{foto.notas}</p>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {fotos.map((foto) => (
-        <Card key={foto.id} className="overflow-hidden">
-          <div className="bg-muted aspect-4/3 w-full overflow-hidden">
-            <img
-              src={foto.urlFoto}
-              alt={foto.notas ?? `Foto de seguimiento (${foto.tipo})`}
-              loading="lazy"
-              className="size-full object-cover"
-            />
-          </div>
-          <CardContent className="px-4 py-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">{foto.tipo}</Badge>
-                <span className="text-muted-foreground text-xs">
-                  {formatearFechaCorta(foto.fechaSubida)}
-                </span>
-              </div>
-              <div className="flex shrink-0 items-center gap-1">
-                <BotonAccion icono={Download} etiqueta="Descargar foto" />
-                <BotonAccion
-                  icono={Trash2}
-                  etiqueta="Eliminar foto"
-                  destructivo
+    <div className="space-y-4">
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">Tipo</label>
+          <select
+            className="border-input bg-background rounded-md border px-3 py-1.5 text-sm"
+            value={tipoSeleccionado}
+            onChange={(e) => {
+              setTipoSeleccionado(e.target.value as TipoFoto);
+            }}
+          >
+            {tiposDisponibles.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => setModoComparacion(false)}>
+          Volver al listado
+        </Button>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="text-sm font-medium mb-1 block">Foto A</label>
+          <select
+            className="w-full border-input bg-background rounded-md border px-3 py-1.5 text-sm"
+            value={fotoA ?? ""}
+            onChange={(e) => setFotoA(e.target.value || null)}
+          >
+            {fotosDelTipo.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.tipo} · {formatearFechaCorta(f.fechaSubida)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-sm font-medium mb-1 block">Foto B</label>
+          <select
+            className="w-full border-input bg-background rounded-md border px-3 py-1.5 text-sm"
+            value={fotoB ?? ""}
+            onChange={(e) => setFotoB(e.target.value || null)}
+          >
+            {fotosDelTipo.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.tipo} · {formatearFechaCorta(f.fechaSubida)}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {[imgA, imgB].map((img, i) => (
+          <div key={i} className="border rounded-lg overflow-hidden">
+            <div className="bg-muted aspect-4/3 w-full overflow-hidden">
+              {img ? (
+                <img
+                  src={img.urlFoto}
+                  alt={img.notas ?? img.tipo}
+                  className="size-full object-cover"
                 />
-              </div>
+              ) : (
+                <div className="size-full flex items-center justify-center text-muted-foreground text-sm">
+                  Sin imagen
+                </div>
+              )}
             </div>
-            {foto.notas && (
-              <p className="text-muted-foreground mt-2 text-sm">{foto.notas}</p>
-            )}
-          </CardContent>
-        </Card>
-      ))}
+            <CardContent className="px-4 py-2 text-sm">
+              {img && (
+                <span className="text-muted-foreground">
+                  {img.tipo} · {formatearFechaCorta(img.fechaSubida)}
+                </span>
+              )}
+            </CardContent>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

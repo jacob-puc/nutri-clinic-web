@@ -32,6 +32,8 @@ export interface Paciente {
   fechaNacimiento: DateOnlyString | null;
   edad: number | null;
   sexo: Sexo;
+  tituloObjetivo: string | null;
+  pesoObjetivo: number | null;
   fechaRegistro: DateTimeString;
 }
 
@@ -45,6 +47,12 @@ export interface CrearPacienteDto {
 }
 
 export type ActualizarPacienteDto = Partial<CrearPacienteDto>;
+
+/** El objetivo se captura en consulta, por eso viaja a su propio endpoint. */
+export interface ActualizarObjetivoPacienteDto {
+  tituloObjetivo: string | null;
+  pesoObjetivo: number | null;
+}
 
 export interface Nutricionista {
   id: Guid;

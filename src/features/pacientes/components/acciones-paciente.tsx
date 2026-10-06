@@ -28,6 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DialogoMedida } from "@/features/pacientes/components/dialogo-medida";
 import { DialogoPaciente } from "@/features/pacientes/components/dialogo-paciente";
 import { pacientesApi } from "@/features/pacientes/api/pacientes-api";
 import { pacientesKeys } from "@/features/pacientes/hooks/use-pacientes";
@@ -43,6 +44,7 @@ const AVISO = "Disponible en la siguiente iteracion";
 
 export function AccionesPaciente({ paciente, onDarbaja }: AccionesPacienteProps) {
   const [editando, setEditando] = useState(false);
+  const [registrandoMedida, setRegistrandoMedida] = useState(false);
   const [confirmandoBaja, setConfirmandoBaja] = useState(false);
 
   const avisar = (accion: string) =>
@@ -75,7 +77,7 @@ export function AccionesPaciente({ paciente, onDarbaja }: AccionesPacienteProps)
             Editar datos
           </DropdownMenuItem>
 
-          <DropdownMenuItem onSelect={() => avisar("Registrar medida")}>
+          <DropdownMenuItem onSelect={() => setRegistrandoMedida(true)}>
             <ClipboardPlus />
             Registrar medida
           </DropdownMenuItem>
@@ -101,6 +103,12 @@ export function AccionesPaciente({ paciente, onDarbaja }: AccionesPacienteProps)
         abierto={editando}
         onOpenChange={setEditando}
         paciente={paciente}
+      />
+
+      <DialogoMedida
+        abierto={registrandoMedida}
+        onOpenChange={setRegistrandoMedida}
+        pacienteId={paciente.id}
       />
 
       <ConfirmarBaja

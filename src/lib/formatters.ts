@@ -3,12 +3,17 @@ import type { Sexo } from "@/types/api";
 export function formatearFechaCorta(fecha: string | null | undefined): string {
   if (!fecha) return "—";
 
-  // `split("-")` sin recortar se lleva la hora dentro del dia en las fechas
-  // con hora, y terminaba mostrando "26/09/26T03:24:17.18278Z".
+  // Sin recortar, el dia se lleva la hora: 26/09/26T03:24:17.18278Z.
   const [anio, mes, dia] = fecha.slice(0, 10).split("-");
   if (!anio || !mes || !dia) return "—";
 
   return `${dia}/${mes}/${anio}`;
+}
+
+/** La API guarda la estatura en centimetros y por eso el IMC sale de dividir entre 100. */
+export function formatearEstatura(centimetros: number | null | undefined): string {
+  if (centimetros === null || centimetros === undefined) return "—";
+  return `${(centimetros / 100).toFixed(2)} m`;
 }
 
 export function formatearFecha(iso: string | null | undefined): string {
@@ -87,6 +92,15 @@ export const ETIQUETA_SEXO: Record<Sexo, string> = {
 export function etiquetaSexo(sexo: Sexo | null | undefined): string {
   if (!sexo) return "—";
   return ETIQUETA_SEXO[sexo] ?? sexo;
+}
+
+/** La API guarda la estatura en centimetros y por eso el IMC sale de dividir entre 100. */
+export function calcularImc(
+  peso: number,
+  centimetros: number,
+): number | null {
+  if (!centimetros || centimetros <= 0) return null;
+  return peso / Math.pow(centimetros / 100, 2);
 }
 
 export function categoriaImc(imc: number): {

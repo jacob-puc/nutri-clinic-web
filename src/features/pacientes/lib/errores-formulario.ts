@@ -7,6 +7,15 @@ const CAMPO_A_FORM: Readonly<Record<string, string>> = {
   CorreoElectronico: "correoElectronico",
   FechaNacimiento: "fechaNacimiento",
   Sexo: "sexo",
+  TituloObjetivo: "tituloObjetivo",
+  PesoObjetivo: "pesoObjetivo",
+  Peso: "peso",
+  Estatura: "estatura",
+  PorcentajeGrasa: "porcentajeGrasa",
+  PorcentajeMasaMuscular: "porcentajeMasaMuscular",
+  MedidaCintura: "medidaCintura",
+  MedidaCadera: "medidaCadera",
+  NotasObservaciones: "notasObservaciones",
 };
 
 export function erroresPorCampo(error: unknown): Record<string, string> {
