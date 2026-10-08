@@ -7,6 +7,7 @@ import { SidebarProvider } from "@/components/layout/sidebar-context";
 import { ThemeProvider, useTheme } from "@/hooks/use-theme";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/features/auth/hooks/use-auth";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,7 +46,9 @@ function Proveedores() {
 export function App() {
   return (
     <ThemeProvider>
-      <Proveedores />
+      <AuthProvider>
+        <Proveedores />
+      </AuthProvider>
     </ThemeProvider>
   );
 }

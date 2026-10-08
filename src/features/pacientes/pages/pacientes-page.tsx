@@ -61,7 +61,7 @@ export function PacientesPage() {
 
       <DialogoPaciente abierto={altaAbierta} onOpenChange={setAltaAbierta} />
 
-      <Card className="mt-6">
+      <Card className="mt-6 border-border/80 shadow-subtle">
         <CardContent className="px-4 py-4 md:px-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
@@ -155,20 +155,20 @@ function EncabezadoPacientes({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <p className="text-primary text-xs font-semibold tracking-wider uppercase">
-          Expedientes
+          <p className="text-primary text-xs font-semibold tracking-wider uppercase">
+          Seguimiento clinico
         </p>
         <h1 className="text-foreground mt-1 text-2xl font-bold tracking-tight md:text-3xl">
           Pacientes
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Catalogo de pacientes activos de la clinica.
+          Consulta y seguimiento de los pacientes activos de la clinica.
         </p>
       </div>
 
       <div className="flex items-center gap-3">
         <Badge variant="secondary" className="tabular-nums">
-          {total} {total === 1 ? "registro" : "registros"}
+          {total} {total === 1 ? "paciente activo" : "pacientes activos"}
         </Badge>
         <Button onClick={onNuevo}>
           <UserPlus className="size-4" />

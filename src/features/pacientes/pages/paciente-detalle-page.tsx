@@ -2,19 +2,13 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
-  CalendarPlus,
   Contact,
   ClipboardPlus,
-  Download,
   FileText,
-  Pencil,
   Stethoscope,
-  Trash2,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { toast } from "sonner";
 
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
 import { DialogoMedida } from "@/features/pacientes/components/dialogo-medida";
@@ -96,6 +90,7 @@ export function PacienteDetallePage() {
         paciente={paciente}
         medidas={medidas}
         onEditar={() => setEditando(true)}
+        onRegistrarMedida={() => setRegistrandoMedida(true)}
       />
 
       <DialogoPaciente
@@ -117,10 +112,9 @@ export function PacienteDetallePage() {
         <TabsList className="w-full justify-start">
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
           <TabsTrigger value="medidas">
-            Progreso/Medidas
+            Evolucion
             {medidas.length > 0 && <Contador>{medidas.length}</Contador>}
           </TabsTrigger>
-          <TabsTrigger value="planes">Planes</TabsTrigger>
           <TabsTrigger value="fotos">
             Fotos
             {fotos.length > 0 && (
@@ -156,10 +150,6 @@ export function PacienteDetallePage() {
           )}
         </TabsContent>
 
-        <TabsContent value="planes" className="mt-4">
-          <p className="text-muted-foreground text-sm">En construccion</p>
-        </TabsContent>
-
         <TabsContent value="fotos" className="mt-4">
           {cargandoExpediente ? (
             <ContenidoSkeleton />
@@ -184,80 +174,76 @@ function EncabezadoFicha({
   paciente,
   medidas,
   onEditar,
+  onRegistrarMedida,
 }: {
   paciente: NonNullable<ReturnType<typeof usePaciente>["data"]>;
   medidas: MedidaAntropometrica[];
   onEditar: () => void;
+  onRegistrarMedida: () => void;
 }) {
-  const avisar = (accion: string) =>
-    toast.info(`${accion} · Disponible en la siguiente iteracion`, {
-      description: paciente.nombreCompleto,
-    });
+  const ultimaMedida = [...medidas].sort((a, b) =>
+    b.fechaMedicion.localeCompare(a.fechaMedicion),
+  )[0];
 
   return (
-    <Card className="py-0">
-      <CardContent className="px-4 py-4 md:px-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+    <Card className="border-primary/20 bg-primary/[0.03] py-0 shadow-subtle">
+      <CardContent className="px-4 py-5 md:px-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
           <AvatarPaciente
             nombre={paciente.nombreCompleto}
             id={paciente.id}
             className="size-16 text-lg"
           />
 
-          <div className="min-w-0 flex-1 text-center">
-            <h1 className="text-foreground text-lg font-bold tracking-tight md:text-xl">
+          <div className="min-w-0 flex-1">
+            <p className="text-primary text-xs font-semibold tracking-wider uppercase">
+              Expediente clinico
+            </p>
+            <h1 className="text-foreground mt-1 text-xl font-bold tracking-tight md:text-2xl">
               {paciente.nombreCompleto}
             </h1>
 
-            <p className="text-muted-foreground mt-0.5 text-sm tabular-nums">
+            <p className="text-muted-foreground mt-1 text-sm tabular-nums">
               {paciente.edad !== null && <>{paciente.edad} anos | </>}
               Tel: {paciente.telefono}
             </p>
 
-            <div className="mt-1 flex flex-col items-center gap-1">
+            <div className="mt-3 flex flex-col items-start gap-1">
               <LineaObjetivo paciente={paciente} medidas={medidas} />
             </div>
           </div>
 
-          <div className="flex shrink-0 gap-2">
+          <div className="grid grid-cols-2 gap-3 border-y border-border/70 py-3 sm:grid-cols-2 lg:w-72 lg:border-y-0 lg:border-l lg:py-0 lg:pl-5">
+            <div>
+              <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+                Ultima medicion
+              </p>
+              <p className="text-foreground mt-1 text-sm font-semibold tabular-nums">
+                {ultimaMedida ? `${ultimaMedida.peso} kg` : "Sin registro"}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+                IMC actual
+              </p>
+              <p className="text-foreground mt-1 text-sm font-semibold tabular-nums">
+                {ultimaMedida ? Number(ultimaMedida.imc.toFixed(1)) : "Sin registro"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={onEditar}>
               Editar
             </Button>
-            <Button size="sm" onClick={() => avisar("Agendar cita")}>
-              <CalendarPlus className="size-4" />
-              Agendar
+            <Button size="sm" onClick={onRegistrarMedida}>
+              <ClipboardPlus className="size-4" />
+              Nueva medicion
             </Button>
           </div>
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function BotonAccion({
-  icono: Icono,
-  etiqueta,
-  destructivo,
-}: {
-  icono: LucideIcon;
-  etiqueta: string;
-  destructivo?: boolean;
-}) {
-  return (
-    <Button
-      variant="ghost"
-      size="icon-sm"
-      disabled
-      title={`${etiqueta} · Proximamente`}
-      aria-label={etiqueta}
-      className={
-        destructivo
-          ? "text-muted-foreground hover:text-destructive"
-          : "text-muted-foreground"
-      }
-    >
-      <Icono className="size-4" aria-hidden />
-    </Button>
   );
 }
 
@@ -657,9 +643,6 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
                   <th scope="col" className="text-muted-foreground pb-2 text-right text-xs font-semibold tracking-wide uppercase">IMC</th>
                   <th scope="col" className="text-muted-foreground hidden pb-2 pl-4 text-left text-xs font-semibold tracking-wide uppercase md:table-cell">Categoria</th>
                   <th scope="col" className="text-muted-foreground hidden pb-2 pl-6 text-left text-xs font-semibold tracking-wide uppercase lg:table-cell">Observaciones</th>
-                  <th scope="col" className="text-muted-foreground pb-2 pl-4 text-right text-xs font-semibold tracking-wide uppercase">
-                    <span className="sr-only">Acciones</span>
-                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -684,16 +667,6 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
                       >
                         {medida.notasObservaciones ?? "—"}
                       </td>
-                      <td className="py-2.5 pl-4">
-                        <div className="flex items-center justify-end gap-1">
-                          <BotonAccion icono={Pencil} etiqueta="Editar medida" />
-                          <BotonAccion
-                            icono={Trash2}
-                            etiqueta="Eliminar medida"
-                            destructivo
-                          />
-                        </div>
-                      </td>
                     </tr>
                   );
                 })}
@@ -715,6 +688,11 @@ function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
   const [fotoA, setFotoA] = useState<string | null>(null);
   const [fotoB, setFotoB] = useState<string | null>(null);
 
+  useEffect(() => {
+    setFotoA(null);
+    setFotoB(null);
+  }, [tipoSeleccionado]);
+
   if (fotos.length === 0) {
     return (
       <Vacio
@@ -729,11 +707,6 @@ function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
   const fotosDelTipo = fotos
     .filter((f) => f.tipo === tipoSeleccionado)
     .sort((a, b) => a.fechaSubida.localeCompare(b.fechaSubida));
-
-  useEffect(() => {
-    setFotoA(null);
-    setFotoB(null);
-  }, [tipoSeleccionado]);
 
   const imgA = fotos.find((f) => f.id === (fotoA ?? fotosDelTipo[0]?.id));
   const imgB = fotos.find((f) => f.id === (fotoB ?? fotosDelTipo[fotosDelTipo.length - 1]?.id));
@@ -764,10 +737,6 @@ function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
                     <span className="text-muted-foreground text-xs">
                       {formatearFechaCorta(foto.fechaSubida)}
                     </span>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <BotonAccion icono={Download} etiqueta="Descargar foto" />
-                    <BotonAccion icono={Trash2} etiqueta="Eliminar foto" destructivo />
                   </div>
                 </div>
                 {foto.notas && (
@@ -891,13 +860,7 @@ function TabDocumentos({ documentos }: { documentos: DocumentoPaciente[] }) {
                 <p className="mt-1.5 text-sm">{documento.observaciones}</p>
               )}
             </div>
-            <div className="flex shrink-0 items-center gap-1">
-              <BotonAccion icono={Pencil} etiqueta="Editar documento" />
-              <BotonAccion
-                icono={Trash2}
-                etiqueta="Eliminar documento"
-                destructivo
-              />
+            <div className="ml-auto flex shrink-0 items-center gap-1">
               <Button variant="ghost" size="sm" asChild>
                 <a href={documento.urlDocumento} target="_blank" rel="noreferrer">
                   Abrir
