@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" role="img" aria-label="">
+  <title>Fondo organico de NutriClinica</title>
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#001f1c" />
+      <stop offset="0.45" stop-color="#004a41" />
+      <stop offset="0.78" stop-color="#003430" />
+      <stop offset="1" stop-color="#001a1c" />
+    </linearGradient>
+
+    <!-- Calor terracota (acento de la marca) arriba a la derecha -->
+    <radialGradient id="calor" cx="0.82" cy="0.18" r="0.55">
+      <stop offset="0" stop-color="#c9663a" stop-opacity="0.50" />
+      <stop offset="0.6" stop-color="#c9663a" stop-opacity="0.12" />
+      <stop offset="1" stop-color="#c9663a" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Luz salvia abajo a la izquierda -->
+    <radialGradient id="luz" cx="0.16" cy="0.86" r="0.6">
+      <stop offset="0" stop-color="#7fd9b6" stop-opacity="0.30" />
+      <stop offset="1" stop-color="#7fd9b6" stop-opacity="0" />
+    </radialGradient>
+
+    <radialGradient id="halo" cx="0.34" cy="0.34" r="0.42">
+      <stop offset="0" stop-color="#25b39a" stop-opacity="0.34" />
+      <stop offset="1" stop-color="#25b39a" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Grano: le da textura de papel/imps fotografia en vez de degradado plano -->
+    <filter id="grano" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" seed="7" result="ruido" />
+      <feColorMatrix in="ruido" type="saturate" values="0" result="gris" />
+      <feComponentTransfer in="gris" result="tenue">
+        <feFuncA type="linear" slope="0.5" />
+      </feComponentTransfer>
+    </filter>
+
+    <!-- Hoja: silueta organica reutilizable -->
+    <symbol id="hoja" viewBox="0 0 200 96">
+      <path d="M4 48C40 4 128 -8 196 48C128 104 40 92 4 48Z" />
+      <path d="M4 48H196" />
+      <path d="M48 48C64 32 76 24 96 20" />
+      <path d="M48 48C64 64 76 72 96 76" />
+      <path d="M104 44C118 32 128 26 144 24" />
+      <path d="M104 52C118 64 128 70 144 72" />
+    </symbol>
+
+    <!-- Rodaja de citrico -->
+    <symbol id="citrico" viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="54" />
+      <circle cx="60" cy="60" r="44" />
+      <path d="M60 16V104M16 60H104M29 29L91 91M91 29L29 91" />
+    </symbol>
+
+    <!-- Semilla / punto -->
+    <symbol id="semilla" viewBox="0 0 40 40">
+      <path d="M20 2C30 10 34 20 30 30C22 34 12 30 8 20C8 12 12 6 20 2Z" />
+    </symbol>
+  </defs>
+
+  <!-- 1. Base -->
+  <rect width="1600" height="1000" fill="url(#base)" />
+  <rect width="1600" height="1000" fill="url(#halo)" />
+  <rect width="1600" height="1000" fill="url(#calor)" />
+  <rect width="1600" height="1000" fill="url(#luz)" />
+
+  <!-- 2. Arcos editoriales: dan estructura "premium" y no de clipart -->
+  <g fill="none" stroke="#eaf7f3" stroke-opacity="0.10" stroke-width="1.5">
+    <circle cx="1180" cy="240" r="360" />
+    <circle cx="1180" cy="240" r="520" />
+    <circle cx="330" cy="760" r="300" />
+    <path d="M-40 640C320 540 520 900 900 800C1180 726 1360 860 1660 760" />
+  </g>
+
+  <!-- 3. Follaje: concentrado abajo-izquierda y en el borde derecho,
+        para que el centro-izquierda (donde va el titulo) quede limpio -->
+  <g fill="none" stroke="#dcf6ec" stroke-opacity="0.22" stroke-width="2" stroke-linecap="round">
+    <use href="#hoja" x="-30" y="700" width="320" height="154" transform="rotate(-18 130 777)" />
+    <use href="#hoja" x="180" y="812" width="260" height="125" transform="rotate(9 310 874)" />
+    <use href="#hoja" x="60" y="560" width="210" height="101" transform="rotate(-42 165 610)" />
+    <use href="#hoja" x="392" y="700" width="230" height="110" transform="rotate(26 507 755)" />
+    <use href="#hoja" x="1268" y="620" width="300" height="144" transform="rotate(-12 1418 692)" />
+    <use href="#hoja" x="1360" y="792" width="240" height="115" transform="rotate(18 1480 850)" />
+    <use href="#hoja" x="1180" y="80" width="180" height="86" transform="rotate(38 1270 123)" />
+  </g>
+
+  <g fill="none" stroke="#ffe9dc" stroke-opacity="0.26" stroke-width="2">
+    <use href="#citrico" x="1120" y="470" width="200" height="200" transform="rotate(-8 1220 570)" />
+    <use href="#citrico" x="1440" y="300" width="132" height="132" transform="rotate(22 1506 366)" />
+    <use href="#citrico" x="248" y="392" width="104" height="104" transform="rotate(-16 300 444)" />
+  </g>
+
+  <g fill="#dcf6ec" fill-opacity="0.20">
+    <use href="#semilla" x="470" y="560" width="46" height="46" transform="rotate(14 493 583)" />
+    <use href="#semilla" x="640" y="880" width="34" height="34" transform="rotate(-24 657 897)" />
+    <use href="#semilla" x="1046" y="700" width="40" height="40" transform="rotate(32 1066 720)" />
+    <use href="#semilla" x="1520" y="620" width="30" height="30" transform="rotate(6 1535 635)" />
+    <use href="#semilla" x="132" y="236" width="26" height="26" transform="rotate(-12 145 249)" />
+  </g>
+
+  <!-- 4. Grano -->
+  <rect width="1600" height="1000" filter="url(#grano)" opacity="0.07" />
+</svg>
