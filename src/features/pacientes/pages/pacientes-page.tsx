@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ArrowDownAZ, ArrowUpAZ, Search, UserPlus, X } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
 
 import { AccionesPaciente } from "@/features/pacientes/components/acciones-paciente";
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
@@ -21,15 +20,20 @@ export function PacientesPage() {
   const [altaAbierta, setAltaAbierta] = useState(false);
 
   const busqueda = searchParams.get("busqueda") ?? "";
+  /* replace: cada pulsacion reemplaza la entrada del historial. Sin esto,
+     escribir "ana" deja tres pasos atras y rompe la flecha del navegador. */
   const cambiarBusqueda = (valor: string) => {
-    setSearchParams((actuales) => {
-      if (valor.trim()) {
-        actuales.set("busqueda", valor);
-      } else {
-        actuales.delete("busqueda");
-      }
-      return actuales;
-    });
+    setSearchParams(
+      (actuales) => {
+        if (valor.trim()) {
+          actuales.set("busqueda", valor);
+        } else {
+          actuales.delete("busqueda");
+        }
+        return actuales;
+      },
+      { replace: true },
+    );
   };
 
   const { data, isPending, isError, error, refetch } = usePacientes();
@@ -61,7 +65,7 @@ export function PacientesPage() {
 
       <DialogoPaciente abierto={altaAbierta} onOpenChange={setAltaAbierta} />
 
-      <Card className="mt-6 border-border/80 shadow-subtle">
+      <Card className="mt-6 shadow-subtle">
         <CardContent className="px-4 py-4 md:px-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
@@ -155,10 +159,10 @@ function EncabezadoPacientes({
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-2">
       <div className="flex items-center gap-3">
-        <h1 className="text-foreground text-2xl font-bold tracking-tight md:text-3xl">
+        <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">
           Pacientes
         </h1>
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-500/10 text-teal-700 dark:text-teal-400 tabular-nums">
+        <span className="bg-primary-soft text-primary-soft-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums">
           {total} {total === 1 ? "activo" : "activos"}
         </span>
       </div>
@@ -183,20 +187,20 @@ function TablaPacientes({ pacientes }: { pacientes: Paciente[] }) {
             Pacientes activos de la clinica
           </caption>
           <thead>
-            <tr className="bg-muted/40 border-b border-border">
-              <th scope="col" className="text-muted-foreground px-4 py-3 text-left text-xs font-semibold tracking-wide uppercase md:px-6">
+            <tr className="bg-surface-subtle border-b border-border">
+              <th scope="col" className="text-muted-foreground px-4 py-3 text-left text-xs font-medium tracking-wide uppercase md:px-6">
                 Paciente
               </th>
-              <th scope="col" className="text-muted-foreground hidden px-4 py-3 text-left text-xs font-semibold tracking-wide uppercase lg:table-cell">
+              <th scope="col" className="text-muted-foreground hidden px-4 py-3 text-left text-xs font-medium tracking-wide uppercase lg:table-cell">
                 Contacto
               </th>
-              <th scope="col" className="text-muted-foreground hidden px-4 py-3 text-left text-xs font-semibold tracking-wide uppercase md:table-cell">
+              <th scope="col" className="text-muted-foreground hidden px-4 py-3 text-left text-xs font-medium tracking-wide uppercase md:table-cell">
                 Nacimiento
               </th>
-              <th scope="col" className="text-muted-foreground hidden px-4 py-3 text-left text-xs font-semibold tracking-wide uppercase sm:table-cell">
+              <th scope="col" className="text-muted-foreground hidden px-4 py-3 text-left text-xs font-medium tracking-wide uppercase sm:table-cell">
                 Edad
               </th>
-              <th scope="col" className="text-muted-foreground px-4 py-3 text-left text-xs font-semibold tracking-wide uppercase md:px-6">
+              <th scope="col" className="text-muted-foreground px-4 py-3 text-left text-xs font-medium tracking-wide uppercase md:px-6">
                 Sexo
               </th>
               {/* Columna de acciones: sin etiqueta visible, pero se conserva
@@ -274,7 +278,7 @@ function TablaSkeleton() {
       aria-live="polite"
     >
       <span className="sr-only">Cargando pacientes...</span>
-      <div className="bg-muted/40 border-b border-border px-6 py-3">
+      <div className="bg-surface-subtle border-b border-border px-6 py-3">
         <div className="skeleton h-4 w-24 rounded" />
       </div>
       <ul className="divide-y divide-border">

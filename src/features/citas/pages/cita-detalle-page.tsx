@@ -55,7 +55,7 @@ export function CitaDetallePage() {
               Agenda
             </Link>
           </li>
-          <li aria-hidden="true" className="text-muted-foreground/60 shrink-0">
+          <li aria-hidden="true" className="text-muted-foreground-subtle shrink-0">
             <ChevronRight className="size-4" />
           </li>
           <li

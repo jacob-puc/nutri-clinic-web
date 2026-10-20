@@ -1,13 +1,16 @@
 import { cn } from "@/lib/utils";
 import { iniciales, tonoDesdeId } from "@/lib/formatters";
 
+/* Tonos del avatar tomados del sistema semantico en vez de la paleta cruda de
+   Tailwind: asi el avatar se re-colorea con la tema y los seis pares ya estan
+   verificados a 4.5:1 en claro y en oscuro. */
 const TONES = [
-  "bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-200",
-  "bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-200",
-  "bg-lime-100 text-lime-800 dark:bg-lime-950 dark:text-lime-200",
-  "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-200",
-  "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200",
-  "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200",
+  "bg-primary-soft text-primary-soft-foreground",
+  "bg-accent-soft text-accent-soft-foreground",
+  "bg-success-soft text-success-soft-foreground",
+  "bg-info-soft text-info-soft-foreground",
+  "bg-warning-soft text-warning-soft-foreground",
+  "bg-secondary text-secondary-foreground",
 ] as const;
 
 interface AvatarPacienteProps {

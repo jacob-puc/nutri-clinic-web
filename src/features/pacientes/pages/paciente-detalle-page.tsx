@@ -97,7 +97,7 @@ export function PacienteDetallePage() {
               Pacientes
             </Link>
           </li>
-          <li aria-hidden="true" className="text-muted-foreground/60 shrink-0">
+          <li aria-hidden="true" className="text-muted-foreground-subtle shrink-0">
             <ChevronRight className="size-4" />
           </li>
           <li
@@ -231,7 +231,7 @@ function EncabezadoFicha({
             <p className="text-primary text-xs font-semibold tracking-wider uppercase">
               Expediente clinico
             </p>
-            <h1 className="text-foreground mt-1 text-xl font-bold tracking-tight md:text-2xl">
+            <h1 className="text-foreground mt-1 text-xl font-semibold tracking-tight md:text-2xl">
               {paciente.nombreCompleto}
             </h1>
 
@@ -247,7 +247,7 @@ function EncabezadoFicha({
 
           <div className="grid grid-cols-2 gap-3 border-y border-border/70 py-3 sm:grid-cols-2 lg:w-72 lg:border-y-0 lg:border-l lg:py-0 lg:pl-5">
             <div>
-              <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+              <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
                 Ultima medicion
               </p>
               <p className="text-foreground mt-1 text-sm font-semibold tabular-nums">
@@ -255,7 +255,7 @@ function EncabezadoFicha({
               </p>
             </div>
             <div>
-              <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+              <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
                 IMC actual
               </p>
               <p className="text-foreground mt-1 text-sm font-semibold tabular-nums">
@@ -396,7 +396,7 @@ function DatoGeneral({
     <div className="pl-4 sm:pl-6">
       <dt className="text-muted-foreground text-xs">{etiqueta}</dt>
       <dd className="text-foreground text-sm break-words">
-        {valor ?? <span className="text-muted-foreground/70">Sin registro</span>}
+        {valor ?? <span className="text-muted-foreground-subtle">Sin registro</span>}
       </dd>
     </div>
   );
@@ -933,7 +933,7 @@ function EstadoNoEncontrado({ nombre }: { nombre?: string }) {
     <div className="mx-auto w-full max-w-2xl px-4 py-16 text-center md:px-8">
       <Card>
         <CardContent className="px-6 py-14">
-          <h1 className="text-foreground text-xl font-bold">
+          <h1 className="text-foreground text-xl font-semibold">
             Paciente no encontrado
           </h1>
           <p className="text-muted-foreground mx-auto mt-2 max-w-sm text-sm">
@@ -961,7 +961,7 @@ function EstadoErrorGeneral({
     <div className="mx-auto w-full max-w-2xl px-4 py-16 md:px-8">
       <Card className="border-destructive/40">
         <CardContent className="px-6 py-14 text-center">
-          <h1 className="text-foreground text-xl font-bold">
+          <h1 className="text-foreground text-xl font-semibold">
             No pudimos cargar la ficha
           </h1>
           <p className="text-muted-foreground mx-auto mt-2 max-w-sm text-sm">

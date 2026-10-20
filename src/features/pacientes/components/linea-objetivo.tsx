@@ -59,7 +59,7 @@ export function LineaObjetivo({
         <span className="font-medium">Objetivo:</span>
 
         {!definido ? (
-          <span className="text-muted-foreground/70 italic">sin definir</span>
+          <span className="text-muted-foreground-subtle italic">sin definir</span>
         ) : (
           <span className="text-foreground">
             {tituloObjetivo ?? "Peso"}

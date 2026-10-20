@@ -1,70 +1,83 @@
 
 :root {
-  --brand-50: oklch(0.971 0.017 178);
-  --brand-100: oklch(0.935 0.036 177);
-  --brand-200: oklch(0.878 0.058 177);
-  --brand-300: oklch(0.803 0.076 177);
-  --brand-400: oklch(0.700 0.089 177);
-  --brand-500: oklch(0.601 0.092 177);
-  --brand-600: oklch(0.508 0.083 177);
-  --brand-700: oklch(0.428 0.069 178);
-  --brand-800: oklch(0.353 0.053 179);
-  --brand-900: oklch(0.283 0.038 180);
-  --brand-950: oklch(0.203 0.028 181);
+  /* Direccion A+ "Clinico Premium Teal": el matiz de marca se fija en 186° y
+     la saturacion sube (chroma 0.069 -> 0.088 en el 700) para que el teal
+     tenga presencia sin entrar en el cian hospitalario. */
+  --brand-50: oklch(0.971 0.017 186);
+  --brand-100: oklch(0.935 0.034 186);
+  --brand-200: oklch(0.878 0.058 186);
+  --brand-300: oklch(0.803 0.085 186);
+  --brand-400: oklch(0.700 0.098 186);
+  --brand-500: oklch(0.601 0.100 187);
+  --brand-600: oklch(0.490 0.095 187);
+  --brand-700: oklch(0.440 0.088 186);
+  --brand-800: oklch(0.360 0.070 186);
+  --brand-900: oklch(0.295 0.055 187);
+  --brand-950: oklch(0.215 0.040 188);
 
-  --accent-50: oklch(0.974 0.014 62);
-  --accent-100: oklch(0.940 0.032 60);
-  --accent-200: oklch(0.889 0.061 57);
-  --accent-300: oklch(0.817 0.093 52);
-  --accent-400: oklch(0.735 0.120 48);
+  /* Terracota: se conserva el acento calido de la identidad, recorrido hacia
+     43° para separarlo del ambar de estados (72°). --accent-600 es el color
+     de texto de acento: 4.63:1 sobre tarjeta. */
+  --accent-50: oklch(0.974 0.014 60);
+  --accent-100: oklch(0.940 0.032 57);
+  --accent-200: oklch(0.889 0.061 54);
+  --accent-300: oklch(0.817 0.093 50);
+  --accent-400: oklch(0.735 0.120 47);
   --accent-500: oklch(0.657 0.140 45);
   --accent-600: oklch(0.573 0.135 43);
   --accent-700: oklch(0.487 0.116 42);
   --accent-800: oklch(0.402 0.092 42);
   --accent-900: oklch(0.330 0.070 43);
 
-  --sage-100: oklch(0.941 0.019 163);
-  --sage-200: oklch(0.885 0.035 163);
-  --sage-300: oklch(0.806 0.049 164);
-  --sage-400: oklch(0.706 0.052 165);
-  --sage-500: oklch(0.612 0.047 166);
-  --sage-600: oklch(0.516 0.040 167);
-  --sage-700: oklch(0.421 0.033 168);
+  --sage-100: oklch(0.945 0.022 170);
+  --sage-200: oklch(0.910 0.045 170);
+  --sage-300: oklch(0.835 0.058 170);
+  --sage-400: oklch(0.740 0.060 168);
+  --sage-500: oklch(0.640 0.055 168);
+  --sage-600: oklch(0.520 0.050 170);
+  --sage-700: oklch(0.360 0.055 175);
 
+  /* Neutrales templados (matiz 92-95): el fondo deja de ser gris frio y pasa
+     a papel calido, que es lo que separa "premium" de "template de dashboard".
+     El texto NO usa esta escala: --foreground y --muted-foreground llevan
+     subtejo teal (185°) para que la tipografia hable con la marca. */
   --neutral-0: oklch(1 0 0);
-  --neutral-50: oklch(0.988 0.002 190);
-  --neutral-100: oklch(0.968 0.004 190);
-  --neutral-200: oklch(0.926 0.006 190);
-  --neutral-300: oklch(0.866 0.008 190);
-  --neutral-400: oklch(0.680 0.010 190);
-  --neutral-500: oklch(0.556 0.011 190);
-  --neutral-600: oklch(0.452 0.011 190);
-  --neutral-700: oklch(0.371 0.010 190);
-  --neutral-800: oklch(0.279 0.009 190);
-  --neutral-900: oklch(0.208 0.008 190);
-  --neutral-950: oklch(0.148 0.007 190);
+  --neutral-50: oklch(0.986 0.007 92);
+  --neutral-100: oklch(0.966 0.010 92);
+  --neutral-200: oklch(0.918 0.014 95);
+  --neutral-300: oklch(0.855 0.020 95);
+  --neutral-400: oklch(0.740 0.022 95);
+  --neutral-500: oklch(0.668 0.020 95);
+  --neutral-600: oklch(0.552 0.016 95);
+  --neutral-700: oklch(0.440 0.014 95);
+  --neutral-800: oklch(0.330 0.012 95);
+  --neutral-900: oklch(0.240 0.010 95);
+  --neutral-950: oklch(0.170 0.008 95);
 }
 
 :root {
-  --radius: 0.625rem;
+  /* Controles a 8px y tarjetas a 12px: mas sobrio que el 10px uniforme. */
+  --radius: 0.5rem;
 
   --background: var(--neutral-50);
-  --foreground: var(--neutral-950);
+  /* Tinta con subtejo teal (185°): 18.8:1 sobre la tarjeta. */
+  --foreground: oklch(0.175 0.015 180);
 
-  --card: var(--neutral-0);
-  --card-foreground: var(--neutral-950);
+  /* Blanco templado en vez de #fff puro: evita el blanco hospitalario. */
+  --card: oklch(0.998 0.003 95);
+  --card-foreground: var(--foreground);
 
-  --popover: var(--neutral-0);
-  --popover-foreground: var(--neutral-950);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
 
   --surface-subtle: var(--neutral-100);
   --surface-muted: var(--neutral-200);
 
   --primary: var(--brand-700);
-  --primary-foreground: var(--neutral-0);
+  --primary-foreground: oklch(1 0 0);
   --primary-hover: var(--brand-800);
-  --primary-soft: var(--brand-50);
-  --primary-soft-foreground: var(--brand-800);
+  --primary-soft: oklch(0.958 0.030 186);
+  --primary-soft-foreground: oklch(0.345 0.070 186);
 
   /* OJO, este NO es el color de marca. En la convencion de shadcn, --accent
      es la SUPERFICIE de hover/focus: lo usan la fila de la tabla, el hover
@@ -76,7 +89,7 @@
      superficie, y la terracota vive en --accent-soft para los casos donde si
      se quiere color calido (badges, acentos pequenos). */
   --accent: var(--neutral-100);
-  --accent-foreground: var(--neutral-900);
+  --accent-foreground: var(--foreground);
   --accent-soft: var(--accent-50);
   --accent-soft-foreground: var(--accent-800);
 
@@ -84,48 +97,59 @@
   --secondary-foreground: var(--sage-700);
 
   --muted: var(--neutral-200);
-  --muted-foreground: var(--neutral-600);
+  --muted-foreground: oklch(0.470 0.013 185);
+  /* Sustituye a `text-muted-foreground/70`: el texto con opacidad caia a
+     3.45:1. Este token es solido y queda en 4.76:1 conservando la
+     jerarquia visual de texto terciario. */
+  --muted-foreground-subtle: oklch(0.552 0.014 185);
 
-  --success: oklch(0.586 0.126 152);
-  --success-foreground: var(--neutral-0);
-  --success-soft: oklch(0.941 0.044 152);
-  --success-soft-foreground: oklch(0.375 0.081 152);
+  --success: oklch(0.490 0.140 148);
+  --success-foreground: oklch(1 0 0);
+  --success-soft: oklch(0.938 0.055 148);
+  --success-soft-foreground: oklch(0.345 0.090 148);
 
-  --warning: oklch(0.712 0.150 68);
-  --warning-foreground: oklch(0.279 0.070 60);
-  --warning-soft: oklch(0.958 0.055 82);
-  --warning-soft-foreground: oklch(0.402 0.105 62);
+  /* 4.74:1 sobre la tarjeta: el ambar de estados era el peor par de la app
+     (2.64:1). --warning-foreground va en blanco porque el texto oscuro
+     encima de este ambar solo llega a 3.12:1. */
+  --warning: oklch(0.560 0.130 72);
+  --warning-foreground: oklch(1 0 0);
+  --warning-soft: oklch(0.955 0.055 84);
+  --warning-soft-foreground: oklch(0.395 0.100 64);
 
-  --info: oklch(0.578 0.128 238);
-  --info-foreground: var(--neutral-0);
-  --info-soft: oklch(0.938 0.041 238);
-  --info-soft-foreground: oklch(0.372 0.092 240);
+  --info: oklch(0.545 0.125 244);
+  --info-foreground: oklch(1 0 0);
+  --info-soft: oklch(0.935 0.045 245);
+  --info-soft-foreground: oklch(0.365 0.095 246);
 
-  --destructive: oklch(0.545 0.204 26);
-  --destructive-foreground: var(--neutral-0);
-  --destructive-soft: oklch(0.951 0.043 20);
-  --destructive-soft-foreground: oklch(0.404 0.152 26);
+  --destructive: oklch(0.535 0.200 26);
+  --destructive-foreground: oklch(1 0 0);
+  --destructive-soft: oklch(0.950 0.045 22);
+  --destructive-soft-foreground: oklch(0.400 0.150 26);
 
   --border: var(--neutral-200);
   --border-strong: var(--neutral-300);
-  --input: var(--neutral-300);
-  --ring: var(--brand-500);
+  /* El borde que identifica un campo necesita 3:1 (WCAG 1.4.11): con
+     neutral-300 estaba en 1.50:1. neutral-500 lo fija en 3.00:1. */
+  --input: var(--neutral-500);
+  /* Foco de teclado: 4.23:1 sobre el fondo. */
+  --ring: oklch(0.560 0.100 190);
 
   --chart-1: var(--brand-600);
+  /* 3.3:1 sobre la tarjeta: --accent-400 (2.43:1) solo sirve como relleno. */
   --chart-2: var(--accent-500);
   --chart-3: var(--sage-500);
   --chart-4: oklch(0.632 0.116 250);
   --chart-5: var(--accent-300);
 
-  --sidebar: oklch(0.212 0.028 195);
-  --sidebar-foreground: oklch(0.945 0.008 185);
-  --sidebar-muted: oklch(0.322 0.026 192);
-  --sidebar-muted-foreground: oklch(0.762 0.014 188);
-  --sidebar-accent: oklch(0.276 0.030 194);
-  --sidebar-accent-foreground: var(--neutral-0);
+  --sidebar: oklch(0.208 0.038 200);
+  --sidebar-foreground: oklch(0.945 0.014 190);
+  --sidebar-muted: oklch(0.322 0.032 198);
+  --sidebar-muted-foreground: oklch(0.755 0.018 195);
+  --sidebar-accent: oklch(0.276 0.036 198);
+  --sidebar-accent-foreground: oklch(1 0 0);
   --sidebar-primary: var(--brand-400);
   --sidebar-primary-foreground: var(--brand-950);
-  --sidebar-border: oklch(0.316 0.026 192);
+  --sidebar-border: oklch(0.316 0.032 198);
   --sidebar-ring: var(--brand-400);
 
   --gradient-brand: linear-gradient(
@@ -144,23 +168,23 @@
 .dark {
   color-scheme: dark;
 
-  --background: oklch(0.168 0.011 195);
-  --foreground: oklch(0.958 0.005 185);
+  --background: oklch(0.168 0.013 195);
+  --foreground: oklch(0.958 0.006 185);
 
-  --card: oklch(0.216 0.013 194);
-  --card-foreground: oklch(0.958 0.005 185);
+  --card: oklch(0.216 0.015 194);
+  --card-foreground: var(--foreground);
 
-  --popover: oklch(0.216 0.013 194);
-  --popover-foreground: oklch(0.958 0.005 185);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
 
-  --surface-subtle: oklch(0.258 0.014 193);
-  --surface-muted: oklch(0.301 0.015 192);
+  --surface-subtle: oklch(0.258 0.016 193);
+  --surface-muted: oklch(0.301 0.017 192);
 
   /* En oscuro el teal se aclara: #00685f sobre fondo oscuro no se leeria. */
   --primary: var(--brand-300);
   --primary-foreground: var(--brand-950);
   --primary-hover: var(--brand-200);
-  --primary-soft: oklch(0.288 0.038 180);
+  --primary-soft: oklch(0.288 0.045 188);
   --primary-soft-foreground: var(--brand-200);
 
   /* En oscuro el hover tiene que ser una superficie MAS CLARA que la tarjeta,
@@ -171,36 +195,40 @@
   --accent-soft: oklch(0.298 0.048 45);
   --accent-soft-foreground: var(--accent-200);
 
-  --secondary: oklch(0.315 0.028 165);
+  --secondary: oklch(0.315 0.035 168);
   --secondary-foreground: var(--sage-200);
 
   --muted: oklch(0.288 0.014 193);
-  --muted-foreground: oklch(0.735 0.012 188);
+  --muted-foreground: oklch(0.735 0.013 188);
+  /* 4.6:1 sobre tarjeta y 5.06:1 sobre fondo: la version oscura del texto
+     terciario que antes se resolvia con opacidad. */
+  --muted-foreground-subtle: oklch(0.609 0.014 188);
 
-  --success: oklch(0.706 0.142 152);
-  --success-foreground: oklch(0.168 0.011 195);
-  --success-soft: oklch(0.302 0.056 152);
-  --success-soft-foreground: oklch(0.855 0.108 152);
+  --success: oklch(0.706 0.142 148);
+  --success-foreground: oklch(0.168 0.013 195);
+  --success-soft: oklch(0.302 0.058 148);
+  --success-soft-foreground: oklch(0.855 0.110 148);
 
   --warning: oklch(0.790 0.145 76);
   --warning-foreground: oklch(0.216 0.055 62);
   --warning-soft: oklch(0.318 0.062 72);
   --warning-soft-foreground: oklch(0.882 0.118 82);
 
-  --info: oklch(0.686 0.128 238);
-  --info-foreground: oklch(0.168 0.011 195);
-  --info-soft: oklch(0.302 0.056 240);
-  --info-soft-foreground: oklch(0.845 0.104 238);
+  --info: oklch(0.686 0.128 244);
+  --info-foreground: oklch(0.168 0.013 195);
+  --info-soft: oklch(0.302 0.056 244);
+  --info-soft-foreground: oklch(0.845 0.104 244);
 
   --destructive: oklch(0.652 0.192 24);
-  --destructive-foreground: oklch(0.168 0.011 195);
+  --destructive-foreground: oklch(0.168 0.013 195);
   --destructive-soft: oklch(0.312 0.078 24);
   --destructive-soft-foreground: oklch(0.855 0.104 24);
 
-  --border: oklch(0.302 0.015 192);
-  --border-strong: oklch(0.382 0.017 191);
-  --input: oklch(0.352 0.016 192);
-  --ring: var(--brand-400);
+  --border: oklch(0.300 0.018 192);
+  --border-strong: oklch(0.382 0.021 191);
+  /* 3.00:1 sobre la tarjeta (estaba en 2.58:1). */
+  --input: oklch(0.505 0.022 192);
+  --ring: var(--brand-300);
 
   --chart-1: var(--brand-400);
   --chart-2: var(--accent-400);
@@ -208,15 +236,15 @@
   --chart-4: oklch(0.712 0.112 250);
   --chart-5: var(--accent-200);
 
-  --sidebar: oklch(0.198 0.020 196);
-  --sidebar-foreground: oklch(0.945 0.008 185);
-  --sidebar-muted: oklch(0.268 0.024 193);
-  --sidebar-muted-foreground: oklch(0.742 0.014 188);
-  --sidebar-accent: oklch(0.312 0.030 192);
-  --sidebar-accent-foreground: var(--neutral-0);
+  --sidebar: oklch(0.198 0.024 196);
+  --sidebar-foreground: oklch(0.945 0.010 188);
+  --sidebar-muted: oklch(0.268 0.026 193);
+  --sidebar-muted-foreground: oklch(0.742 0.016 188);
+  --sidebar-accent: oklch(0.312 0.034 192);
+  --sidebar-accent-foreground: oklch(1 0 0);
   --sidebar-primary: var(--brand-300);
   --sidebar-primary-foreground: var(--brand-950);
-  --sidebar-border: oklch(0.288 0.022 193);
+  --sidebar-border: oklch(0.288 0.024 193);
   --sidebar-ring: var(--brand-300);
 
   --gradient-brand: linear-gradient(
@@ -253,6 +281,7 @@
 
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-muted-foreground-subtle: var(--muted-foreground-subtle);
 
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
@@ -298,6 +327,10 @@
 
   --font-sans: "Public Sans Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Public Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Tipografia de marca (DM Sans): de momento solo la usa el login, como
+     prueba. Si se aprueba, se escala a titulos de toda la app. */
+  --font-brand: "DM Sans Variable", "Public Sans Variable", ui-sans-serif,
+    system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

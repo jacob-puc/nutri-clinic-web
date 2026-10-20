@@ -100,10 +100,10 @@ export function GraficaMedidas({ medidas }: GraficaMedidasProps) {
                 type="monotone"
                 dataKey="imc"
                 name="IMC"
-                stroke="var(--accent-400)"
+                stroke="var(--chart-2)"
                 strokeWidth={2}
                 strokeDasharray="4 4"
-                dot={{ r: 3, strokeWidth: 0, fill: "var(--accent-400)" }}
+                dot={{ r: 3, strokeWidth: 0, fill: "var(--chart-2)" }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -160,7 +160,7 @@ function LeyendaGrafica() {
       <span className="flex items-center gap-1.5">
         <span
           className="inline-block h-0.5 w-4 rounded"
-          style={{ backgroundColor: "var(--accent-400)" }}
+          style={{ backgroundColor: "var(--chart-2)" }}
         />
         IMC
       </span>
