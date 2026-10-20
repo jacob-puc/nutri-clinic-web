@@ -25,7 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useRegistrarMedida } from "@/features/pacientes/hooks/use-mutaciones-paciente";
-import { erroresPorCampo } from "@/features/pacientes/lib/errores-formulario";
+import { erroresPorCampo } from "@/lib/errores-formulario";
 import { mensajeDeError } from "@/lib/api-error";
 import { campoNumero } from "@/lib/campos-formulario";
 import { calcularImc, categoriaImc } from "@/lib/formatters";

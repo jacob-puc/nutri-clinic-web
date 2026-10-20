@@ -153,23 +153,17 @@ function EncabezadoPacientes({
   onNuevo: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-          <p className="text-primary text-xs font-semibold tracking-wider uppercase">
-          Seguimiento clinico
-        </p>
-        <h1 className="text-foreground mt-1 text-2xl font-bold tracking-tight md:text-3xl">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-2">
+      <div className="flex items-center gap-3">
+        <h1 className="text-foreground text-2xl font-bold tracking-tight md:text-3xl">
           Pacientes
         </h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Consulta y seguimiento de los pacientes activos de la clinica.
-        </p>
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-500/10 text-teal-700 dark:text-teal-400 tabular-nums">
+          {total} {total === 1 ? "activo" : "activos"}
+        </span>
       </div>
 
       <div className="flex items-center gap-3">
-        <Badge variant="secondary" className="tabular-nums">
-          {total} {total === 1 ? "paciente activo" : "pacientes activos"}
-        </Badge>
         <Button onClick={onNuevo}>
           <UserPlus className="size-4" />
           <span className="hidden sm:inline">Nuevo paciente</span>

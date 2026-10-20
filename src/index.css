@@ -56,3 +56,252 @@
     background-color: transparent;
   }
 }
+
+/* Calendarios: react-day-picker y FullCalendar inyectan su CSS por fuera de
+   las capas de Tailwind, asi que estas reglas van sin @layer y con un nivel
+   de especificidad mas (el prefijo body) para que ganen sin importar el
+   orden en que Vite cargue los estilos. */
+
+body .rdp-root {
+  --rdp-accent-color: var(--primary);
+  --rdp-accent-background-color: color-mix(in oklab, var(--primary) 22%, transparent);
+  --rdp-day_button-border-radius: 0.5rem;
+  --rdp-nav_button-border-radius: 0.5rem;
+  color: var(--foreground);
+  font-family: inherit;
+}
+
+body .rdp-root .rdp-day_button {
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+body .rdp-root .rdp-day_button:hover:not(:disabled) {
+  background-color: var(--muted);
+}
+
+body .rdp-root .rdp-selected .rdp-day_button {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 600;
+}
+
+body .rdp-root .rdp-today:not(.rdp-selected) .rdp-day_button {
+  box-shadow: inset 0 0 0 1.5px var(--primary);
+  color: var(--primary);
+}
+
+body .rdp-root .rdp-outside .rdp-day_button {
+  color: var(--muted-foreground);
+}
+
+body .rdp-root .rdp-button_previous,
+body .rdp-root .rdp-button_next {
+  background-color: transparent;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  color: var(--foreground);
+}
+
+body .rdp-root .rdp-button_previous:hover,
+body .rdp-root .rdp-button_next:hover {
+  background-color: var(--muted);
+}
+
+body .rdp-root .rdp-caption_label {
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+body .rdp-root .rdp-dropdown {
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  padding: 0.2rem 0.35rem;
+}
+
+body .rdp-root .rdp-weekday {
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+body .fc {
+  --fc-page-bg-color: transparent;
+  --fc-border-color: var(--border);
+  --fc-neutral-bg-color: var(--muted);
+  --fc-neutral-text-color: var(--muted-foreground);
+  --fc-today-bg-color: color-mix(in oklab, var(--primary) 9%, transparent);
+  --fc-highlight-color: color-mix(in oklab, var(--primary) 20%, transparent);
+  --fc-now-indicator-color: var(--destructive);
+  --fc-event-border-color: transparent;
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+body .fc .fc-toolbar {
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+body .fc .fc-toolbar-title {
+  color: var(--foreground);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+body .fc .fc-button {
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: none;
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.35rem 0.7rem;
+  text-transform: capitalize;
+}
+
+body .fc .fc-button:hover:not(:disabled) {
+  background-color: var(--muted);
+  border-color: var(--border-strong);
+  color: var(--foreground);
+}
+
+body .fc .fc-button:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+body .fc .fc-button:disabled {
+  opacity: 0.5;
+}
+
+body .fc .fc-button-primary:not(:disabled).fc-button-active,
+body .fc .fc-button-primary:not(:disabled):active {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+body .fc .fc-col-header-cell-cushion {
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.45rem 0;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+body .fc .fc-daygrid-day-number {
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.2rem 0.4rem;
+  text-decoration: none;
+}
+
+body .fc .fc-day-other .fc-daygrid-day-number {
+  color: var(--muted-foreground);
+  font-weight: 500;
+  opacity: 0.6;
+}
+
+body .fc .fc-day-today .fc-daygrid-day-number {
+  color: var(--primary);
+}
+
+body .fc .fc-event {
+  border-width: 0;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.35rem;
+}
+
+body .fc .fc-event:hover {
+  filter: brightness(0.97);
+}
+
+body .fc .fc-event:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+body .fc .fc-daygrid-event-dot {
+  display: none;
+}
+
+body .fc .fc-daygrid-more-link {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+/* Barra de color del estado a la izquierda de cada cita. */
+body .fc .fc-event.cita-programada {
+  box-shadow: inset 3px 0 0 var(--info);
+}
+
+body .fc .fc-event.cita-confirmada {
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+body .fc .fc-event.cita-en-curso {
+  box-shadow: inset 3px 0 0 var(--warning);
+}
+
+body .fc .fc-event.cita-completada {
+  box-shadow: inset 3px 0 0 var(--success);
+}
+
+body .fc .fc-event.cita-cancelada {
+  box-shadow: inset 3px 0 0 var(--destructive);
+}
+
+body .fc .fc-event.cita-no-asistio {
+  box-shadow: inset 3px 0 0 var(--muted-foreground);
+}
+
+body .fc .fc-scrollgrid {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+body .fc .fc-timegrid-slot {
+  height: 2.4em;
+}
+
+body .fc .fc-time-axis-cushion,
+body .fc .fc-timegrid-slot-cushion,
+body .fc .fc-list-day-text,
+body .fc .fc-list-day-side-text {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+body .fc .fc-popover {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-md, 0 10px 15px -3px rgb(0 0 0 / 0.1));
+}
+
+body .fc .fc-popover-header {
+  background-color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.4rem 0.6rem;
+}

@@ -110,6 +110,14 @@ export interface CambiarEstadoCitaDto {
   motivo?: string | null;
 }
 
+/** No trae pacienteId: el paciente de una cita es inmutable. */
+export interface ActualizarCitaDto {
+  nutricionistaId: Guid;
+  fechaInicio: DateTimeString;
+  fechaFin: DateTimeString;
+  motivo?: string | null;
+}
+
 export interface Consulta {
   id: Guid;
   pacienteId: Guid;

@@ -35,7 +35,7 @@ export const MODULOS_NAV: ModuloNav[] = [
     label: "Agenda",
     href: "/agenda",
     icon: CalendarDays,
-    activo: false,
+    activo: true,
     descripcion: "Citas por dia y traslados",
   },
   {

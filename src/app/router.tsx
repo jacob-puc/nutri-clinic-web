@@ -5,6 +5,8 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { LoginPage } from "@/features/auth/pages/login-page";
 import { PacienteDetallePage } from "@/features/pacientes/pages/paciente-detalle-page";
 import { PacientesPage } from "@/features/pacientes/pages/pacientes-page";
+import { AgendaPage } from "@/features/citas/pages/agenda-page";
+import { CitaDetallePage } from "@/features/citas/pages/cita-detalle-page";
 
 export const router = createBrowserRouter([
   {
@@ -21,7 +23,8 @@ export const router = createBrowserRouter([
           { index: true, element: <Navigate to="/pacientes" replace /> },
           { path: "pacientes", element: <PacientesPage /> },
           { path: "pacientes/:id", element: <PacienteDetallePage /> },
-          { path: "agenda", element: <Navigate to="/pacientes" replace /> },
+          { path: "agenda", element: <AgendaPage /> },
+          { path: "agenda/:id", element: <CitaDetallePage /> },
           { path: "consultas", element: <Navigate to="/pacientes" replace /> },
           { path: "nutricionistas", element: <Navigate to="/pacientes" replace /> },
           { path: "planes", element: <Navigate to="/pacientes" replace /> },

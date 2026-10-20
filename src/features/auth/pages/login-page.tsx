@@ -30,7 +30,7 @@ export function LoginPage() {
       navigate(desde, { replace: true });
     } catch (err) {
       if (err instanceof ApiError) {
-        setError(err.mensaje);
+        setError(err.message);
       } else {
         setError("No se pudo iniciar sesión. Intenta nuevamente.");
       }

@@ -5,7 +5,8 @@ export type ApiErrorCode =
   | "ERROR_BD"
   | "ERROR_INTERNO"
   | "ERROR_DE_RED"
-  | "ERROR_DESCONOCIDO";
+  | "ERROR_DESCONOCIDO"
+  | "SESION_EXPIRADA";
 
 export interface ApiErrorDetail {
   campo: string;

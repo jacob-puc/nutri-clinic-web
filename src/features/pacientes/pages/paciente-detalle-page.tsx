@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft,
   Contact,
+  CalendarPlus,
   ClipboardPlus,
   FileText,
+  ChevronRight,
   Stethoscope,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
 
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
+import { CitasPaciente } from "@/features/citas/components/citas-paciente";
+import { DialogoCita } from "@/features/citas/components/dialogo-cita";
 import { DialogoMedida } from "@/features/pacientes/components/dialogo-medida";
 import { LineaObjetivo } from "@/features/pacientes/components/linea-objetivo";
 import { DialogoPaciente } from "@/features/pacientes/components/dialogo-paciente";
@@ -22,6 +25,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { esApiError } from "@/lib/api-error";
 import {
   categoriaImc,
@@ -45,6 +55,7 @@ export function PacienteDetallePage() {
   const navigate = useNavigate();
   const [editando, setEditando] = useState(false);
   const [registrandoMedida, setRegistrandoMedida] = useState(false);
+  const [agendandoCita, setAgendandoCita] = useState(false);
 
   const { data: paciente, isPending: cargandoPaciente, isError: errorPaciente } =
     usePaciente(id);
@@ -76,27 +87,47 @@ export function PacienteDetallePage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-8">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => navigate("/pacientes")}
-        className="text-muted-foreground -ml-2 mb-4"
-      >
-        <ArrowLeft className="size-4" />
-        Volver al listado
-      </Button>
+      <nav aria-label="Navegacion del expediente" className="mb-4">
+        <ol className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-sm">
+          <li className="shrink-0">
+            <Link
+              to="/pacientes"
+              className="rounded-sm px-1.5 py-1 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Pacientes
+            </Link>
+          </li>
+          <li aria-hidden="true" className="text-muted-foreground/60 shrink-0">
+            <ChevronRight className="size-4" />
+          </li>
+          <li
+            className="bg-primary/10 text-primary border-primary/20 min-w-0 truncate rounded-md border px-2.5 py-1 font-semibold"
+            aria-current="page"
+          >
+            Expediente clinico
+          </li>
+        </ol>
+      </nav>
 
       <EncabezadoFicha
         paciente={paciente}
         medidas={medidas}
         onEditar={() => setEditando(true)}
         onRegistrarMedida={() => setRegistrandoMedida(true)}
+        onAgendarCita={() => setAgendandoCita(true)}
       />
 
       <DialogoPaciente
         abierto={editando}
         onOpenChange={setEditando}
         paciente={paciente}
+      />
+
+      <DialogoCita
+        abierto={agendandoCita}
+        onOpenChange={setAgendandoCita}
+        pacienteId={paciente.id}
+        pacienteNombre={paciente.nombreCompleto}
       />
 
       {id && (
@@ -136,7 +167,6 @@ export function PacienteDetallePage() {
             <TabResumen
               historial={historial}
               medidas={medidas}
-              onRegistrarMedida={() => setRegistrandoMedida(true)}
               paciente={paciente}
             />
           )}
@@ -175,11 +205,13 @@ function EncabezadoFicha({
   medidas,
   onEditar,
   onRegistrarMedida,
+  onAgendarCita,
 }: {
   paciente: NonNullable<ReturnType<typeof usePaciente>["data"]>;
   medidas: MedidaAntropometrica[];
   onEditar: () => void;
   onRegistrarMedida: () => void;
+  onAgendarCita: () => void;
 }) {
   const ultimaMedida = [...medidas].sort((a, b) =>
     b.fechaMedicion.localeCompare(a.fechaMedicion),
@@ -236,6 +268,11 @@ function EncabezadoFicha({
             <Button variant="outline" size="sm" onClick={onEditar}>
               Editar
             </Button>
+            <Button variant="outline" size="sm" onClick={onAgendarCita}>
+              <CalendarPlus className="size-4" />
+              <span className="hidden sm:inline">Agendar cita</span>
+              <span className="sm:hidden">Cita</span>
+            </Button>
             <Button size="sm" onClick={onRegistrarMedida}>
               <ClipboardPlus className="size-4" />
               Nueva medicion
@@ -258,17 +295,17 @@ function Contador({ children }: { children: React.ReactNode }) {
 function TabResumen({
   historial,
   medidas,
-  onRegistrarMedida,
   paciente,
 }: {
   historial: HistorialClinico | null;
   medidas: MedidaAntropometrica[];
-  onRegistrarMedida: () => void;
   paciente: Paciente;
 }) {
   return (
     <div className="space-y-4">
       <CardInformacionGeneral paciente={paciente} />
+
+      <CitasPaciente pacienteId={paciente.id} pacienteNombre={paciente.nombreCompleto} />
 
       <Card className="py-0">
         <CardContent className="px-4 pt-2 pb-5 md:px-6">
@@ -307,7 +344,6 @@ function TabResumen({
 
       <UltimasMedidas
         medidas={medidas}
-        onRegistrarMedida={onRegistrarMedida}
       />
     </div>
   );
@@ -409,16 +445,14 @@ const MAX_MEDIDAS_RESUMEN = 3;
 
 function UltimasMedidas({
   medidas,
-  onRegistrarMedida,
 }: {
   medidas: MedidaAntropometrica[];
-  onRegistrarMedida: () => void;
 }) {
   if (medidas.length === 0) {
     return (
       <Card className="py-0">
         <CardContent className="px-4 pt-2 pb-5 md:px-6">
-          <EncabezadoMediciones total={0} onRegistrarMedida={onRegistrarMedida} />
+          <EncabezadoMediciones total={0} />
           <Separator className="my-2" />
           <p className="text-muted-foreground text-sm text-center py-6">
             Aun no se ha registrado ninguna medida antropometrica para este
@@ -446,7 +480,6 @@ function UltimasMedidas({
         <EncabezadoMediciones
           total={medidas.length}
           fechaReciente={principal.fechaMedicion}
-          onRegistrarMedida={onRegistrarMedida}
         />
         <Separator className="my-2" />
 
@@ -554,11 +587,9 @@ function VariacionPeso({ delta }: { delta: number | null }) {
 function EncabezadoMediciones({
   total,
   fechaReciente,
-  onRegistrarMedida,
 }: {
   total: number;
   fechaReciente?: string;
-  onRegistrarMedida: () => void;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -573,11 +604,6 @@ function EncabezadoMediciones({
           </span>
         )}
       </div>
-
-      <Button variant="outline" size="sm" onClick={onRegistrarMedida}>
-        <ClipboardPlus className="size-4" />
-        Registrar medida
-      </Button>
     </div>
   );
 }
@@ -755,51 +781,61 @@ function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
       <div className="flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium">Tipo</label>
-          <select
-            className="border-input bg-background rounded-md border px-3 py-1.5 text-sm"
+          <Select
             value={tipoSeleccionado}
-            onChange={(e) => {
-              setTipoSeleccionado(e.target.value as TipoFoto);
-            }}
+            onValueChange={(value) => setTipoSeleccionado(value as TipoFoto)}
           >
-            {tiposDisponibles.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
+            <SelectTrigger size="sm" className="w-40">
+              <SelectValue placeholder="Selecciona tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              {tiposDisponibles.map((tipo) => (
+                <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <Button variant="ghost" size="sm" onClick={() => setModoComparacion(false)}>
-          Volver al listado
+          Salir de comparación
         </Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="text-sm font-medium mb-1 block">Foto A</label>
-          <select
-            className="w-full border-input bg-background rounded-md border px-3 py-1.5 text-sm"
+          <Select
             value={fotoA ?? ""}
-            onChange={(e) => setFotoA(e.target.value || null)}
+            onValueChange={setFotoA}
           >
-            {fotosDelTipo.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.tipo} · {formatearFechaCorta(f.fechaSubida)}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Selecciona una foto" />
+            </SelectTrigger>
+            <SelectContent>
+              {fotosDelTipo.map((foto) => (
+                <SelectItem key={foto.id} value={foto.id}>
+                  {foto.tipo} · {formatearFechaCorta(foto.fechaSubida)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <label className="text-sm font-medium mb-1 block">Foto B</label>
-          <select
-            className="w-full border-input bg-background rounded-md border px-3 py-1.5 text-sm"
+          <Select
             value={fotoB ?? ""}
-            onChange={(e) => setFotoB(e.target.value || null)}
+            onValueChange={setFotoB}
           >
-            {fotosDelTipo.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.tipo} · {formatearFechaCorta(f.fechaSubida)}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Selecciona una foto" />
+            </SelectTrigger>
+            <SelectContent>
+              {fotosDelTipo.map((foto) => (
+                <SelectItem key={foto.id} value={foto.id}>
+                  {foto.tipo} · {formatearFechaCorta(foto.fechaSubida)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -906,7 +942,7 @@ function EstadoNoEncontrado({ nombre }: { nombre?: string }) {
               : "El paciente que buscas no existe o fue dado de baja."}
           </p>
           <Button asChild className="mt-6">
-            <Link to="/pacientes">Volver al listado</Link>
+            <Link to="/pacientes">Volver a pacientes</Link>
           </Button>
         </CardContent>
       </Card>
@@ -933,7 +969,7 @@ function EstadoErrorGeneral({
           </p>
           <div className="mt-6 flex justify-center gap-2">
             <Button variant="outline" onClick={onVolver}>
-              Volver al listado
+              Volver a pacientes
             </Button>
             <Button onClick={onReintentar}>Reintentar</Button>
           </div>

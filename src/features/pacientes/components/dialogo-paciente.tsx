@@ -32,7 +32,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useActualizarPaciente, useCrearPaciente } from "@/features/pacientes/hooks/use-mutaciones-paciente";
-import { erroresPorCampo, mensajeDeConflicto } from "@/features/pacientes/lib/errores-formulario";
+import { erroresPorCampo, mensajeDeConflicto } from "@/lib/errores-formulario";
+import { Calendar } from "@/components/ui/calendar";
+import { dateOnlyDe, fechaDeDateOnly } from "@/lib/fechas";
 import { mensajeDeError } from "@/lib/api-error";
 import type { CrearPacienteDto, Paciente } from "@/types/api";
 
@@ -56,13 +58,6 @@ const esquema = z.object({
 type FormularioValues = z.infer<typeof esquema>;
 
 type CampoFormulario = keyof FormularioValues;
-
-function hoyComoDateOnly(): string {
-  const ahora = new Date();
-  const mes = String(ahora.getMonth() + 1).padStart(2, "0");
-  const dia = String(ahora.getDate()).padStart(2, "0");
-  return `${ahora.getFullYear()}-${mes}-${dia}`;
-}
 
 interface DialogoPacienteProps {
   abierto: boolean;
@@ -224,9 +219,17 @@ function FormularioPaciente({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Fecha de nacimiento</FormLabel>
-                    <FormControl>
-                      <Input type="date" max={hoyComoDateOnly()} {...field} />
-                    </FormControl>
+                    <Calendar
+                      selected={fechaDeDateOnly(field.value)}
+                      onSelect={(fecha) =>
+                        field.onChange(fecha ? dateOnlyDe(fecha) : "")
+                      }
+                      hasta={new Date()}
+                      conDesplegables
+                      startMonth={new Date(new Date().getFullYear() - 120, 0, 1)}
+                      endMonth={new Date()}
+                      className="w-full"
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
