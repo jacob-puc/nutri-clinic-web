@@ -12,13 +12,13 @@ Leyenda de estado: `[RESUELTO]` ya está hecho y verificado · `[PENDIENTE]` con
 
 | # | Punto | Estado verificado |
 |---|---|---|
-| 1 | Estados globales vacío/error/esqueleto + primitivas huérfanas | `[PENDIENTE]` |
+| 1 | Estados globales vacío/error/esqueleto + primitivas huérfanas | `[RESUELTO]` (commit `e5e00a8`) |
 | 3 | Contraste del tema claro | `[RESUELTO]` (commit `01087ec`) |
 | 4 | Clave del tema `nutriclinia` | `[RESUELTO]` (commit `01087ec`) |
 | 5 | Acciones muertas + Cerrar sesión | `[PARCIAL]` — faltan menú de usuario y logout |
 | 6 | Mapas de transición + `Completada` | `[RESUELTO]` — pero destapa otro hueco mayor |
 | 7 | Estado de vista en URL | `[PARCIAL]` — agenda hecho (`b91bcf2`); falta expediente y orden |
-| 8 | Editorial y tipografía | `[RESUELTO]` — tildes (`090cc6a`), escala de títulos y anchos (esta fase) |
+| 8 | Editorial y tipografía | `[RESUELTO]` — tildes (`090cc6a`), escala de títulos y anchos (`ad0c4c9`) |
 
 **Hallazgo nuevo y de mayor peso que los anteriores:** el módulo **Consultas existe completo en el
 backend y no tiene una sola línea en el frontend**. Es la causa real de que una cita no pueda llegar
@@ -80,42 +80,61 @@ archivos del commit son idénticos salvo por las tildes.
 
 ---
 
-## 2. Fase 1 — Estados globales y limpieza de primitivas
+## 2. Fase 1 — Estados globales y limpieza de primitivas ✅ COMPLETADA (`e5e00a8`)
 
-### 2.1 `[PENDIENTE]` Componentes globales de estado
-Verificado que **no existen**: no hay `empty-state`, `error-state` ni `breadcrumb` en `src/components/`.
-Sí existe `src/components/ui/skeleton.tsx` (usado en 4 sitios).
+### 2.1 `[RESUELTO]` Componentes globales de estado
+Diez implementaciones sueltas pasan a cuatro. Se crearon en `src/components/states/` (la ruta que
+proponía el plan era `components/feedback/`; se unifica en un solo directorio), y el breadcrumb en
+`components/layout/`, que es donde vive ya la navegación.
 
-Hoy cada página monta su propio estado vacío/error. Ejemplo: `paciente-detalle-page.tsx` define
-`EstadoNoEncontrado` (línea ~1263) y `EstadoErrorGeneral` (línea ~1291), y hay un `<Vacio>` local
-usado en `TabDocumentos` (línea 1204). `cita-detalle-page.tsx` define su propio `EstadoErrorCita`
-(línea ~254). Todo duplicado.
+| Componente | Sustituye | Consumos |
+|---|---|---|
+| `EstadoError` | `EstadoError` (pacientes), `EstadoErrorGeneral` (expediente), `EstadoErrorCita` (cita) | 3 |
+| `EstadoVacio` | `Vacio` ×3 (expediente), `EstadoVacioCatalogo`, `EstadoSinResultados` | 5 |
+| `SkeletonTabla` | `TablaSkeleton` | 1 |
+| `Breadcrumbs` | dos miguas de pan hechas a mano | 2 |
 
-Entregables:
-- `src/components/feedback/estado-vacio.tsx` — `Vacio` con `titulo`, `descripcion`, `icono`, `accion?`.
-- `src/components/feedback/estado-error.tsx` — `EstadoError` con mensaje del `ApiError` y reintento.
-- `src/components/feedback/skeleton-tabla.tsx` — filas esqueleto con el mismo ancho de columna real.
-- `src/components/navigation/breadcrumbs.tsx` — miga de pan derivada de la ruta
-  (`/pacientes/:id` → `Pacientes › nombre`). Hoy no existe ningún indicador de contexto en el
-  expediente más allá del título.
+Detalles que decidieron la forma de cada uno, y que no eran evidentes al planificar:
 
-Alimentarlos desde los que ya están hechos en `paciente-detalle-page.tsx` para no partir de cero, y
-sustituir los equivalentes de `cita-detalle-page.tsx`.
+- **`EstadoError` necesitaba dos variantes, no una.** El error dentro de una página lleva icono y
+  fila horizontal; el que reemplaza la página entera va centrado y sin icono. Ese era el patrón real
+  de las tres implementaciones originales.
+- **`onReintentar` y `children` conviven.** El expediente ofrece "Volver a pacientes" **y**
+  "Reintentar"; la cita solo "Volver a citas"; el listado solo reintentar. Con una sola vía no se
+  cubrían los tres.
+- **El nivel del título depende de la variante.** `pagina` lleva `h1` porque sustituye a la página;
+  `linea` baja a `h2`, porque siempre va dentro de una que ya tiene el suyo. Usar `h1` en ambas
+  dejaba dos `h1` en la página de pacientes. Verificado después: cada página tiene un único `h1`.
+- **`EstadoVacio` no conoce los módulos.** El estado de catálogo vacío se dibuja con un
+  `AvatarPaciente`, pero `components/` no puede importar de `features/`. El slot es un `ReactNode`
+  (`visual`) y el avatar lo pinta `pacientes-page.tsx`.
+- **La descripción acepta nodos**, no `string`, porque `EstadoSinResultados` resalta el término
+  buscado con un `<span>`.
+- **Se conservó la copy original** de cada implementación, corrigiendo solo sus tildes.
 
-### 2.2 `[PENDIENTE]` Primitivas shadcn huérfanas
-Medido por imports reales sobre el total de `src/**/*.tsx` (excluyendo `components/ui`):
+### 2.2 `[RESUELTO]` Primitivas shadcn huérfanas — se migran, no se borran
+Decisión tomada: **usar shadcn**, que era el motivo de tenerlas. Resultado medido sobre
+`src/**/*.tsx`:
 
-| Primitiva | Usos |
-|---|---|
-| `avatar.tsx` | **0** |
-| `table.tsx` | **0** |
+| Primitiva | Antes | Después |
+|---|---|---|
+| `table.tsx` | **0** usos, 3 tablas `<table>` nativas | 3 tablas migradas, **0** nativas |
+| `avatar.tsx` | **0** usos | `AvatarPaciente` montado sobre `Avatar`/`AvatarFallback` |
 
-Las tablas de la app (`Mediciones anteriores`, `TabMedidas`, listado de pacientes) están hechas con
-`<table>` nativo, no con la primitiva.
+En la migración de tablas lo que había que no romper: los anchos, el colapso responsive por
+breakpoint (`sm:table-cell`, `lg:table-cell`) y la truncación. `TableCell` trae `whitespace-nowrap`
+por defecto, que impediría comprimir las celdas con texto truncado, así que esas se fijan en
+`whitespace-normal` explícitamente.
 
-**Decisión:** borrar ambas (`avatar`, `table`) — es lo más limpio — o migrar las 3 tablas reales a
-`table.tsx`. Recomiendo **borrar**, porque migrar es retoque visual justo cuando el expediente acaba
-de quedar bien.
+### 2.3 `[RESUELTO]` Hallazgo de paso: el esqueleto de carga era invisible
+La clase `.skeleton` **no está definida en ningún CSS** — aparece solo en un comentario de
+`theme.css:85`. Los cuatro placeholders de `TablaSkeleton` se pintaban transparentes y sin
+animación: la tabla se veía como una tarjeta con filas vacías mientras cargaba. Sustituidos por el
+componente `Skeleton`, que sí tiene `animate-pulse bg-muted`.
+
+`SkeletonTabla` replica además la estructura real de tabla, en vez de una lista, para que no haya
+salto de layout al llegar los datos; la primera columna acepta un avatar con dos líneas de texto,
+que es como se compone la fila real del listado.
 
 ---
 
@@ -268,8 +287,8 @@ Alcance propuesto (por orden de esfuerzo):
 ## 8. Orden de ejecución recomendado
 
 1. ~~**Fase 0 completa** (sección 1)~~ ✅ `01087ec`, `090cc6a`
-2. ~~**Fase 2** (sección 3) — editorial y tipografía~~ ✅ esta fase
-3. **Fase 1** (sección 2) — estados globales + huérfanas.
+2. ~~**Fase 2** (sección 3) — editorial y tipografía~~ ✅ `ad0c4c9`
+3. ~~**Fase 1** (sección 2) — estados globales + huérfanas~~ ✅ `e5e00a8`
 4. **Fase 3** (sección 4) — URL. La agenda ya está; queda el expediente y el orden de tabla.
 5. **Fase 4** (sección 5) — menú de usuario y logout.
 6. **Fase 5** (sección 6) — Consultas, que es la que de verdad cierra el circuito clínico.
@@ -288,3 +307,6 @@ Cada fase es entregable independiente y commiteable por separado.
 | `01087ec` | fix: clave del tema con typo y borde `--input` a 3:1 |
 | `090cc6a` | tildes en toda la UI |
 | `b91bcf2` | vista de citas con estado en URL y renombre Agenda→Citas |
+| `d1ca0dd` | docs: fase 0 marcada como completada |
+| `ad0c4c9` | escala única de títulos y ancho de página por tipo |
+| `e5e00a8` | estados globales compartidos y tablas sobre shadcn |
