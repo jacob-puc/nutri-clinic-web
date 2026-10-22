@@ -87,6 +87,11 @@ export function AgendaPage() {
   const [vista, setVista] = useState<VistaCitas>(() =>
     parametros.get("vista") === "calendario" ? "calendario" : "hoy",
   );
+  /* La vista interna del calendario (mes/semana/dia). FullCalendar solo lee
+     `initialView` al construirse, asi que si se desmonta pierde la vista. Al
+     recordarla aqui, que es un componente que NO se desmonta al alternar
+     Hoy/Calendario, al volver a montar el calendario arranca donde estaba. */
+  const [vistaDelCalendario, setVistaDelCalendario] = useState("dayGridMonth");
   const citaSeleccionadaId = parametros.get("cita");
 
   const filtroVisible = useMemo<CitaFiltro>(
@@ -291,7 +296,7 @@ export function AgendaPage() {
               ) : (
                 <FullCalendar
                   plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                  initialView="dayGridMonth"
+                  initialView={vistaDelCalendario}
                   locale={esLocale}
                   firstDay={1}
                   height="auto"
@@ -304,6 +309,10 @@ export function AgendaPage() {
                   eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
                   dayMaxEvents={3}
                   nowIndicator
+                  /* Dispara al montar y en cada cambio de vista, asi que
+                     refleja en estado lo que el usuario eligio. Si el valor no
+                     cambia, React corta el ciclo y no hay render extra. */
+                  viewDidMount={(arg) => setVistaDelCalendario(arg.view.type)}
                   datesSet={(arg) => {
                     const desde = arg.start.toISOString();
                     const hasta = arg.end.toISOString();
@@ -313,6 +322,9 @@ export function AgendaPage() {
                   }}
                   dateClick={(arg) => setDiaSeleccionado(dateOnlyDe(arg.date))}
                   eventClick={(arg) => abrirCita(arg.event.id)}
+                  /* title nativo, no TooltipSimple: FullCalendar monta estos
+                     nodos fuera de React, así que no hay dónde enganchar un
+                     trigger. El plugin de tooltip de FullCalendar es de pago. */
                   eventDidMount={(arg) => {
                     const props = arg.event.extendedProps;
                     arg.el.title = `${formatearHoraLocal(String(arg.event.start))} — ${props.nutricionista}${props.motivo ? ` · ${props.motivo}` : ""}`;

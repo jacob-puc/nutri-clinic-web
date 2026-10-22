@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { citasApi } from "@/features/citas/api/citas-api";
 import type { CitaFiltro, Guid } from "@/types/api";
@@ -20,6 +20,14 @@ export function useCitas(
     queryFn: () => citasApi.listar(filtro),
     staleTime: 30_000,
     enabled: opciones.enabled ?? true,
+    /* El filtro entra entero en la queryKey, asi que cambiar el rango visible
+       genera una consulta nueva y, mientras carga, `isPending` pasa a true.
+
+       Sin esto, la agenda desmonta y remonta el calendario en cada cambio de
+       rango, y al remontarse vuelve a `initialView="dayGridMonth"`: el usuario
+       pulsa "Semana" y la app lo devuelve a "Mes". Con los datos previos en
+       pie, `isPending` no vuelve a true y el calendario jamas se desmonta. */
+    placeholderData: keepPreviousData,
   });
 }
 
