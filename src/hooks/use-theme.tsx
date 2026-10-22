@@ -4,7 +4,9 @@ import type { ReactNode } from "react";
 export type Theme = "light" | "dark";
 export type ThemePreference = Theme | "system";
 
-const STORAGE_KEY = "nutriclinia-theme";
+const STORAGE_KEY = "nutriclinica-theme";
+/** Clave anterior, con la "c" perdida. Se migra una sola vez. */
+const STORAGE_KEY_LEGADO = "nutriclinia-theme";
 
 interface ThemeContextValue {
   theme: Theme;
@@ -21,6 +23,13 @@ function leerPreferenciaInicial(): ThemePreference {
   const guardado = window.localStorage.getItem(STORAGE_KEY);
   if (guardado === "light" || guardado === "dark" || guardado === "system") {
     return guardado;
+  }
+
+  const legado = window.localStorage.getItem(STORAGE_KEY_LEGADO);
+  if (legado === "light" || legado === "dark" || legado === "system") {
+    window.localStorage.setItem(STORAGE_KEY, legado);
+    window.localStorage.removeItem(STORAGE_KEY_LEGADO);
+    return legado;
   }
 
   return "system";
