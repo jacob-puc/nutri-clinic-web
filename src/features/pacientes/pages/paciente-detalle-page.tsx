@@ -1,15 +1,23 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  Contact,
+  Activity,
+  AlertTriangle,
+  Ban,
   CalendarPlus,
   ClipboardPlus,
+  Contact,
   FileText,
   ChevronRight,
+  Heart,
+  Ruler,
+  Scale,
   Stethoscope,
+  Target,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
 import { CitasPaciente } from "@/features/citas/components/citas-paciente";
@@ -22,7 +30,6 @@ import { useExpediente, usePaciente } from "@/features/pacientes/hooks/use-exped
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -33,6 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { esApiError } from "@/lib/api-error";
+import { cn } from "@/lib/utils";
 import {
   categoriaImc,
   etiquetaSexo,
@@ -213,74 +221,149 @@ function EncabezadoFicha({
   onRegistrarMedida: () => void;
   onAgendarCita: () => void;
 }) {
-  const ultimaMedida = [...medidas].sort((a, b) =>
+  const porFecha = [...medidas].sort((a, b) =>
     b.fechaMedicion.localeCompare(a.fechaMedicion),
-  )[0];
+  );
+  const ultimaMedida = porFecha[0];
+  const imcActual = ultimaMedida
+    ? Number(ultimaMedida.imc.toFixed(1))
+    : null;
+  const categoria = imcActual !== null ? categoriaImc(imcActual) : null;
 
   return (
-    <Card className="border-primary/20 bg-primary/[0.03] py-0 shadow-subtle">
-      <CardContent className="px-4 py-5 md:px-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
+    <section className="border-border bg-card overflow-hidden rounded-xl border shadow-sm">
+      {/* Folio del expediente + acciones: portada de la ficha, no una card mas. */}
+      <div className="border-border/70 flex flex-wrap items-center justify-between gap-3 border-b px-4 py-2.5 md:px-6">
+        <div className="flex items-center gap-2.5">
+          <span className="text-primary text-[11px] font-semibold tracking-[0.2em] uppercase">
+            Expediente clinico
+          </span>
+          <span aria-hidden className="bg-border h-3 w-px" />
+          <span className="text-muted-foreground-subtle text-[11px] tracking-wide tabular-nums">
+            EXP-{paciente.id.slice(0, 8).toUpperCase()}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={onEditar}>
+            Editar
+          </Button>
+          <Button variant="outline" size="sm" onClick={onAgendarCita}>
+            <CalendarPlus className="size-4" />
+            <span className="hidden sm:inline">Agendar cita</span>
+            <span className="sm:hidden">Cita</span>
+          </Button>
+          <Button size="sm" onClick={onRegistrarMedida}>
+            <ClipboardPlus className="size-4" />
+            Nueva medicion
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid gap-5 px-4 py-5 md:px-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-8">
+        <div className="flex min-w-0 items-start gap-4">
           <AvatarPaciente
             nombre={paciente.nombreCompleto}
             id={paciente.id}
-            className="size-16 text-lg"
+            className="size-14 shrink-0 text-base"
           />
 
-          <div className="min-w-0 flex-1">
-            <p className="text-primary text-xs font-semibold tracking-wider uppercase">
-              Expediente clinico
-            </p>
-            <h1 className="text-foreground mt-1 text-xl font-semibold tracking-tight md:text-2xl">
+          <div className="min-w-0">
+            <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">
               {paciente.nombreCompleto}
             </h1>
 
             <p className="text-muted-foreground mt-1 text-sm tabular-nums">
-              {paciente.edad !== null && <>{paciente.edad} anos | </>}
+              {paciente.edad !== null && <>{paciente.edad} anos · </>}
               Tel: {paciente.telefono}
             </p>
 
-            <div className="mt-3 flex flex-col items-start gap-1">
-              <LineaObjetivo paciente={paciente} medidas={medidas} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 border-y border-border/70 py-3 sm:grid-cols-2 lg:w-72 lg:border-y-0 lg:border-l lg:py-0 lg:pl-5">
-            <div>
-              <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
-                Ultima medicion
-              </p>
-              <p className="text-foreground mt-1 text-sm font-semibold tabular-nums">
-                {ultimaMedida ? `${ultimaMedida.peso} kg` : "Sin registro"}
-              </p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
-                IMC actual
-              </p>
-              <p className="text-foreground mt-1 text-sm font-semibold tabular-nums">
-                {ultimaMedida ? Number(ultimaMedida.imc.toFixed(1)) : "Sin registro"}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex shrink-0 flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={onEditar}>
-              Editar
-            </Button>
-            <Button variant="outline" size="sm" onClick={onAgendarCita}>
-              <CalendarPlus className="size-4" />
-              <span className="hidden sm:inline">Agendar cita</span>
-              <span className="sm:hidden">Cita</span>
-            </Button>
-            <Button size="sm" onClick={onRegistrarMedida}>
-              <ClipboardPlus className="size-4" />
-              Nueva medicion
-            </Button>
+            <LineaObjetivo
+              paciente={paciente}
+              medidas={medidas}
+              className="mt-3 max-w-sm"
+            />
           </div>
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Constantes actuales: numeros grandes y etiquetas micro, como una hoja de signos. */}
+        <div className="lg:border-border/70 lg:border-l lg:pl-8">
+          <dl className="border-border/60 grid grid-cols-3 gap-4 border-t pt-4 lg:border-t-0 lg:pt-0">
+            <Constante
+              etiqueta="Peso"
+              valor={ultimaMedida ? `${ultimaMedida.peso}` : "—"}
+              unidad="kg"
+              icono={Scale}
+            />
+            <Constante
+              etiqueta="IMC"
+              valor={imcActual !== null ? `${imcActual}` : "—"}
+              icono={Activity}
+              tono={categoria?.tono}
+            />
+            <Constante
+              etiqueta="Estatura"
+              valor={ultimaMedida?.estatura != null ? `${ultimaMedida.estatura}` : "—"}
+              unidad="cm"
+              icono={Ruler}
+            />
+          </dl>
+
+          {categoria && imcActual !== null && (
+            <div className="border-border/60 mt-4 flex flex-wrap items-center gap-2 border-t pt-3">
+              <span className="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase">
+                Categoria OMS
+              </span>
+              <BadgeCategoria imc={imcActual} />
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+type TonoImc = "success" | "info" | "warning" | "destructive";
+
+function Constante({
+  etiqueta,
+  valor,
+  unidad,
+  tono,
+  icono: Icono,
+}: {
+  etiqueta: string;
+  valor: string;
+  unidad?: string;
+  tono?: TonoImc;
+  icono: LucideIcon;
+}) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-muted-foreground flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] uppercase">
+        <Icono className="size-3.5 shrink-0" aria-hidden />
+        {etiqueta}
+      </dt>
+      <dd
+        className={cn(
+          "mt-1 flex items-baseline gap-1 text-2xl font-semibold tracking-tight tabular-nums",
+          tono === "destructive"
+            ? "text-destructive"
+            : tono === "warning"
+              ? "text-warning"
+              : tono === "success"
+                ? "text-success"
+                : "text-foreground",
+        )}
+      >
+        {valor}
+        {unidad && (
+          <span className="text-muted-foreground text-xs font-medium tracking-normal">
+            {unidad}
+          </span>
+        )}
+      </dd>
+    </div>
   );
 }
 
@@ -303,89 +386,88 @@ function TabResumen({
 }) {
   return (
     <div className="space-y-4">
-      <CardInformacionGeneral paciente={paciente} />
+      <PanelFicha paciente={paciente} />
 
-      <CitasPaciente pacienteId={paciente.id} pacienteNombre={paciente.nombreCompleto} />
-
-      <Card className="py-0">
-        <CardContent className="px-4 pt-2 pb-5 md:px-6">
-          <h2 className="text-foreground flex items-center gap-2 text-sm font-semibold">
-            <Stethoscope className="text-primary size-4" aria-hidden />
-            Historial clinico
-          </h2>
-          <Separator className="my-2" />
-
-          {!historial ? (
-            <p className="text-muted-foreground text-sm text-center py-6">
-              Sin historial clinico capturado. Completalo en la primera consulta.
-            </p>
-          ) : (
-            <div className="grid gap-5 sm:grid-cols-3">
-              <ListaHistorial
-                etiqueta="Alergias"
-                items={historial.alergias}
-                vacio="Sin alergias registradas"
-                variante="alerta"
-              />
-              <ListaHistorial
-                etiqueta="Alimentos favoritos"
-                items={historial.alimentosFavoritos}
-                vacio="Sin alimentos favoritos"
-              />
-              <ListaHistorial
-                etiqueta="Alimentos no favoritos"
-                items={historial.alimentosNoFavoritos}
-                vacio="Sin alimentos no favoritos"
-              />
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <UltimasMedidas
-        medidas={medidas}
+      <CitasPaciente
+        pacienteId={paciente.id}
+        pacienteNombre={paciente.nombreCompleto}
       />
+
+      <PanelHistorial historial={historial} />
+
+      <PanelMediciones medidas={medidas} pesoObjetivo={paciente.pesoObjetivo} />
     </div>
   );
 }
 
-function CardInformacionGeneral({ paciente }: { paciente: Paciente }) {
+/** Cabecera comun de cada seccion del expediente: icono, titulo y meta. */
+function Panel({
+  titulo,
+  icono: Icono,
+  meta,
+  acciones,
+  children,
+}: {
+  titulo: string;
+  icono: LucideIcon;
+  meta?: React.ReactNode;
+  acciones?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
-    <Card className="py-0">
-      <CardContent className="px-4 pt-2 pb-5 md:px-6">
-        <h2 className="text-foreground flex items-center gap-2 text-sm font-semibold">
-          <Contact className="text-primary size-4" aria-hidden />
-          Informacion general
-        </h2>
-        <Separator className="my-2" />
-
-        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-          <DatoGeneral etiqueta="Sexo" valor={etiquetaSexo(paciente.sexo)} />
-          <DatoGeneral
-            etiqueta="Fecha de nacimiento"
-            valor={
-              paciente.fechaNacimiento
-                ? formatearFecha(paciente.fechaNacimiento)
-                : null
-            }
-          />
-          <DatoGeneral
-            etiqueta="Correo electronico"
-            valor={paciente.correoElectronico}
-          />
-          <DatoGeneral etiqueta="Telefono" valor={paciente.telefono} />
-          <DatoGeneral etiqueta="Direccion" valor={paciente.direccion} />
-          <DatoGeneral
-            etiqueta="Fecha de alta"
-            valor={formatearFecha(paciente.fechaRegistro)}
-          />
-        </dl>
-      </CardContent>
-    </Card>
+    <section className="border-border bg-card overflow-hidden rounded-xl border shadow-sm">
+      <header className="border-border/70 flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 md:px-5">
+        <div className="flex min-w-0 items-center gap-2">
+          <Icono className="text-primary size-4 shrink-0" aria-hidden />
+          <h2 className="text-foreground text-sm font-semibold tracking-tight">
+            {titulo}
+          </h2>
+          {meta && (
+            <span className="text-muted-foreground-subtle truncate text-xs">
+              {meta}
+            </span>
+          )}
+        </div>
+        {acciones}
+      </header>
+      <div className="px-4 py-4 md:px-5">{children}</div>
+    </section>
   );
 }
 
-function DatoGeneral({
+function PanelFicha({ paciente }: { paciente: Paciente }) {
+  return (
+    <Panel
+      titulo="Ficha del paciente"
+      icono={Contact}
+      meta="Datos de contacto y alta"
+    >
+      <dl className="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
+        <DatoFicha etiqueta="Sexo" valor={etiquetaSexo(paciente.sexo)} />
+        <DatoFicha
+          etiqueta="Fecha de nacimiento"
+          valor={
+            paciente.fechaNacimiento
+              ? formatearFecha(paciente.fechaNacimiento)
+              : null
+          }
+        />
+        <DatoFicha
+          etiqueta="Correo electronico"
+          valor={paciente.correoElectronico}
+        />
+        <DatoFicha etiqueta="Telefono" valor={paciente.telefono} />
+        <DatoFicha etiqueta="Direccion" valor={paciente.direccion} />
+        <DatoFicha
+          etiqueta="Fecha de alta"
+          valor={formatearFecha(paciente.fechaRegistro)}
+        />
+      </dl>
+    </Panel>
+  );
+}
+
+function DatoFicha({
   etiqueta,
   valor,
 }: {
@@ -393,46 +475,105 @@ function DatoGeneral({
   valor: string | null;
 }) {
   return (
-    <div className="pl-4 sm:pl-6">
-      <dt className="text-muted-foreground text-xs">{etiqueta}</dt>
-      <dd className="text-foreground text-sm break-words">
+    <div className="border-border/50 py-2.5">
+      <dt className="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase">
+        {etiqueta}
+      </dt>
+      <dd className="text-foreground mt-1 text-sm break-words">
         {valor ?? <span className="text-muted-foreground-subtle">Sin registro</span>}
       </dd>
     </div>
   );
 }
 
-function ListaHistorial({
+function PanelHistorial({ historial }: { historial: HistorialClinico | null }) {
+  return (
+    <Panel
+      titulo="Historial clinico"
+      icono={Stethoscope}
+      meta="Alergias y preferencias de la dieta"
+    >
+      {!historial ? (
+        <p className="text-muted-foreground py-6 text-center text-sm">
+          Sin historial clinico capturado. Completalo en la primera consulta.
+        </p>
+      ) : (
+        <div className="grid gap-x-8 gap-y-5 sm:grid-cols-3">
+          <GrupoHistorial
+            etiqueta="Alergias"
+            items={historial.alergias}
+            vacio="Sin alergias registradas"
+            tono="alerta"
+            icono={AlertTriangle}
+          />
+          <GrupoHistorial
+            etiqueta="Alimentos favoritos"
+            items={historial.alimentosFavoritos}
+            vacio="Sin alimentos favoritos"
+            tono="favorito"
+            icono={Heart}
+          />
+          <GrupoHistorial
+            etiqueta="Alimentos no favoritos"
+            items={historial.alimentosNoFavoritos}
+            vacio="Sin alimentos no favoritos"
+            tono="evitar"
+            icono={Ban}
+          />
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+type TonoHistorial = "alerta" | "favorito" | "evitar";
+
+/** Cada tipo de alimento se distingue por icono y tono, no solo por el texto. */
+const CHIP_HISTORIAL: Record<TonoHistorial, string> = {
+  alerta: "bg-destructive-soft text-destructive-soft-foreground ring-destructive/30",
+  favorito: "bg-success-soft text-success-soft-foreground ring-success/30",
+  evitar: "bg-secondary text-secondary-foreground ring-ring/40",
+};
+
+function GrupoHistorial({
   etiqueta,
   items,
   vacio,
-  variante,
+  tono,
+  icono: Icono,
 }: {
   etiqueta: string;
   items: string[];
   vacio: string;
-  variante?: "alerta";
+  tono: TonoHistorial;
+  icono: LucideIcon;
 }) {
   return (
-    <div>
-      <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+    <div className="min-w-0">
+      <p className="text-muted-foreground flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] uppercase">
+        <Icono className="size-3.5 shrink-0" aria-hidden />
         {etiqueta}
+        <span className="text-muted-foreground-subtle font-normal tabular-nums">
+          {items.length}
+        </span>
       </p>
 
       {items.length === 0 ? (
-        <p className="text-muted-foreground mt-2 text-sm">{vacio}</p>
+        <p className="border-border/60 text-muted-foreground-subtle mt-2 rounded-md border border-dashed px-3 py-2 text-xs">
+          {vacio}
+        </p>
       ) : (
         <ul className="mt-2 flex flex-wrap gap-1.5">
           {items.map((item) => (
             <li
               key={item}
-              className={
-                variante === "alerta"
-                  ? "bg-destructive/10 text-destructive ring-destructive/20 rounded-full px-2 py-0.5 text-xs ring-1"
-                  : "bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs"
-              }
+              className={cn(
+                "inline-flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1",
+                CHIP_HISTORIAL[tono],
+              )}
             >
-              {item}
+              <Icono className="size-3 shrink-0" aria-hidden />
+              <span className="truncate">{item}</span>
             </li>
           ))}
         </ul>
@@ -443,102 +584,109 @@ function ListaHistorial({
 
 const MAX_MEDIDAS_RESUMEN = 3;
 
-function UltimasMedidas({
+/** En la barra de variacion, 5 kg llegan al tope: el centro es el punto de partida. */
+const ESCALA_BARRA_KG = 5;
+
+function PanelMediciones({
   medidas,
+  pesoObjetivo,
 }: {
   medidas: MedidaAntropometrica[];
+  pesoObjetivo: number | null;
 }) {
   if (medidas.length === 0) {
     return (
-      <Card className="py-0">
-        <CardContent className="px-4 pt-2 pb-5 md:px-6">
-          <EncabezadoMediciones total={0} />
-          <Separator className="my-2" />
-          <p className="text-muted-foreground text-sm text-center py-6">
-            Aun no se ha registrado ninguna medida antropometrica para este
-            paciente.
-          </p>
-        </CardContent>
-      </Card>
+      <Panel titulo="Mediciones" icono={ClipboardPlus}>
+        <p className="text-muted-foreground py-6 text-center text-sm">
+          Aun no se ha registrado ninguna medida antropometrica para este
+          paciente.
+        </p>
+      </Panel>
     );
   }
 
-  const porFecha = [...medidas].sort((a, b) =>
+  const ascendente = [...medidas].sort((a, b) =>
     a.fechaMedicion.localeCompare(b.fechaMedicion),
   );
-  const recientes = [...porFecha].reverse().slice(0, MAX_MEDIDAS_RESUMEN);
-  const [principal, ...previas] = recientes;
-
-  // La primera medicion jamas registrada no tiene contra que compararse.
-  const sinPrecedente = new Set([porFecha[0]?.id]);
-
+  const principal = ascendente.at(-1);
+  const anterior = ascendente.at(-2);
   if (!principal) return null;
 
+  // La primera medicion jamas registrada no tiene contra que compararse.
+  const sinPrecedente = new Set([ascendente[0]?.id]);
+  const recientes = [...ascendente].reverse().slice(0, MAX_MEDIDAS_RESUMEN);
+  const previas = recientes.slice(1);
+  const imcActual = Number(principal.imc.toFixed(1));
+
   return (
-    <Card className="py-0">
-      <CardContent className="px-4 pt-2 pb-5 md:px-6">
-        <EncabezadoMediciones
-          total={medidas.length}
-          fechaReciente={principal.fechaMedicion}
+    <Panel
+      titulo="Mediciones"
+      icono={ClipboardPlus}
+      meta={`${medidas.length} ${
+        medidas.length === 1 ? "registrada" : "registradas"
+      } · ultima ${formatearFechaCorta(principal.fechaMedicion)}`}
+    >
+      {/* Hoja de signos: cifras actuales con su variacion respecto a lo anterior. */}
+      <dl className="border-border/60 grid grid-cols-2 gap-x-6 gap-y-2 border-y py-2 sm:grid-cols-4 sm:gap-x-0 sm:py-0">
+        <ConstanteMedida
+          etiqueta="Peso"
+          valor={`${principal.peso}`}
+          unidad="kg"
+          delta={anterior ? principal.peso - anterior.peso : null}
         />
-        <Separator className="my-2" />
+        <ConstanteMedida etiqueta="IMC" valor={`${imcActual}`}>
+          <BadgeCategoria imc={imcActual} />
+        </ConstanteMedida>
+        <ConstanteMedida
+          etiqueta="Estatura"
+          valor={formatearEstatura(principal.estatura)}
+        />
+        <CeldaObjetivo pesoActual={principal.peso} pesoObjetivo={pesoObjetivo} />
+      </dl>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Dato titulo="Peso" valor={`${principal.peso} kg`} />
-          <Dato titulo="Estatura" valor={formatearEstatura(principal.estatura)} />
-          <Dato titulo="IMC" valor={String(Number(principal.imc.toFixed(1)))} />
-          <div>
-            <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-              Categoria
-            </p>
-            <div className="mt-1.5">
-              <BadgeCategoria imc={principal.imc} />
-            </div>
-          </div>
-        </div>
-
-        {previas.length > 0 && (
-          <div className="border-border mt-5 border-t pt-4">
-            <p className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
-              Anteriores mediciones
-            </p>
-            <table className="w-full text-sm">
+      {previas.length > 0 && (
+        <div className="mt-4">
+          <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase">
+            Mediciones anteriores
+          </p>
+          {/* Envolvente con scroll horizontal propio: sin ella, el ancho de la
+              columna de variacion desborda el <main> y aparece una segunda
+              barra de scroll a nivel de pagina. */}
+          <div className="scrollbar-slim -mx-1 overflow-x-auto px-1">
+            <table className="mt-1.5 w-full text-sm">
+              <caption className="sr-only">
+                Mediciones antropometricas recientes del paciente
+              </caption>
               <thead>
                 <tr className="text-muted-foreground text-xs">
-                  <th scope="col" className="pb-2 text-left font-semibold">
+                  <th scope="col" className="pb-1.5 text-left font-medium whitespace-nowrap">
                     Fecha
                   </th>
-                  <th scope="col" className="pb-2 text-right font-semibold">
+                  <th scope="col" className="pb-1.5 text-right font-medium">
                     Peso
                   </th>
-                  <th scope="col" className="pb-2 text-right font-semibold">
-                    Estatura
-                  </th>
-                  <th scope="col" className="pb-2 text-right font-semibold">
+                  <th scope="col" className="pb-1.5 text-right font-medium">
                     IMC
                   </th>
-                  <th scope="col" className="pb-2 text-right font-semibold">
+                  <th scope="col" className="pb-1.5 text-right font-medium whitespace-nowrap">
                     Variacion
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="border-border/50 divide-y divide-border/50">
                 {previas.map((medida, indice) => (
                   <tr key={medida.id}>
-                    <td className="py-2.5">
+                    <td className="text-muted-foreground py-2.5 whitespace-nowrap">
                       {formatearFechaCorta(medida.fechaMedicion)}
                     </td>
-                    <td className="py-2.5 text-right tabular-nums">
+                    <td className="py-2.5 text-right font-medium tabular-nums whitespace-nowrap">
                       {medida.peso} kg
                     </td>
-                    <td className="text-muted-foreground py-2.5 text-right tabular-nums">
-                      {formatearEstatura(medida.estatura)}
-                    </td>
-                    <td className="py-2.5 text-right font-medium tabular-nums">
+                    <td className="py-2.5 text-right tabular-nums whitespace-nowrap">
                       {Number(medida.imc.toFixed(1))}
                     </td>
-                    <td className="py-2.5 text-right">
-                      <VariacionPeso
+                    <td className="py-2.5 pl-4">
+                      <BarraDelta
                         delta={
                           sinPrecedente.has(medida.id) || !recientes[indice]
                             ? null
@@ -551,9 +699,138 @@ function UltimasMedidas({
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+function ConstanteMedida({
+  etiqueta,
+  valor,
+  unidad,
+  delta,
+  children,
+}: {
+  etiqueta: string;
+  valor: string;
+  unidad?: string;
+  delta?: number | null;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="min-w-0 py-1.5 sm:border-border/40 sm:border-l sm:px-4 sm:py-3.5 sm:first:border-l-0 sm:first:pl-0">
+      <dt className="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase">
+        {etiqueta}
+      </dt>
+      <dd className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
+        <span className="text-foreground text-xl font-semibold tracking-tight tabular-nums">
+          {valor}
+        </span>
+        {unidad && (
+          <span className="text-muted-foreground text-xs font-medium">
+            {unidad}
+          </span>
         )}
-      </CardContent>
-    </Card>
+        {delta !== undefined && <VariacionPeso delta={delta} />}
+      </dd>
+      {children && <div className="mt-1.5">{children}</div>}
+    </div>
+  );
+}
+
+function CeldaObjetivo({
+  pesoActual,
+  pesoObjetivo,
+}: {
+  pesoActual: number;
+  pesoObjetivo: number | null;
+}) {
+  if (pesoObjetivo === null) {
+    return (
+      <ConstanteMedida etiqueta="Objetivo" valor="—">
+        <span className="text-muted-foreground-subtle text-xs">sin definir</span>
+      </ConstanteMedida>
+    );
+  }
+
+  const restante = pesoActual - pesoObjetivo;
+
+  if (Math.abs(restante) < 0.05) {
+    return (
+      <ConstanteMedida etiqueta="Objetivo" valor={`${pesoObjetivo}`} unidad="kg">
+        <span className="text-success inline-flex items-center gap-1 text-xs font-medium">
+          <Target className="size-3.5" aria-hidden />
+          meta alcanzada
+        </span>
+      </ConstanteMedida>
+    );
+  }
+
+  const subio = restante > 0;
+
+  return (
+    <ConstanteMedida
+      etiqueta="Para el objetivo"
+      valor={Math.abs(restante).toFixed(1)}
+      unidad="kg"
+    >
+      <span className={subio ? "text-warning text-xs" : "text-primary text-xs"}>
+        {subio ? "por encima de" : "por debajo de"} {pesoObjetivo} kg
+      </span>
+    </ConstanteMedida>
+  );
+}
+
+/** Barra de variacion centrada: baja a la izquierda (avance), sube a la derecha. */
+function BarraDelta({ delta }: { delta: number | null }) {
+  if (delta === null) {
+    return (
+      <span className="text-muted-foreground-subtle block text-right text-sm">
+        —
+      </span>
+    );
+  }
+
+  if (Math.abs(delta) < 0.05) {
+    return (
+      <span className="text-muted-foreground block text-right text-xs">
+        sin cambio
+      </span>
+    );
+  }
+
+  const subio = delta > 0;
+  const Icono = subio ? TrendingUp : TrendingDown;
+  const ancho = Math.min(50, (Math.abs(delta) / ESCALA_BARRA_KG) * 50);
+
+  return (
+    <span className="flex items-center justify-end gap-2.5">
+      <span
+        aria-hidden
+        className="bg-muted relative h-1.5 w-16 shrink-0 rounded-full sm:w-24"
+      >
+        <span className="border-border absolute inset-y-0 left-1/2 w-px" />
+        <span
+          className={cn(
+            "absolute inset-y-0 rounded-full",
+            subio ? "bg-warning left-1/2" : "bg-primary right-1/2",
+          )}
+          style={{ width: `${ancho}%` }}
+        />
+      </span>
+      <span
+        className={cn(
+          "inline-flex w-20 items-center justify-end gap-1 text-xs font-medium tabular-nums",
+          subio ? "text-warning" : "text-primary",
+        )}
+      >
+        <Icono className="size-3.5" aria-hidden />
+        {subio ? "+" : "−"}
+        {Math.abs(delta).toFixed(1)}
+        <span className="text-muted-foreground font-normal">kg</span>
+      </span>
+    </span>
   );
 }
 
@@ -584,30 +861,6 @@ function VariacionPeso({ delta }: { delta: number | null }) {
   );
 }
 
-function EncabezadoMediciones({
-  total,
-  fechaReciente,
-}: {
-  total: number;
-  fechaReciente?: string;
-}) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      <div className="flex flex-wrap items-baseline gap-x-2">
-        <h2 className="text-foreground text-sm font-semibold">
-          {total === 1 ? "Ultima medicion" : "Ultimas mediciones"}
-        </h2>
-        {total > 0 && (
-          <span className="text-muted-foreground text-xs">
-            {total} {total === 1 ? "registrada" : "registradas"}
-            {fechaReciente && ` · ${formatearFechaCorta(fechaReciente)}`}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function BadgeCategoria({ imc }: { imc: number }) {
   const categoria = categoriaImc(Number(imc.toFixed(1)));
 
@@ -629,78 +882,155 @@ function BadgeCategoria({ imc }: { imc: number }) {
   );
 }
 
-function Dato({ titulo, valor }: { titulo: string; valor: string }) {
-  return (
-    <div>
-      <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-        {titulo}
-      </p>
-      <p className="mt-1 text-lg font-semibold tabular-nums">{valor}</p>
-    </div>
-  );
-}
-
 function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
   if (medidas.length === 0) {
-    return <Vacio titulo="Sin mediciones" descripcion="Aun no se ha registrado ninguna medida antropometrica para este paciente." />;
+    return (
+      <Vacio
+        titulo="Sin mediciones"
+        descripcion="Aun no se ha registrado ninguna medida antropometrica para este paciente."
+      />
+    );
   }
 
   const ordenadas = [...medidas].sort((a, b) =>
     b.fechaMedicion.localeCompare(a.fechaMedicion),
   );
+  const primera = ordenadas.at(-1);
+  const ultima = ordenadas[0];
+  const variacion = primera && ultima ? ultima.peso - primera.peso : 0;
+  const estable = Math.abs(variacion) < 0.05;
+  const subio = variacion > 0;
 
   return (
     <div className="space-y-4">
       <GraficaMedidas medidas={medidas} />
 
-      <Card>
-        <CardContent className="px-4 py-5 md:px-6">
-          <h2 className="text-foreground mb-4 text-sm font-semibold">
-            Todas las mediciones
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <caption className="sr-only">Mediciones antropometricas del paciente</caption>
-              <thead>
-                <tr className="border-b border-border">
-                  <th scope="col" className="text-muted-foreground pb-2 text-left text-xs font-semibold tracking-wide uppercase">Fecha</th>
-                  <th scope="col" className="text-muted-foreground pb-2 text-right text-xs font-semibold tracking-wide uppercase">Peso</th>
-                  <th scope="col" className="text-muted-foreground hidden pb-2 text-right text-xs font-semibold tracking-wide uppercase sm:table-cell">Estatura</th>
-                  <th scope="col" className="text-muted-foreground pb-2 text-right text-xs font-semibold tracking-wide uppercase">IMC</th>
-                  <th scope="col" className="text-muted-foreground hidden pb-2 pl-4 text-left text-xs font-semibold tracking-wide uppercase md:table-cell">Categoria</th>
-                  <th scope="col" className="text-muted-foreground hidden pb-2 pl-6 text-left text-xs font-semibold tracking-wide uppercase lg:table-cell">Observaciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {ordenadas.map((medida) => {
-                  const imc = Number(medida.imc.toFixed(1));
-                  return (
-                    <tr key={medida.id} className="hover:bg-accent transition-colors">
-                      <td className="py-2.5 whitespace-nowrap">
-                        {formatearFechaHora(medida.fechaMedicion)}
-                      </td>
-                      <td className="py-2.5 text-right tabular-nums">{medida.peso} kg</td>
-                      <td className="text-muted-foreground hidden py-2.5 text-right tabular-nums sm:table-cell">
-                        {formatearEstatura(medida.estatura)}
-                      </td>
-                      <td className="py-2.5 text-right font-medium tabular-nums">{imc}</td>
-                      <td className="text-muted-foreground hidden py-2.5 pl-4 md:table-cell">
-                        {categoriaImc(imc).etiqueta}
-                      </td>
-                      <td
-                        className="text-muted-foreground hidden truncate py-2.5 pl-6 lg:table-cell"
-                        title={medida.notasObservaciones ?? undefined}
-                      >
-                        {medida.notasObservaciones ?? "—"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      <Panel
+        titulo="Registro completo"
+        icono={ClipboardPlus}
+        meta={`${medidas.length} ${
+          medidas.length === 1 ? "medicion" : "mediciones"
+        }`}
+      >
+        {/* Balance del seguimiento: de donde viene y hacia donde va. */}
+        <dl className="border-border/60 grid grid-cols-2 gap-x-6 gap-y-2 border-b pb-4 sm:grid-cols-4 sm:gap-x-0">
+          <ResumenMedida
+            etiqueta="Primera medicion"
+            valor={primera ? `${primera.peso} kg` : "—"}
+            nota={primera ? formatearFechaCorta(primera.fechaMedicion) : undefined}
+          />
+          <ResumenMedida
+            etiqueta="Ultima medicion"
+            valor={ultima ? `${ultima.peso} kg` : "—"}
+            nota={ultima ? formatearFechaCorta(ultima.fechaMedicion) : undefined}
+          />
+          <ResumenMedida
+            etiqueta="Variacion total"
+            valor={`${subio ? "+" : "−"}${Math.abs(variacion).toFixed(1)} kg`}
+            tono={estable ? undefined : subio ? "warning" : "success"}
+          />
+          <ResumenMedida
+            etiqueta="Tendencia"
+            valor={estable ? "Estable" : subio ? "Aumento" : "Descenso"}
+            tono={estable ? undefined : subio ? "warning" : "success"}
+          />
+        </dl>
+
+        <div className="scrollbar-slim -mx-1 overflow-x-auto px-1">
+          <table className="mt-4 w-full text-sm">
+            <caption className="sr-only">Mediciones antropometricas del paciente</caption>
+            <thead>
+              <tr className="border-border/60 border-b">
+                <th scope="col" className="text-muted-foreground pb-2 text-left text-[11px] font-semibold tracking-[0.14em] uppercase">Fecha</th>
+                <th scope="col" className="text-muted-foreground pb-2 text-right text-[11px] font-semibold tracking-[0.14em] uppercase">Peso</th>
+                <th scope="col" className="text-muted-foreground hidden pb-2 text-right text-[11px] font-semibold tracking-[0.14em] uppercase sm:table-cell">Estatura</th>
+                <th scope="col" className="text-muted-foreground pb-2 text-right text-[11px] font-semibold tracking-[0.14em] uppercase">IMC</th>
+                <th scope="col" className="text-muted-foreground hidden pb-2 pl-4 text-left text-[11px] font-semibold tracking-[0.14em] uppercase md:table-cell">Categoria</th>
+                <th scope="col" className="text-muted-foreground hidden pb-2 pl-6 text-left text-[11px] font-semibold tracking-[0.14em] uppercase lg:table-cell">Observaciones</th>
+              </tr>
+            </thead>
+            <tbody className="border-border/50 divide-y divide-border/50">
+              {ordenadas.map((medida) => {
+                const imc = Number(medida.imc.toFixed(1));
+                const categoria = categoriaImc(imc);
+                return (
+                  <tr key={medida.id} className="hover:bg-accent/60 transition-colors">
+                    <td className="text-muted-foreground py-2.5 whitespace-nowrap">
+                      {formatearFechaHora(medida.fechaMedicion)}
+                    </td>
+                    <td className="py-2.5 text-right font-medium tabular-nums">{medida.peso} kg</td>
+                    <td className="text-muted-foreground hidden py-2.5 text-right tabular-nums sm:table-cell">
+                      {formatearEstatura(medida.estatura)}
+                    </td>
+                    <td className="py-2.5 text-right font-medium tabular-nums">{imc}</td>
+                    <td className="hidden py-2.5 pl-4 md:table-cell">
+                      <span className="inline-flex items-center gap-1.5 text-xs">
+                        <span
+                          aria-hidden
+                          className={cn("size-1.5 shrink-0 rounded-full", PUNTO_IMC[categoria.tono])}
+                        />
+                        <span className="text-muted-foreground">{categoria.etiqueta}</span>
+                      </span>
+                    </td>
+                    <td
+                      className="text-muted-foreground hidden truncate py-2.5 pl-6 lg:table-cell"
+                      title={medida.notasObservaciones ?? undefined}
+                    >
+                      {medida.notasObservaciones ?? "—"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
+    </div>
+  );
+}
+
+const PUNTO_IMC: Record<TonoImc, string> = {
+  destructive: "bg-destructive",
+  warning: "bg-warning",
+  success: "bg-success",
+  info: "bg-info",
+};
+
+function ResumenMedida({
+  etiqueta,
+  valor,
+  nota,
+  tono,
+}: {
+  etiqueta: string;
+  valor: string;
+  nota?: string;
+  tono?: TonoImc;
+}) {
+  return (
+    <div className="min-w-0 py-1.5 sm:border-border/40 sm:border-l sm:px-4 sm:py-0 sm:first:border-l-0 sm:first:pl-0">
+      <dt className="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase">
+        {etiqueta}
+      </dt>
+      <dd
+        className={cn(
+          "mt-1 text-lg font-semibold tracking-tight tabular-nums",
+          tono === "destructive"
+            ? "text-destructive"
+            : tono === "warning"
+              ? "text-warning"
+              : tono === "success"
+                ? "text-success"
+                : "text-foreground",
+        )}
+      >
+        {valor}
+      </dd>
+      {nota && (
+        <dd className="text-muted-foreground-subtle text-xs tabular-nums">
+          {nota}
+        </dd>
+      )}
     </div>
   );
 }
@@ -871,7 +1201,7 @@ function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
 
 function TabDocumentos({ documentos }: { documentos: DocumentoPaciente[] }) {
   if (documentos.length === 0) {
-    return <Vacio titulo="Sin documentos" descripcion="No hay analisis, estudios ni recetas associated a este paciente." />;
+    return <Vacio titulo="Sin documentos" descripcion="No hay análisis, estudios ni recetas asociadas a este paciente." />;
   }
 
   return (

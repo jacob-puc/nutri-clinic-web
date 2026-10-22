@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { DialogoObjetivo } from "@/features/pacientes/components/dialogo-objetivo";
 import { useActualizarObjetivo } from "@/features/pacientes/hooks/use-mutaciones-paciente";
+import { cn } from "@/lib/utils";
 import type { MedidaAntropometrica, Paciente } from "@/types/api";
 
 /**
@@ -25,12 +26,18 @@ export function calcularAvance(
   };
 }
 
+/**
+ * Objetivo del paciente como rail de avance: etiqueta micro, meta legible y
+ * el porcentaje a la derecha, del mismo estilo que las constantes de la ficha.
+ */
 export function LineaObjetivo({
   paciente,
   medidas,
+  className,
 }: {
   paciente: Paciente;
   medidas: MedidaAntropometrica[];
+  className?: string;
 }) {
   const [editando, setEditando] = useState(false);
   const guardar = useActualizarObjetivo(paciente.id);
@@ -51,31 +58,44 @@ export function LineaObjetivo({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setEditando(true)}
-        className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex items-center gap-1.5 rounded-md text-sm underline-offset-4 transition-colors hover:underline focus-visible:ring-2 focus-visible:outline-none"
-      >
-        <span className="font-medium">Objetivo:</span>
-
-        {!definido ? (
-          <span className="text-muted-foreground-subtle italic">sin definir</span>
-        ) : (
-          <span className="text-foreground">
-            {tituloObjetivo ?? "Peso"}
-            {pesoObjetivo !== null && ` · ${pesoObjetivo} kg`}
-            {avance && ` · ${Math.round(avance.progreso)}%`}
+      <div className={cn("min-w-0", className)}>
+        <button
+          type="button"
+          onClick={() => setEditando(true)}
+          className="group flex w-full items-baseline gap-2 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <span className="text-muted-foreground text-[11px] font-semibold tracking-[0.16em] uppercase">
+            Objetivo
           </span>
-        )}
-      </button>
 
-      {avance && (
-        <Progress
-          value={avance.progreso}
-          aria-label="Avance del objetivo de peso"
-          className="mx-auto w-full max-w-xs [&>[data-slot=progress-indicator]]:bg-primary"
-        />
-      )}
+          <span className="text-foreground truncate text-sm font-medium underline-offset-4 group-hover:underline">
+            {!definido ? (
+              <span className="text-muted-foreground-subtle italic">
+                sin definir
+              </span>
+            ) : (
+              <>
+                {tituloObjetivo ?? "Peso"}
+                {pesoObjetivo !== null && ` · ${pesoObjetivo} kg`}
+              </>
+            )}
+          </span>
+
+          {avance && (
+            <span className="text-primary ml-auto shrink-0 text-sm font-semibold tabular-nums">
+              {Math.round(avance.progreso)}%
+            </span>
+          )}
+        </button>
+
+        {avance && (
+          <Progress
+            value={avance.progreso}
+            aria-label="Avance del objetivo de peso"
+            className="mt-2 h-1.5 w-full [&>[data-slot=progress-indicator]]:bg-primary"
+          />
+        )}
+      </div>
 
       <DialogoObjetivo
         abierto={editando}
