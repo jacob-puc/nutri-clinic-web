@@ -105,6 +105,18 @@ export interface CitaFiltro {
   estado?: EstadoCita;
 }
 
+/**
+ * Envoltorio que el backend devuelve en los listados paginados
+ * (CitasController.ObtenerCitas). El tope que aplica el servidor es 100.
+ */
+export interface RespuestaPaginada<T> {
+  totalRegistros: number;
+  pagina: number;
+  tamanoPagina: number;
+  totalPaginas: number;
+  datos: T[];
+}
+
 export interface CambiarEstadoCitaDto {
   estado: EstadoCita;
   motivo?: string | null;
