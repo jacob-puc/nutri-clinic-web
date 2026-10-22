@@ -45,14 +45,14 @@ export function CitaDetallePage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-6 md:px-8 md:py-8">
-      <nav aria-label="Navegacion de agenda" className="mb-4">
+      <nav aria-label="Navegación de citas" className="mb-4">
         <ol className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-sm">
           <li className="shrink-0">
             <Link
-              to="/agenda"
+              to="/citas"
               className="rounded-sm px-1.5 py-1 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              Agenda
+              Citas
             </Link>
           </li>
           <li aria-hidden="true" className="text-muted-foreground-subtle shrink-0">
@@ -136,8 +136,8 @@ function EliminarCita({ cita }: { cita: Cita }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar la cita</AlertDialogTitle>
             <AlertDialogDescription>
-              Se borrara la cita de {cita.pacienteNombre}. Esta accion no se puede
-              deshacer. Si la atencion ya ocurrio, mejor cancelala con un motivo.
+              Se borrará la cita de {cita.pacienteNombre}. Esta acción no se puede
+              deshacer. Si la atención ya ocurrió, mejor cancélala con un motivo.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -150,7 +150,7 @@ function EliminarCita({ cita }: { cita: Cita }) {
               onClick={(evento) => {
                 evento.preventDefault();
                 eliminar.mutate(undefined, {
-                  onSuccess: () => navigate("/agenda"),
+                  onSuccess: () => navigate("/citas"),
                   onError: (error: unknown) =>
                     toast.error("No se pudo eliminar la cita", {
                       description: mensajeDeError(error),
@@ -203,7 +203,7 @@ function DetalleCita({ cita }: { cita: Cita }) {
 
             {cita.consultaId && (
               <DatoCita etiqueta="Consulta" className="sm:col-span-2">
-                Vinculada a una consulta clinica
+                Vinculada a una consulta clínica
               </DatoCita>
             )}
           </dl>
@@ -261,7 +261,7 @@ function EstadoErrorCita({ mensaje }: { mensaje: string }) {
             {mensaje}
           </p>
           <Button asChild className="mt-6">
-            <Link to="/agenda">Volver a la agenda</Link>
+            <Link to="/citas">Volver a citas</Link>
           </Button>
         </CardContent>
       </Card>

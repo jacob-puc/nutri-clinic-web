@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import esLocale from "@fullcalendar/core/locales/es";
-import { CalendarPlus, CalendarX, Clock, TrendingUp } from "lucide-react";
+import { CalendarDays, CalendarPlus, CalendarX, Clock, TrendingUp } from "lucide-react";
 
 import { BotonesEstadoCita } from "@/features/citas/components/acciones-cita";
 import { BadgeEstadoCita } from "@/features/citas/components/badge-estado-cita";
+import { DetalleCitaSheet } from "@/features/citas/components/detalle-cita-sheet";
 import { DialogoCita } from "@/features/citas/components/dialogo-cita";
 import { useCitas } from "@/features/citas/hooks/use-citas";
 import {
@@ -34,6 +35,7 @@ import type { Cita, CitaFiltro, EstadoCita } from "@/types/api";
 
 const TODOS = "todos" as const;
 type FiltroEstado = EstadoCita | typeof TODOS;
+type VistaCitas = "hoy" | "calendario";
 
 const ESTADOS: EstadoCita[] = [
   "Programada",
@@ -65,7 +67,7 @@ const COLOR_ESTADO: Record<EstadoCita, { fondo: string; borde: string; texto: st
 };
 
 export function AgendaPage() {
-  const navigate = useNavigate();
+  const [parametros, setParametros] = useSearchParams();
   const hoy = useMemo(() => new Date(), []);
   const claveHoy = dateOnlyDe(hoy);
 
@@ -82,6 +84,10 @@ export function AgendaPage() {
   const [estado, setEstado] = useState<FiltroEstado>(TODOS);
   const [diaSeleccionado, setDiaSeleccionado] = useState(claveHoy);
   const [rango, setRango] = useState(() => rangoDelMes(hoy));
+  const [vista, setVista] = useState<VistaCitas>(() =>
+    parametros.get("vista") === "calendario" ? "calendario" : "hoy",
+  );
+  const citaSeleccionadaId = parametros.get("cita");
 
   const filtroVisible = useMemo<CitaFiltro>(
     () => ({ ...rango, ...(estado !== TODOS ? { estado } : {}) }),
@@ -104,6 +110,10 @@ export function AgendaPage() {
   const { data: citasHoy = [], isPending: pendienteHoy } = useCitas(filtroHoy);
 
   const visibles = useMemo(() => citas.data ?? [], [citas.data]);
+  const citaSeleccionada = useMemo(
+    () => visibles.find((cita) => cita.id === citaSeleccionadaId),
+    [citaSeleccionadaId, visibles],
+  );
   const porOrden = (a: Cita, b: Cita) => a.fechaInicio.localeCompare(b.fechaInicio);
 
   const proximosHoy = useMemo(
@@ -153,17 +163,66 @@ export function AgendaPage() {
     }));
   }, [visibles]);
 
+  const abrirCita = (citaId: string) => {
+    const siguientes = new URLSearchParams(parametros);
+    siguientes.set("cita", citaId);
+    setParametros(siguientes);
+  };
+
+  const cerrarCita = (abierto: boolean) => {
+    if (abierto) return;
+    const siguientes = new URLSearchParams(parametros);
+    siguientes.delete("cita");
+    setParametros(siguientes, { replace: true });
+  };
+
+  const cambiarVista = (siguiente: VistaCitas) => {
+    setVista(siguiente);
+    const siguientes = new URLSearchParams(parametros);
+    siguientes.set("vista", siguiente);
+    setParametros(siguientes, { replace: true });
+  };
+
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-6 md:px-8 md:py-8">
       <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Agenda</h1>
+          <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">Citas</h1>
           <Badge variant="outline" className="border-border text-muted-foreground tabular-nums">
             {visibles.length} {visibles.length === 1 ? "cita" : "citas"}
           </Badge>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <div className="bg-muted flex items-center gap-1 rounded-lg p-1" aria-label="Vista de citas">
+            <button
+              type="button"
+              aria-pressed={vista === "hoy"}
+              onClick={() => cambiarVista("hoy")}
+              className={`flex h-8 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium transition-colors ${
+                vista === "hoy"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Clock className="size-4" aria-hidden />
+              Hoy
+            </button>
+            <button
+              type="button"
+              aria-pressed={vista === "calendario"}
+              onClick={() => cambiarVista("calendario")}
+              className={`flex h-8 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium transition-colors ${
+                vista === "calendario"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <CalendarDays className="size-4" aria-hidden />
+              Calendario
+            </button>
+          </div>
+
           <Select
             value={estado}
             onValueChange={(valor) => setEstado(valor as FiltroEstado)}
@@ -190,101 +249,131 @@ export function AgendaPage() {
 
       <DialogoCita abierto={altaAbierta} onOpenChange={setAltaAbierta} />
 
-      <div className="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_400px]">
-        <Card className="overflow-hidden py-0">
-          <CardContent className="p-3 md:p-4">
-            {citas.isError ? (
-              <div className="flex min-h-[420px] flex-col items-center justify-center gap-3 text-center">
-                <CalendarX className="text-muted-foreground size-7" aria-hidden />
-                <div>
-                  <p className="font-semibold">No pudimos cargar la agenda</p>
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    {mensajeDeError(citas.error)}
-                  </p>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => void citas.refetch()}>
-                  Reintentar
-                </Button>
-              </div>
-            ) : citas.isPending ? (
-              <div className="space-y-3" aria-busy="true" aria-live="polite">
-                <span className="sr-only">Cargando calendario...</span>
-                <Skeleton className="h-8 w-56" />
-                <div className="grid gap-2 sm:grid-cols-7">
-                  {Array.from({ length: 35 }, (_, i) => (
-                    <Skeleton key={i} className="h-20" />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <FullCalendar
-                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                initialView="dayGridMonth"
-                locale={esLocale}
-                firstDay={1}
-                height="auto"
-                headerToolbar={{
-                  left: "prev,next today",
-                  center: "title",
-                  right: "dayGridMonth,timeGridWeek,timeGridDay",
-                }}
-                events={eventos}
-                eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
-                dayMaxEvents={3}
-                nowIndicator
-                datesSet={(arg) => {
-                  const desde = arg.start.toISOString();
-                  const hasta = arg.end.toISOString();
-                  setRango((prev) =>
-                    prev.desde === desde && prev.hasta === hasta ? prev : { desde, hasta },
-                  );
-                }}
-                dateClick={(arg) => setDiaSeleccionado(dateOnlyDe(arg.date))}
-                eventClick={(arg) => navigate(`/agenda/${arg.event.id}`)}
-                eventDidMount={(arg) => {
-                  const props = arg.event.extendedProps;
-                  arg.el.title = `${formatearHoraLocal(String(arg.event.start))} — ${props.nutricionista}${props.motivo ? ` · ${props.motivo}` : ""}`;
-                }}
-              />
-            )}
-          </CardContent>
-        </Card>
-
-        <aside className="flex w-full flex-col gap-4 lg:w-auto">
+      {vista === "hoy" ? (
+        <div className="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
           <PanelDia
             esHoy={diaSeleccionado === claveHoy}
             clave={diaSeleccionado}
             cargando={pendienteHoy || citas.isPending}
             citas={citasDelDia}
             onVerHoy={() => setDiaSeleccionado(claveHoy)}
+            onAbrirCita={abrirCita}
           />
-
-          <Card className="py-0">
-            <CardContent className="px-4 pt-3 pb-4">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="text-primary size-4" aria-hidden />
-                <h2 className="text-sm font-semibold">Resumen de la vista</h2>
-              </div>
-              <Separator className="my-2" />
-              {resumen.length === 0 ? (
-                <p className="text-muted-foreground py-3 text-sm">
-                  Sin citas en este rango.
-                </p>
+          <ResumenCitas resumen={resumen} titulo="Resumen de citas" />
+        </div>
+      ) : (
+        <div className="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_400px]">
+          <Card className="overflow-hidden py-0">
+            <CardContent className="p-3 md:p-4">
+              {citas.isError ? (
+                <div className="flex min-h-[420px] flex-col items-center justify-center gap-3 text-center">
+                  <CalendarX className="text-muted-foreground size-7" aria-hidden />
+                  <div>
+                    <p className="font-semibold">No pudimos cargar las citas</p>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                      {mensajeDeError(citas.error)}
+                    </p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => void citas.refetch()}>
+                    Reintentar
+                  </Button>
+                </div>
+              ) : citas.isPending ? (
+                <div className="space-y-3" aria-busy="true" aria-live="polite">
+                  <span className="sr-only">Cargando calendario...</span>
+                  <Skeleton className="h-8 w-56" />
+                  <div className="grid gap-2 sm:grid-cols-7">
+                    {Array.from({ length: 35 }, (_, i) => (
+                      <Skeleton key={i} className="h-20" />
+                    ))}
+                  </div>
+                </div>
               ) : (
-                <ul className="space-y-1.5">
-                  {resumen.map(({ valor, cantidad }) => (
-                    <li key={valor} className="flex items-center justify-between gap-2 text-sm">
-                      <BadgeEstadoCita estado={valor} />
-                      <span className="text-muted-foreground tabular-nums">{cantidad}</span>
-                    </li>
-                  ))}
-                </ul>
+                <FullCalendar
+                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                  initialView="dayGridMonth"
+                  locale={esLocale}
+                  firstDay={1}
+                  height="auto"
+                  headerToolbar={{
+                    left: "prev,next today",
+                    center: "title",
+                    right: "dayGridMonth,timeGridWeek,timeGridDay",
+                  }}
+                  events={eventos}
+                  eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
+                  dayMaxEvents={3}
+                  nowIndicator
+                  datesSet={(arg) => {
+                    const desde = arg.start.toISOString();
+                    const hasta = arg.end.toISOString();
+                    setRango((prev) =>
+                      prev.desde === desde && prev.hasta === hasta ? prev : { desde, hasta },
+                    );
+                  }}
+                  dateClick={(arg) => setDiaSeleccionado(dateOnlyDe(arg.date))}
+                  eventClick={(arg) => abrirCita(arg.event.id)}
+                  eventDidMount={(arg) => {
+                    const props = arg.event.extendedProps;
+                    arg.el.title = `${formatearHoraLocal(String(arg.event.start))} — ${props.nutricionista}${props.motivo ? ` · ${props.motivo}` : ""}`;
+                  }}
+                />
               )}
             </CardContent>
           </Card>
-        </aside>
-      </div>
+
+          <aside className="flex w-full flex-col gap-4 lg:w-auto">
+            <PanelDia
+              esHoy={diaSeleccionado === claveHoy}
+              clave={diaSeleccionado}
+              cargando={pendienteHoy || citas.isPending}
+              citas={citasDelDia}
+              onVerHoy={() => setDiaSeleccionado(claveHoy)}
+              onAbrirCita={abrirCita}
+            />
+            <ResumenCitas resumen={resumen} titulo="Resumen de la vista" />
+          </aside>
+        </div>
+      )}
+
+      <DetalleCitaSheet
+        cita={citaSeleccionada}
+        abierto={Boolean(citaSeleccionada)}
+        onOpenChange={cerrarCita}
+      />
     </div>
+  );
+}
+
+function ResumenCitas({
+  resumen,
+  titulo,
+}: {
+  resumen: Array<{ valor: EstadoCita; cantidad: number }>;
+  titulo: string;
+}) {
+  return (
+    <Card className="py-0">
+      <CardContent className="px-4 pt-3 pb-4">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="text-primary size-4" aria-hidden />
+          <h2 className="text-sm font-semibold">{titulo}</h2>
+        </div>
+        <Separator className="my-2" />
+        {resumen.length === 0 ? (
+          <p className="text-muted-foreground py-3 text-sm">Sin citas en este rango.</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {resumen.map(({ valor, cantidad }) => (
+              <li key={valor} className="flex items-center justify-between gap-2 text-sm">
+                <BadgeEstadoCita estado={valor} />
+                <span className="text-muted-foreground tabular-nums">{cantidad}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -295,12 +384,14 @@ function PanelDia({
   cargando,
   citas,
   onVerHoy,
+  onAbrirCita,
 }: {
   esHoy: boolean;
   clave: string;
   cargando: boolean;
   citas: Cita[];
   onVerHoy: () => void;
+  onAbrirCita: (citaId: string) => void;
 }) {
   return (
     <Card className="py-0">
@@ -308,7 +399,7 @@ function PanelDia({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
             <Clock className="text-primary size-4" aria-hidden />
-            {esHoy ? "Proximos de hoy" : "Citas del dia"}
+            {esHoy ? "Próximos de hoy" : "Citas del día"}
           </h2>
           {!esHoy && (
             <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onVerHoy}>
@@ -323,7 +414,7 @@ function PanelDia({
 
         {cargando ? (
           <div className="space-y-2" aria-busy="true" aria-live="polite">
-            <span className="sr-only">Cargando citas del dia...</span>
+            <span className="sr-only">Cargando citas del día...</span>
             <Skeleton className="h-9" />
             <Skeleton className="h-9" />
           </div>
@@ -331,19 +422,20 @@ function PanelDia({
           <p className="text-muted-foreground py-5 text-center text-sm">
             {esHoy
               ? "No quedan citas pendientes para hoy."
-              : "Sin citas en este dia."}
+              : "Sin citas en este día."}
           </p>
         ) : (
           <ul className="space-y-3">
             {citas.map((cita) => (
               <li key={cita.id} className="space-y-1.5 border-b border-border pb-3 last:border-0 last:pb-0">
                 <div className="flex flex-wrap items-baseline gap-x-2">
-                  <Link
-                    to={`/agenda/${cita.id}`}
+                  <button
+                    type="button"
+                    onClick={() => onAbrirCita(cita.id)}
                     className="rounded-sm text-sm font-semibold tabular-nums outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {formatearHoraLocal(cita.fechaInicio)}
-                  </Link>
+                  </button>
                   <Link
                     to={`/pacientes/${cita.pacienteId}`}
                     className="min-w-0 truncate rounded-sm text-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"

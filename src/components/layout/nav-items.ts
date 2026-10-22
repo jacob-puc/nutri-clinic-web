@@ -32,8 +32,8 @@ export const MODULOS_NAV: ModuloNav[] = [
     descripcion: "Listado y expediente clinico",
   },
   {
-    label: "Agenda",
-    href: "/agenda",
+    label: "Citas",
+    href: "/citas",
     icon: CalendarDays,
     activo: true,
     descripcion: "Citas por dia y traslados",

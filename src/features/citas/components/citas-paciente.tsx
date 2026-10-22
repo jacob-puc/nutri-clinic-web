@@ -144,11 +144,11 @@ function CitaProximal({ cita }: { cita: Cita }) {
 
         <div className="min-w-0 flex-1">
           <p className="text-primary text-[11px] font-semibold tracking-[0.16em] uppercase">
-            Proxima cita
+            Próxima cita
           </p>
           <p className="text-foreground mt-0.5 text-sm font-medium tabular-nums">
             <Link
-              to={`/agenda/${cita.id}`}
+              to={`/citas/${cita.id}`}
               className="rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
             >
               {formatearFechaHoraLocal(cita.fechaInicio)}
@@ -189,7 +189,7 @@ function LineaCitas({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <div className="min-w-0 flex-1">
               <Link
-                to={`/agenda/${cita.id}`}
+                to={`/citas/${cita.id}`}
                 className={cn(
                   "rounded-sm text-sm font-medium outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring",
                   pasadas ? "text-muted-foreground" : "text-foreground",
