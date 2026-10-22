@@ -95,7 +95,7 @@ export function PacienteDetallePage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-8">
-      <nav aria-label="Navegacion del expediente" className="mb-4">
+      <nav aria-label="Navegación del expediente" className="mb-4">
         <ol className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-sm">
           <li className="shrink-0">
             <Link
@@ -112,7 +112,7 @@ export function PacienteDetallePage() {
             className="bg-primary/10 text-primary border-primary/20 min-w-0 truncate rounded-md border px-2.5 py-1 font-semibold"
             aria-current="page"
           >
-            Expediente clinico
+            Expediente clínico
           </li>
         </ol>
       </nav>
@@ -151,7 +151,7 @@ export function PacienteDetallePage() {
         <TabsList className="w-full justify-start">
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
           <TabsTrigger value="medidas">
-            Evolucion
+            Evolución
             {medidas.length > 0 && <Contador>{medidas.length}</Contador>}
           </TabsTrigger>
           <TabsTrigger value="fotos">
@@ -236,7 +236,7 @@ function EncabezadoFicha({
       <div className="border-border/70 flex flex-wrap items-center justify-between gap-3 border-b px-4 py-2.5 md:px-6">
         <div className="flex items-center gap-2.5">
           <span className="text-primary text-[11px] font-semibold tracking-[0.2em] uppercase">
-            Expediente clinico
+            Expediente clínico
           </span>
           <span aria-hidden className="bg-border h-3 w-px" />
           <span className="text-muted-foreground-subtle text-[11px] tracking-wide tabular-nums">
@@ -255,7 +255,7 @@ function EncabezadoFicha({
           </Button>
           <Button size="sm" onClick={onRegistrarMedida}>
             <ClipboardPlus className="size-4" />
-            Nueva medicion
+            Nueva medición
           </Button>
         </div>
       </div>
@@ -274,7 +274,7 @@ function EncabezadoFicha({
             </h1>
 
             <p className="text-muted-foreground mt-1 text-sm tabular-nums">
-              {paciente.edad !== null && <>{paciente.edad} anos · </>}
+              {paciente.edad !== null && <>{paciente.edad} años · </>}
               Tel: {paciente.telefono}
             </p>
 
@@ -312,7 +312,7 @@ function EncabezadoFicha({
           {categoria && imcActual !== null && (
             <div className="border-border/60 mt-4 flex flex-wrap items-center gap-2 border-t pt-3">
               <span className="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase">
-                Categoria OMS
+                Categoría OMS
               </span>
               <BadgeCategoria imc={imcActual} />
             </div>
@@ -453,10 +453,10 @@ function PanelFicha({ paciente }: { paciente: Paciente }) {
           }
         />
         <DatoFicha
-          etiqueta="Correo electronico"
+          etiqueta="Correo electrónico"
           valor={paciente.correoElectronico}
         />
-        <DatoFicha etiqueta="Telefono" valor={paciente.telefono} />
+        <DatoFicha etiqueta="Teléfono" valor={paciente.telefono} />
         <DatoFicha etiqueta="Direccion" valor={paciente.direccion} />
         <DatoFicha
           etiqueta="Fecha de alta"
@@ -489,13 +489,13 @@ function DatoFicha({
 function PanelHistorial({ historial }: { historial: HistorialClinico | null }) {
   return (
     <Panel
-      titulo="Historial clinico"
+      titulo="Historial clínico"
       icono={Stethoscope}
       meta="Alergias y preferencias de la dieta"
     >
       {!historial ? (
         <p className="text-muted-foreground py-6 text-center text-sm">
-          Sin historial clinico capturado. Completalo en la primera consulta.
+          Sin historial clínico capturado. Complétalo en la primera consulta.
         </p>
       ) : (
         <div className="grid gap-x-8 gap-y-5 sm:grid-cols-3">
@@ -624,7 +624,7 @@ function PanelMediciones({
       icono={ClipboardPlus}
       meta={`${medidas.length} ${
         medidas.length === 1 ? "registrada" : "registradas"
-      } · ultima ${formatearFechaCorta(principal.fechaMedicion)}`}
+      } · última ${formatearFechaCorta(principal.fechaMedicion)}`}
     >
       {/* Hoja de signos: cifras actuales con su variacion respecto a lo anterior. */}
       <dl className="border-border/60 grid grid-cols-2 gap-x-6 gap-y-2 border-y py-2 sm:grid-cols-4 sm:gap-x-0 sm:py-0">
@@ -655,7 +655,7 @@ function PanelMediciones({
           <div className="scrollbar-slim -mx-1 overflow-x-auto px-1">
             <table className="mt-1.5 w-full text-sm">
               <caption className="sr-only">
-                Mediciones antropometricas recientes del paciente
+                Mediciones antropométricas recientes del paciente
               </caption>
               <thead>
                 <tr className="text-muted-foreground text-xs">
@@ -887,7 +887,7 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
     return (
       <Vacio
         titulo="Sin mediciones"
-        descripcion="Aun no se ha registrado ninguna medida antropometrica para este paciente."
+        descripcion="Aún no se ha registrado ninguna medida antropométrica para este paciente."
       />
     );
   }
@@ -909,18 +909,18 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
         titulo="Registro completo"
         icono={ClipboardPlus}
         meta={`${medidas.length} ${
-          medidas.length === 1 ? "medicion" : "mediciones"
+          medidas.length === 1 ? "medición" : "mediciones"
         }`}
       >
         {/* Balance del seguimiento: de donde viene y hacia donde va. */}
         <dl className="border-border/60 grid grid-cols-2 gap-x-6 gap-y-2 border-b pb-4 sm:grid-cols-4 sm:gap-x-0">
           <ResumenMedida
-            etiqueta="Primera medicion"
+            etiqueta="Primera medición"
             valor={primera ? `${primera.peso} kg` : "—"}
             nota={primera ? formatearFechaCorta(primera.fechaMedicion) : undefined}
           />
           <ResumenMedida
-            etiqueta="Ultima medicion"
+            etiqueta="Última medición"
             valor={ultima ? `${ultima.peso} kg` : "—"}
             nota={ultima ? formatearFechaCorta(ultima.fechaMedicion) : undefined}
           />
@@ -938,14 +938,14 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
 
         <div className="scrollbar-slim -mx-1 overflow-x-auto px-1">
           <table className="mt-4 w-full text-sm">
-            <caption className="sr-only">Mediciones antropometricas del paciente</caption>
+            <caption className="sr-only">Mediciones antropométricas del paciente</caption>
             <thead>
               <tr className="border-border/60 border-b">
                 <th scope="col" className="text-muted-foreground pb-2 text-left text-[11px] font-semibold tracking-[0.14em] uppercase">Fecha</th>
                 <th scope="col" className="text-muted-foreground pb-2 text-right text-[11px] font-semibold tracking-[0.14em] uppercase">Peso</th>
                 <th scope="col" className="text-muted-foreground hidden pb-2 text-right text-[11px] font-semibold tracking-[0.14em] uppercase sm:table-cell">Estatura</th>
                 <th scope="col" className="text-muted-foreground pb-2 text-right text-[11px] font-semibold tracking-[0.14em] uppercase">IMC</th>
-                <th scope="col" className="text-muted-foreground hidden pb-2 pl-4 text-left text-[11px] font-semibold tracking-[0.14em] uppercase md:table-cell">Categoria</th>
+                <th scope="col" className="text-muted-foreground hidden pb-2 pl-4 text-left text-[11px] font-semibold tracking-[0.14em] uppercase md:table-cell">Categoría</th>
                 <th scope="col" className="text-muted-foreground hidden pb-2 pl-6 text-left text-[11px] font-semibold tracking-[0.14em] uppercase lg:table-cell">Observaciones</th>
               </tr>
             </thead>

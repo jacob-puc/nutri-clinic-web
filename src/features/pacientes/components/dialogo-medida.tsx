@@ -36,7 +36,7 @@ const esquema = z.object({
   peso: z
     .number({ required_error: "El peso es requerido" })
     .positive("El peso debe ser mayor a 0 kg.")
-    .max(400, "Ingresa un peso valido."),
+    .max(400, "Ingresa un peso válido."),
   estatura: z
     .number({ required_error: "La estatura es requerida" })
     .positive("La estatura debe ser mayor a 0 cm.")
@@ -84,7 +84,7 @@ export function DialogoMedida({
     <Dialog open={abierto} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Registrar medicion</DialogTitle>
+          <DialogTitle>Registrar medición</DialogTitle>
           <DialogDescription>
             Peso y estatura son los unicos campos obligatorios.
           </DialogDescription>
@@ -202,8 +202,8 @@ function FormularioMedida({
                 </FormControl>
                 <FormDescription className="text-muted-foreground text-xs">
                   {estaturaSugerida
-                    ? "Tomada de la ultima medicion."
-                    : "Ultima medicion registrada."}
+                    ? "Tomada de la última medición."
+                    : "Última medición registrada."}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -349,7 +349,7 @@ function FormularioMedida({
           </Button>
           <Button type="submit" disabled={registrar.isPending}>
             {registrar.isPending && <Loader2 className="size-4 animate-spin" />}
-            Registrar medicion
+            Registrar medición
           </Button>
         </DialogFooter>
       </form>

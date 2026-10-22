@@ -43,7 +43,7 @@ export function GraficaMedidas({ medidas }: GraficaMedidasProps) {
       <CardContent className="px-4 py-5 md:px-6">
         <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
           <h3 className="text-foreground text-sm font-semibold">
-            Evolucion de peso e IMC
+            Evolución de peso e IMC
           </h3>
           <p className="text-muted-foreground text-xs">
             {datos.length} mediciones

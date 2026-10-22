@@ -52,14 +52,14 @@ export function Sidebar() {
             "text-sidebar-muted-foreground hover:bg-sidebar-muted hover:text-sidebar-foreground mt-2 w-full",
             collapsed && "px-0",
           )}
-          aria-label={collapsed ? "Expandir menu" : "Contraer menu"}
+          aria-label={collapsed ? "Expandir menú" : "Contraer menú"}
         >
           {collapsed ? (
             <PanelLeftOpen className="size-4" />
           ) : (
             <>
               <PanelLeftClose className="size-4" />
-              <span>Contraer menu</span>
+              <span>Contraer menú</span>
             </>
           )}
         </Button>

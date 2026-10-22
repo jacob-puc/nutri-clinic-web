@@ -86,7 +86,7 @@ export function PacientesPage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => cambiarBusqueda("")}
-                  aria-label="Limpiar busqueda"
+                  aria-label="Limpiar búsqueda"
                   className="text-muted-foreground absolute top-1/2 right-1 size-7 -translate-y-1/2"
                 >
                   <X className="size-3.5" />
@@ -241,7 +241,7 @@ function FilaPaciente({ paciente }: { paciente: Paciente }) {
             </p>
             <p className="text-muted-foreground truncate text-xs lg:hidden">
               {formatearFechaCorta(paciente.fechaNacimiento)}
-              {paciente.edad !== null && ` · ${paciente.edad} anos`}
+              {paciente.edad !== null && ` · ${paciente.edad} años`}
             </p>
           </div>
         </Link>
@@ -350,7 +350,7 @@ function EstadoSinResultados({ termino, onLimpiar }: { termino: string; onLimpia
           </p>
         </div>
         <Button variant="outline" onClick={onLimpiar} className="mt-1">
-          Limpiar busqueda
+          Limpiar búsqueda
         </Button>
       </CardContent>
     </Card>

@@ -157,7 +157,7 @@ function ConfirmarBaja({
           <AlertDialogTitle>Dar de baja a {paciente.nombreCompleto}?</AlertDialogTitle>
           <AlertDialogDescription>
             El paciente dejara de aparecer en el listado y no podra volver a
-            entrar por la aplicacion. Su historial clinico se conserva intacto.
+            entrar por la aplicación. Su historial clínico se conserva intacto.
           </AlertDialogDescription>
         </AlertDialogHeader>
 

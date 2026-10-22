@@ -40,11 +40,11 @@ const schema = z.object({
   tituloObjetivo: z
     .string()
     .trim()
-    .max(80, "El titulo no puede tener mas de 80 caracteres"),
+    .max(80, "El título no puede tener más de 80 caracteres"),
   pesoObjetivo: z
     .number()
     .positive("El peso objetivo debe ser mayor a 0 kg.")
-    .lt(400, "Ingresa un peso objetivo valido.")
+    .lt(400, "Ingresa un peso objetivo válido.")
     .optional(),
 });
 
@@ -109,7 +109,7 @@ export function DialogoObjetivo({
                 name="tituloObjetivo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Titulo del objetivo</FormLabel>
+                    <FormLabel>Título del objetivo</FormLabel>
                     <FormControl>
                       <Input
                         list="titulos-objetivo"

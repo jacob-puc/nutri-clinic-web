@@ -100,7 +100,7 @@ function SidebarLink({
 
 export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
   return (
-    <nav aria-label="Navegacion principal" className="flex flex-1 flex-col gap-1">
+    <nav aria-label="Navegación principal" className="flex flex-1 flex-col gap-1">
       {!collapsed && (
         <p className="px-3 pb-1 text-xs font-semibold tracking-wider text-sidebar-muted-foreground uppercase">
           Modulos
@@ -129,7 +129,7 @@ export function SidebarFooter({ collapsed }: { collapsed: boolean }) {
               NutriClinica
             </p>
             <p className="text-sidebar-muted-foreground truncate text-xs">
-              Sistema de consulta clinica
+              Sistema de consulta clínica
             </p>
           </div>
         )}

@@ -25,7 +25,7 @@ export function Topbar() {
         size="icon"
         className="md:hidden"
         onClick={() => setMobileOpen(true)}
-        aria-label="Abrir menu"
+        aria-label="Abrir menú"
       >
         <Menu className="size-5" />
       </Button>
@@ -67,7 +67,7 @@ export function Topbar() {
         <ThemeToggle />
         <div
           className="bg-card ml-1 hidden size-9 items-center justify-center rounded-full border border-border text-xs font-semibold text-muted-foreground sm:flex"
-          aria-label="Sesion de usuario"
+          aria-label="Sesión de usuario"
           title="Autenticacion pendiente"
         >
           NC

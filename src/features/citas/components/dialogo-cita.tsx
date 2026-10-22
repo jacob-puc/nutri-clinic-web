@@ -58,7 +58,7 @@ function construirEsquema(permiteInicioPasado: boolean) {
       nutricionistaId: z.string().min(1, "El nutricionista es requerido"),
       fechaInicio: z.string().min(1, "La fecha de inicio es requerida"),
       fechaFin: z.string().min(1, "La fecha de fin es requerida"),
-      motivo: z.string().max(500, "El motivo no puede tener mas de 500 caracteres"),
+      motivo: z.string().max(500, "El motivo no puede tener más de 500 caracteres"),
     })
     .refine((v) => !v.fechaInicio || !v.fechaFin || v.fechaFin > v.fechaInicio, {
       path: ["fechaFin"],

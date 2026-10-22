@@ -44,12 +44,12 @@ const esquema = z.object({
     .string()
     .trim()
     .min(1, "El correo es requerido")
-    .email("El correo no es valido"),
+    .email("El correo no es válido"),
   telefono: z
     .string()
     .trim()
-    .min(1, "El telefono es requerido")
-    .regex(/^\+?[0-9]{7,15}$/, "El numero de telefono no tiene un formato valido."),
+    .min(1, "El teléfono es requerido")
+    .regex(/^\+?[0-9]{7,15}$/, "El número de teléfono no tiene un formato válido."),
   fechaNacimiento: z.string(),
   sexo: z.enum(["M", "F", "Otro"]),
   direccion: z.string(),
@@ -80,7 +80,7 @@ export function DialogoPaciente({
           <DialogDescription>
             {paciente
               ? "Los cambios se aplican de inmediato."
-              : "Solo el nombre, el correo y el telefono son obligatorios."}
+              : "Solo el nombre, el correo y el teléfono son obligatorios."}
           </DialogDescription>
         </DialogHeader>
 
@@ -178,7 +178,7 @@ function FormularioPaciente({
                 name="correoElectronico"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Correo electronico</FormLabel>
+                    <FormLabel>Correo electrónico</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
@@ -197,7 +197,7 @@ function FormularioPaciente({
                 name="telefono"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Telefono</FormLabel>
+                    <FormLabel>Teléfono</FormLabel>
                     <FormControl>
                       <Input
                         type="tel"
@@ -270,7 +270,7 @@ function FormularioPaciente({
                   <FormLabel>Direccion</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Calle, numero, colonia, ciudad"
+                      placeholder="Calle, número, colonia, ciudad"
                       rows={2}
                       className="resize-none"
                       {...field}

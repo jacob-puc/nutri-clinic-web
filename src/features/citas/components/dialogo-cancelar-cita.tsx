@@ -28,7 +28,7 @@ import type { Guid } from "@/types/api";
 
 /** Replica `CambiarEstadoCitaValidator`: cancelar siempre pide motivo. */
 const esquema = z.object({
-  motivo: z.string().min(1, "Debes indicar el motivo de la cancelacion").max(500, "El motivo no puede tener mas de 500 caracteres"),
+  motivo: z.string().min(1, "Debes indicar el motivo de la cancelación").max(500, "El motivo no puede tener más de 500 caracteres"),
 });
 
 type FormularioValues = z.infer<typeof esquema>;

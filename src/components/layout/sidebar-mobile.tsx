@@ -19,7 +19,7 @@ export function SidebarMobile() {
         className="bg-sidebar border-sidebar-border text-sidebar-foreground w-72 border-r p-0"
       >
         <SheetHeader className="border-sidebar-border border-b px-4 py-4 text-left">
-          <SheetTitle className="sr-only">Menu de navegacion</SheetTitle>
+          <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
           <SheetDescription className="sr-only">
             Navega entre los modulos de NutriClinica
           </SheetDescription>
