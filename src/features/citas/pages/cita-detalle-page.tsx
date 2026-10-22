@@ -254,7 +254,7 @@ function EstadoErrorCita({ mensaje }: { mensaje: string }) {
     <div className="mx-auto w-full max-w-2xl px-4 py-16 md:px-8">
       <Card className="border-destructive/40">
         <CardContent className="px-6 py-14 text-center">
-          <h1 className="text-foreground text-xl font-bold">
+          <h1 className="text-foreground text-xl font-semibold">
             No pudimos cargar la cita
           </h1>
           <p className="text-muted-foreground mx-auto mt-2 max-w-sm text-sm">

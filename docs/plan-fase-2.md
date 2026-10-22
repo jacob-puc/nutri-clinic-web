@@ -18,7 +18,7 @@ Leyenda de estado: `[RESUELTO]` ya está hecho y verificado · `[PENDIENTE]` con
 | 5 | Acciones muertas + Cerrar sesión | `[PARCIAL]` — faltan menú de usuario y logout |
 | 6 | Mapas de transición + `Completada` | `[RESUELTO]` — pero destapa otro hueco mayor |
 | 7 | Estado de vista en URL | `[PARCIAL]` — agenda hecho (`b91bcf2`); falta expediente y orden |
-| 8 | Editorial y tipografía | `[PENDIENTE]` (tildes ya `[RESUELTO]` en `090cc6a`) |
+| 8 | Editorial y tipografía | `[RESUELTO]` — tildes (`090cc6a`), escala de títulos y anchos (esta fase) |
 
 **Hallazgo nuevo y de mayor peso que los anteriores:** el módulo **Consultas existe completo en el
 backend y no tiene una sola línea en el frontend**. Es la causa real de que una cita no pueda llegar
@@ -121,41 +121,43 @@ de quedar bien.
 
 ## 3. Fase 2 — Editorial y tipografía
 
-### 3.1 `[PENDIENTE]` Escala única de `h1`
-Verificado que hay 3 tamaños y 2 pesos en juego:
+### 3.1 `[RESUELTO]` Escala única de `h1`
+Aplicado. La escala de pesos quedó **100% uniforme**:
 
-| Ubicación | Clase | Problema |
+| Rol | Clase | Ocurrencias |
 |---|---|---|
-| `login-page.tsx:116` | `text-5xl … sm:text-6xl lg:text-7xl` | hero — correcto, es una portada |
-| `pacientes-page.tsx:162` | `text-2xl … md:text-3xl font-semibold tracking-tight` | referencia de página |
-| `paciente-detalle-page.tsx:272` | idéntico al anterior | ok |
-| `paciente-detalle-page.tsx:1263` (no encontrado) | `text-xl font-semibold` | |
-| `paciente-detalle-page.tsx:1291` (error) | `text-xl font-semibold` | |
-| `agenda-page.tsx:160` | `text-2xl … md:text-3xl font-bold` | **`font-bold` en vez de `semibold`** y **falta `text-foreground`** |
-| `cita-detalle-page.tsx:257` | `text-xl font-bold` | **`font-bold`** |
+| Hero de portada (login) | `text-5xl sm:text-6xl lg:text-7xl font-semibold tracking-tight leading-[0.92]` | 1 (justificado: es una portada) |
+| Página | `text-foreground text-2xl font-semibold tracking-tight md:text-3xl` | 3 |
+| Estado / error | `text-foreground text-xl font-semibold` | 3 |
+| `h2` de sección | `font-semibold` | 11 |
+| `h3` | `font-semibold` | 1 |
 
-Definir 2 roles y aplicarlos:
-- **Página:** `text-2xl md:text-3xl font-semibold tracking-tight text-foreground`
-- **Estado/error:** `text-xl font-semibold text-foreground`
-- El hero del login queda aparte, justificado.
+`font-bold` desaparece de todo el HTML salvo del logotipo (`logo.tsx:28`, `sidebar.tsx:30`,
+`sidebar-mobile.tsx:29`), donde es correcto: es la marca, no tipografía de interfaz.
 
-### 3.2 `[PENDIENTE]` Ancho de página por tipo
-Verificado que cada página usa su propio ancho:
+Corregido el único desviado: `cita-detalle-page.tsx:257` iba con `font-bold`.
 
-| Tipo de página | Página | Ancho actual |
+### 3.2 `[RESUELTO]` Ancho de página por tipo
+Aplicado. El ancho **baja con la profundidad de la lectura**, que es la regla que faltaba fijar:
+
+| Rol | Ancho | Páginas |
 |---|---|---|
-| Listado | Pacientes (`pacientes-page.tsx:63`) | `max-w-7xl` |
-| Listado | Agenda (`agenda-page.tsx:157`) | `max-w-[1400px]` |
-| Ficha | Paciente (`paciente-detalle-page.tsx:97`) | `max-w-6xl` |
-| Ficha | Cita (`cita-detalle-page.tsx:47`) | `max-w-4xl` |
-| Estado | ambas | `max-w-2xl` ✅ consistente |
+| Listado | `max-w-7xl` (1280px) | Pacientes, Citas (calendario) |
+| Expediente (ficha densa) | `max-w-6xl` (1152px) | Ficha del paciente + su skeleton |
+| Ficha simple | `max-w-4xl` (896px) | Ficha de la cita + su skeleton |
+| Estado / error | `max-w-2xl` (672px) | las 3 pantallas de estado |
 
-Dos anchos distintos para el mismo tipo (listado) y dos para ficha. El padding sí es consistente en
-todas (`px-4 py-6 md:px-8 md:py-8`), salvo estados (`py-16`, correcto).
+El padding ya era consistente en todas (`px-4 py-6 md:px-8 md:py-8`), salvo estados (`py-16`),
+que es correcto.
 
-Propuesta: **listado `max-w-7xl`** (el calendario lo justifica: necesita ancho), **ficha `max-w-6xl`**,
-**estado `max-w-2xl`**. Dejaría `cita-detalle` en `max-w-4xl` solo si su contenido es de una sola
-columna estrecha — comprobar antes de moverlo.
+**No se igualó la ficha de cita a la del expediente, y fue deliberado.** `cita-detalle` es una
+pila de cards con `<dl>` a 2 columnas; `paciente-detalle` tiene grids de 3 columnas, galería de
+fotos y una cabecera con rail de signos. Forzar las dos a `6xl` habría dejado la ficha de cita
+aireada y con medidas de línea largas. Densidad distinta, ancho distinto.
+
+Único cambio de ancho real: la agenda pasó de `max-w-[1400px]` a `max-w-7xl`, para que los dos
+listados compartieran medida. Verificado que el calendario aguanta: su rejilla es
+`lg:grid-cols-[minmax(0,1fr)_360px]`, así que a 1280px cada columna de día queda en ~120px.
 
 ---
 
@@ -266,7 +268,7 @@ Alcance propuesto (por orden de esfuerzo):
 ## 8. Orden de ejecución recomendado
 
 1. ~~**Fase 0 completa** (sección 1)~~ ✅ `01087ec`, `090cc6a`
-2. **Fase 2** (sección 3) — editorial y tipografía: es lo que hace que deje de verse "genérico".
+2. ~~**Fase 2** (sección 3) — editorial y tipografía~~ ✅ esta fase
 3. **Fase 1** (sección 2) — estados globales + huérfanas.
 4. **Fase 3** (sección 4) — URL. La agenda ya está; queda el expediente y el orden de tabla.
 5. **Fase 4** (sección 5) — menú de usuario y logout.
