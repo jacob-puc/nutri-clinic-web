@@ -1,7 +1,7 @@
 # Plan de cierre — Fase 2 dirección visual A+
 
-> Estado: **propuesto**. Cada ítem lleva la evidencia verificada (archivo:línea o cálculo).
-> Fecha de auditoría: 22-10-2026. Rama: `fase-2-direccion-visual`.
+> Estado: **en ejecución**. Fase 0 completada. Cada ítem lleva la evidencia verificada
+> (archivo:línea o cálculo). Auditoría: 22-10-2026. Rama: `fase-2-direccion-visual`.
 
 Leyenda de estado: `[RESUELTO]` ya está hecho y verificado · `[PENDIENTE]` confirmado sin resolver ·
 `[PARCIAL]` queda una parte concreta · `[DECISIÓN]` necesita que se defina el rumbo antes de tocar código.
@@ -10,17 +10,15 @@ Leyenda de estado: `[RESUELTO]` ya está hecho y verificado · `[PENDIENTE]` con
 
 ## 0. Resumen ejecutivo
 
-De los 8 puntos que quedaron abiertos en la última revisión:
-
 | # | Punto | Estado verificado |
 |---|---|---|
 | 1 | Estados globales vacío/error/esqueleto + primitivas huérfanas | `[PENDIENTE]` |
-| 3 | Contraste del tema claro | `[PARCIAL]` — solo queda `--input` |
-| 4 | Clave del tema `nutriclinia` | `[PENDIENTE]` (1 línea) |
+| 3 | Contraste del tema claro | `[RESUELTO]` (commit `01087ec`) |
+| 4 | Clave del tema `nutriclinia` | `[RESUELTO]` (commit `01087ec`) |
 | 5 | Acciones muertas + Cerrar sesión | `[PARCIAL]` — faltan menú de usuario y logout |
 | 6 | Mapas de transición + `Completada` | `[RESUELTO]` — pero destapa otro hueco mayor |
-| 7 | Estado de vista en URL | `[PARCIAL]` — `replace:true` ya está; falta pestaña y orden |
-| 8 | Editorial y tipografía | `[PENDIENTE]` |
+| 7 | Estado de vista en URL | `[PARCIAL]` — agenda hecho (`b91bcf2`); falta expediente y orden |
+| 8 | Editorial y tipografía | `[PENDIENTE]` (tildes ya `[RESUELTO]` en `090cc6a`) |
 
 **Hallazgo nuevo y de mayor peso que los anteriores:** el módulo **Consultas existe completo en el
 backend y no tiene una sola línea en el frontend**. Es la causa real de que una cita no pueda llegar
@@ -28,28 +26,26 @@ nunca a `Completada` desde la interfaz. Ver sección 6.
 
 ---
 
-## 1. Fase 0 — Arreglos de minutos (sin decisión pendiente)
+## 1. Fase 0 — Arreglos de minutos ✅ COMPLETADA (`01087ec`, `090cc6a`)
 
-### 1.1 `[PENDIENTE]` Clave del tema con typo
-`src/hooks/use-theme.tsx:7` → `const STORAGE_KEY = "nutriclinia-theme";`
-Falta la `c`. Cada recarga no encuentra la clave guardada y parpadea al tema por defecto.
+### 1.1 `[RESUELTO]` Clave del tema con typo
+`src/hooks/use-theme.tsx:7` era `const STORAGE_KEY = "nutriclinia-theme";`. Corregido a
+`nutriclinica-theme` con migración de la clave vieja en `leerPreferenciaInicial`: si la nueva no
+tiene valor y la antigua sí, se copia y se borra, así el usuario no pierde su preferencia.
 
-- Cambiar a `nutriclinica-theme`.
-- **Migración:** leer la clave vieja una vez y reescribirla, o el usuario pierde su preferencia
-  guardada una sola vez. Recomiendo la migración de 3 líneas.
+### 1.2 `[RESUELTO]` Borde `--input` a 3:1
+Aplicado en `theme.css`. `--input` deja de apuntar a `var(--neutral-500)` y lleva valor propio por
+tema, para no arrastrar la primitiva neutral:
 
-### 1.2 `[PARCIAL]` Borde `--input` a 3:1
-Calculado contra el CSS real:
+| Par | Antes | Ahora |
+|---|---|---|
+| `--input` sobre `--card` (claro) | 2.995:1 | **3.31:1** |
+| `--input` sobre `--card` (oscuro) | 2.997:1 | **3.21:1** |
 
-| Par | Ratio | Mínimo | Resultado |
-|---|---|---|---|
-| `--input` sobre `--card` (claro) | **2.995:1** | 3.0 | falla por 0.005 |
-| `--input` sobre `--card` (oscuro) | **2.997:1** | 3.0 | falla por 0.003 |
-| `--input` sobre `--background` (oscuro) | 3.296:1 | 3.0 | ok |
-
-`--input: var(--neutral-500)` (`theme.css:133`). Es el borde de `input.tsx`, `textarea.tsx`,
-`select.tsx` y `button.tsx`. Basta bajar `--neutral-500` un paso en L* (o subirlo, según el tema)
-hasta cruzar 3.0 con margen — objetivo ≥3.2 para que no vuelva a quedar al filo.
+Detalle que hay que recordar: **la dirección es opuesta en cada tema**. En claro el borde baja de
+luminosidad porque la tarjeta es clara; en oscuro **sube**, porque la tarjeta es oscura y solo un
+borde más claro la contrasta. Escribir la corrección como "oscurecer el borde" habría empeorado el
+tema oscuro.
 
 > Resto del punto 3 **ya está resuelto**, verificado calculando el CSS real:
 > `warning` 4.74:1 · `info` 4.88:1 · `success` 5.85:1 · `muted-foreground` 6.74:1 (card) y 6.51:1
@@ -59,34 +55,28 @@ hasta cruzar 3.0 con margen — objetivo ≥3.2 para que no vuelva a quedar al f
 > (3.3:1) y el propio `theme.css:138` documenta que `accent-400` (2.43:1) es solo relleno de
 > `--gradient-accent`.
 
-### 1.3 `[PARCIAL]` Palabra en inglés suelta
-`src/features/pacientes/pages/paciente-detalle-page.tsx:1204`:
-`"No hay analisis, estudios ni recetas associated a este paciente."` → `asociadas`.
+### 1.3 `[RESUELTO]` Palabra en inglés suelta
+`paciente-detalle-page.tsx:1204`: "No hay analisis, estudios ni recetas associated a este paciente."
+→ "No hay análisis, estudios ni recetas **asociadas** a este paciente."
 
-### 1.4 `[DECISIÓN]` Tildes: el login se salta la política
-La política del proyecto es **texto de UI sin tildes** y el resto del código la cumple
-("busqueda", "clinica", "Evolucion", "Expediente clinico"). Pero el **login está sistemáticamente
-acentuado** — y es la pantalla más visible del producto:
+### 1.4 `[RESUELTO]` Tildes: se decide que la UI se escribe con tildes (commit `090cc6a`)
+Decisión tomada: **toda la UI con tildes**, no solo el login. El login ya estaba acentuado y el
+resto no, con lo que el producto tenía dos voces.
 
-- `login-page.tsx:34` "Expediente clínico con medidas y objetivos"
-- `login-page.tsx:35` "Agenda de citas de la clínica en un vistazo"
-- `login-page.tsx:69` "No se pudo iniciar sesión. Intenta nuevamente."
-- `login-page.tsx:113` "Sistema de consulta clínica y nutricional"
-- `login-page.tsx:122` "…agenda de la clínica en un solo…"
-- `login-page.tsx:159` "Iniciar sesión"
-- `login-page.tsx:168` "Correo electrónico"
-- `login-page.tsx:190` "Contraseña"
-- `login-page.tsx:225` "Iniciando sesión…" / "Iniciar sesión"
-- `login-page.tsx:236` "NutriClinica · consulta clínica y nutricional"
+Aplicado a 55 cadenas visibles en 16 archivos: etiquetas de formulario, botones, mensajes de
+validación de los zod schemas, placeholders, `aria-label` y estados vacíos.
 
-Dos sueltos fuera del login:
-- `paciente-detalle-page.tsx:1129` "Salir de comparación"
-- `src/lib/api-client.ts:76` "La sesión expiró. Inicia sesión nuevamente."
+Verificado que **no** se tocó nada que no fuera texto visible:
+- contrato con la API: `?busqueda=`, `correoElectronico`, `contrasena`, `telefono`
+- identificadores, constantes (`VACIO`, `HORAS_AGENDA`) y clases CSS (`data-slot="dropdown-menu*"`)
+- el nombre de marca **NutriClinica**, que no se acentúa (aparece partido en `logo.tsx:29`,
+  `sidebar.tsx:32` y `sidebar-mobile.tsx:30` para el degradado)
+- comentarios
 
-**Opción A (recomendada):** quitar las tildes del login y de los dos sueltos. Unifica el criterio y
-deja de tener dos voces en el mismo producto.
-**Opción B:** pasar toda la UI a con tildes. Mejor como texto, pero es un barrido grande y hay que
-decidirlo como política, no caso a caso.
+El chequeo se hizo quitando los acentos de ambas versiones y comparando línea a línea: los 13
+archivos del commit son idénticos salvo por las tildes.
+
+**Regla para el resto de fases:** cualquier texto nuevo que se escriba va con tildes.
 
 ---
 
@@ -179,10 +169,14 @@ columna estrecha — comprobar antes de moverlo.
 cada Enter del buscador global empuja una entrada al historial y el botón Atrás deja de funcionar
 como se espera. Mismo destino que la lista, criterio distinto. Añadir `{ replace: true }`.
 
-### 4.3 `[PENDIENTE]` La pestaña del expediente no está ni en `useState`
-`paciente-detalle-page.tsx:150` → `<Tabs defaultValue="resumen" className="mt-6">` es **sin controlar**:
-el estado vive dentro de Radix. Resultado: al refrescar o volver atrás, la pestaña vuelve a
-"Resumen" siempre.
+### 4.3 `[PARCIAL]` La pestaña del expediente no está ni en `useState` — la agenda ya sí
+**La agenda quedó resuelta** en el commit `b91bcf2`: `AgendaPage` controla `?vista=hoy|calendario`
+y `?cita=<id>` con `useSearchParams`, y esa cita abre un `DetalleCitaSheet` sin salir del
+calendario. Es el patrón a replicar.
+
+**Sigue pendiente el expediente.** `paciente-detalle-page.tsx:150` → `<Tabs defaultValue="resumen" className="mt-6">`
+es **sin controlar**: el estado vive dentro de Radix. Resultado: al refrescar o volver atrás, la
+pestaña vuelve a "Resumen" siempre.
 
 Mover a `value` + `onValueChange` controlado y sincronizar con el parámetro `?pestana=`, para que
 compartir la URL de "Evolución" abra Evolución.
@@ -271,11 +265,24 @@ Alcance propuesto (por orden de esfuerzo):
 
 ## 8. Orden de ejecución recomendado
 
-1. **Fase 0 completa** (sección 1) — arreglos de minutos, algunos requieren decisión (tildes).
+1. ~~**Fase 0 completa** (sección 1)~~ ✅ `01087ec`, `090cc6a`
 2. **Fase 2** (sección 3) — editorial y tipografía: es lo que hace que deje de verse "genérico".
 3. **Fase 1** (sección 2) — estados globales + huérfanas.
-4. **Fase 3** (sección 4) — URL.
+4. **Fase 3** (sección 4) — URL. La agenda ya está; queda el expediente y el orden de tabla.
 5. **Fase 4** (sección 5) — menú de usuario y logout.
 6. **Fase 5** (sección 6) — Consultas, que es la que de verdad cierra el circuito clínico.
 
 Cada fase es entregable independiente y commiteable por separado.
+
+### Commits de la fase hasta ahora
+
+| Commit | Contenido |
+|---|---|
+| `55c5362` | baseline previo a la fase |
+| `88092d6` | dirección visual A+ en el módulo Pacientes |
+| `1cb87a2` | login a pantalla completa con fondo nutricional |
+| `99b3399` | fix: agenda rota por el nuevo paginado de `GET /api/citas` |
+| `472c207` | rediseño del expediente clínico + fix del doble scroll |
+| `01087ec` | fix: clave del tema con typo y borde `--input` a 3:1 |
+| `090cc6a` | tildes en toda la UI |
+| `b91bcf2` | vista de citas con estado en URL y renombre Agenda→Citas |
