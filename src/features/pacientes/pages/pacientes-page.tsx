@@ -6,10 +6,21 @@ import { AccionesPaciente } from "@/features/pacientes/components/acciones-pacie
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
 import { DialogoPaciente } from "@/features/pacientes/components/dialogo-paciente";
 import { usePacientes } from "@/features/pacientes/hooks/use-pacientes";
+import { EstadoError } from "@/components/states/estado-error";
+import { EstadoVacio } from "@/components/states/estado-vacio";
+import { SkeletonTabla } from "@/components/states/skeleton-tabla";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { mensajeDeError } from "@/lib/api-error";
 import { etiquetaSexo, formatearFechaCorta, normalizar } from "@/lib/formatters";
 import type { Paciente } from "@/types/api";
@@ -124,21 +135,58 @@ export function PacientesPage() {
       </Card>
 
       <div className="mt-4">
-        {isPending && <TablaSkeleton />}
+        {isPending && (
+          <SkeletonTabla
+            anchos={["w-56", "w-40", "w-32", "w-16", "w-20", "w-12"]}
+            filas={6}
+            conAvatar
+          />
+        )}
 
         {!isPending && isError && (
-          <EstadoError mensaje={mensajeDeError(error)} onReintentar={refetch} />
+          <EstadoError
+            titulo="No pudimos cargar los pacientes"
+            mensaje={mensajeDeError(error)}
+            onReintentar={refetch}
+          />
         )}
 
         {!isPending && !isError && !hayDatos && (
-          <EstadoVacioCatalogo onReintentar={refetch} />
+          <EstadoVacio
+            titulo="Todavía no hay pacientes"
+            descripcion="La clínica todavía no tiene pacientes activos registrados. Cuando se dé de alta el primero, aparecerá aquí."
+            visual={
+              <AvatarPaciente nombre="Paciente" id="vacio" className="size-14" />
+            }
+          >
+            <Button variant="outline" onClick={() => refetch()} className="mt-1">
+              Actualizar
+            </Button>
+          </EstadoVacio>
         )}
 
         {!isPending && !isError && hayDatos && pacientes.length === 0 && (
-          <EstadoSinResultados
-            termino={busqueda}
-            onLimpiar={() => cambiarBusqueda("")}
-          />
+          <EstadoVacio
+            icono={Search}
+            titulo="Sin coincidencias"
+            descripcion={
+              <>
+                Ningún paciente coincide con{" "}
+                <span className="text-foreground font-medium">
+                  "{busqueda}"
+                </span>
+                .
+              </>
+            }
+          >
+            <Button
+              variant="outline"
+              onClick={() => cambiarBusqueda("")}
+              className="mt-1"
+            >
+              Limpiar búsqueda
+            </Button>
+          </EstadoVacio>
         )}
 
         {!isPending && !isError && pacientes.length > 0 && (
@@ -181,51 +229,53 @@ function EncabezadoPacientes({
 function TablaPacientes({ pacientes }: { pacientes: Paciente[] }) {
   return (
     <div className="bg-card overflow-hidden rounded-xl border border-border shadow-card">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-0 text-sm">
-          <caption className="sr-only">
-            Pacientes activos de la clinica
-          </caption>
-          <thead>
-            <tr className="bg-surface-subtle border-b border-border">
-              <th scope="col" className="text-muted-foreground px-4 py-3 text-left text-xs font-medium tracking-wide uppercase md:px-6">
-                Paciente
-              </th>
-              <th scope="col" className="text-muted-foreground hidden px-4 py-3 text-left text-xs font-medium tracking-wide uppercase lg:table-cell">
-                Contacto
-              </th>
-              <th scope="col" className="text-muted-foreground hidden px-4 py-3 text-left text-xs font-medium tracking-wide uppercase md:table-cell">
-                Nacimiento
-              </th>
-              <th scope="col" className="text-muted-foreground hidden px-4 py-3 text-left text-xs font-medium tracking-wide uppercase sm:table-cell">
-                Edad
-              </th>
-              <th scope="col" className="text-muted-foreground px-4 py-3 text-left text-xs font-medium tracking-wide uppercase md:px-6">
-                Sexo
-              </th>
-              {/* Columna de acciones: sin etiqueta visible, pero se conserva
-                  el <th> para que el numero de columnas siga cuadrando con
-                  los <td> de cada fila. */}
-              <th scope="col" className="w-12 py-3 pr-3 pl-0 md:pr-4">
-                <span className="sr-only">Acciones</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {pacientes.map((paciente) => (
-              <FilaPaciente key={paciente.id} paciente={paciente} />
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <caption className="sr-only">Pacientes activos de la clínica</caption>
+
+        <TableHeader>
+          <TableRow className="bg-surface-subtle hover:bg-surface-subtle">
+            <TableHead className="text-muted-foreground px-4 py-3 text-xs font-medium tracking-wide uppercase md:px-6">
+              Paciente
+            </TableHead>
+            <TableHead className="text-muted-foreground hidden px-4 py-3 text-xs font-medium tracking-wide uppercase lg:table-cell">
+              Contacto
+            </TableHead>
+            <TableHead className="text-muted-foreground hidden px-4 py-3 text-xs font-medium tracking-wide uppercase md:table-cell">
+              Nacimiento
+            </TableHead>
+            <TableHead className="text-muted-foreground hidden px-4 py-3 text-xs font-medium tracking-wide uppercase sm:table-cell">
+              Edad
+            </TableHead>
+            <TableHead className="text-muted-foreground px-4 py-3 text-xs font-medium tracking-wide uppercase md:px-6">
+              Sexo
+            </TableHead>
+            {/* Columna de acciones: sin etiqueta visible, pero se conserva
+                la celda de encabezado para que el numero de columnas siga
+                cuadrando con las de cada fila. */}
+            <TableHead className="w-12 py-3 pr-3 pl-0 md:pr-4">
+              <span className="sr-only">Acciones</span>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+
+        <TableBody>
+          {pacientes.map((paciente) => (
+            <FilaPaciente key={paciente.id} paciente={paciente} />
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
 
 function FilaPaciente({ paciente }: { paciente: Paciente }) {
   return (
-    <tr className="hover:bg-accent transition-colors">
-      <td className="px-4 py-3 md:px-6">
+    <TableRow className="hover:bg-accent">
+      {/* whitespace-normal en las dos primeras celdas: contienen texto con
+          truncate, que necesita poder comprimirse. El resto conserva el
+          nowrap por defecto de TableCell, que es lo que quieren fechas y
+          numeros. */}
+      <TableCell className="px-4 py-3 whitespace-normal md:px-6">
         <Link
           to={`/pacientes/${paciente.id}`}
           className="-mx-2 flex items-center gap-3 rounded-md px-2 py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -245,114 +295,27 @@ function FilaPaciente({ paciente }: { paciente: Paciente }) {
             </p>
           </div>
         </Link>
-      </td>
-      <td className="hidden px-4 py-3 lg:table-cell">
+      </TableCell>
+      <TableCell className="hidden px-4 py-3 whitespace-normal lg:table-cell">
         <p className="truncate">{paciente.correoElectronico}</p>
         <p className="text-muted-foreground truncate text-xs">
           {paciente.telefono}
         </p>
-      </td>
-      <td className="text-muted-foreground hidden px-4 py-3 md:table-cell">
+      </TableCell>
+      <TableCell className="text-muted-foreground hidden px-4 py-3 md:table-cell">
         {formatearFechaCorta(paciente.fechaNacimiento)}
-      </td>
-      <td className="text-muted-foreground hidden px-4 py-3 sm:table-cell tabular-nums">
+      </TableCell>
+      <TableCell className="text-muted-foreground hidden px-4 py-3 tabular-nums sm:table-cell">
         {paciente.edad !== null ? `${paciente.edad}` : "—"}
-      </td>
-      <td className="px-4 py-3 md:px-6">
+      </TableCell>
+      <TableCell className="px-4 py-3 md:px-6">
         <Badge variant="outline">{etiquetaSexo(paciente.sexo)}</Badge>
-      </td>
+      </TableCell>
       {/* El menu de acciones es la unica accion disponible, asi que esta
           columna NO se oculta en movil: es la que sobrevive al colapso. */}
-      <td className="w-12 py-3 pr-3 pl-0 text-right md:pr-4">
+      <TableCell className="w-12 py-3 pr-3 pl-0 text-right md:pr-4">
         <AccionesPaciente paciente={paciente} />
-      </td>
-    </tr>
-  );
-}
-
-function TablaSkeleton() {
-  return (
-    <div
-      className="bg-card overflow-hidden rounded-xl border border-border shadow-card"
-      aria-busy="true"
-      aria-live="polite"
-    >
-      <span className="sr-only">Cargando pacientes...</span>
-      <div className="bg-surface-subtle border-b border-border px-6 py-3">
-        <div className="skeleton h-4 w-24 rounded" />
-      </div>
-      <ul className="divide-y divide-border">
-        {Array.from({ length: 6 }, (_, indice) => (
-          <li key={indice} className="flex items-center gap-3 px-4 py-3 md:px-6">
-            <div className="skeleton size-10 shrink-0 rounded-full" />
-            <div className="flex-1 space-y-2">
-              <div className="skeleton h-3.5 w-2/5 max-w-56 rounded" />
-              <div className="skeleton h-3 w-1/4 max-w-40 rounded" />
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function EstadoError({ mensaje, onReintentar }: { mensaje: string; onReintentar: () => void }) {
-  return (
-    <Card className="border-destructive/40">
-      <CardContent className="flex flex-col items-start gap-4 px-6 py-10 sm:flex-row sm:items-center">
-        <div className="bg-destructive/10 text-destructive grid size-11 shrink-0 place-items-center rounded-full">
-          <X className="size-5" aria-hidden />
-        </div>
-        <div className="flex-1">
-          <h2 className="text-foreground font-semibold">No pudimos cargar los pacientes</h2>
-          <p className="text-muted-foreground mt-1 text-sm">{mensaje}</p>
-        </div>
-        <Button variant="outline" onClick={onReintentar} className="shrink-0">
-          Reintentar
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-function EstadoVacioCatalogo({ onReintentar }: { onReintentar: () => void }) {
-  return (
-    <Card>
-      <CardContent className="flex flex-col items-center gap-4 px-6 py-16 text-center">
-        <AvatarPaciente nombre="Paciente" id="vacio" className="size-14" />
-        <div>
-          <h2 className="text-foreground font-semibold">Todavia no hay pacientes</h2>
-          <p className="text-muted-foreground mx-auto mt-1 max-w-sm text-sm">
-            La clinica todavia no tiene pacientes activos registrados. Cuando se
-            de de alta el primero, aparecera aqui.
-          </p>
-        </div>
-        <Button variant="outline" onClick={onReintentar} className="mt-1">
-          Actualizar
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-function EstadoSinResultados({ termino, onLimpiar }: { termino: string; onLimpiar: () => void }) {
-  return (
-    <Card>
-      <CardContent className="flex flex-col items-center gap-4 px-6 py-16 text-center">
-        <div className="bg-muted text-muted-foreground grid size-14 place-items-center rounded-full">
-          <Search className="size-6" aria-hidden />
-        </div>
-        <div>
-          <h2 className="text-foreground font-semibold">Sin coincidencias</h2>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Ningun paciente coincide con{" "}
-            <span className="text-foreground font-medium">"{termino}"</span>.
-          </p>
-        </div>
-        <Button variant="outline" onClick={onLimpiar} className="mt-1">
-          Limpiar búsqueda
-        </Button>
-      </CardContent>
-    </Card>
+      </TableCell>
+    </TableRow>
   );
 }

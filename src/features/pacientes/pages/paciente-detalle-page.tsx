@@ -8,7 +8,6 @@ import {
   ClipboardPlus,
   Contact,
   FileText,
-  ChevronRight,
   Heart,
   Ruler,
   Scale,
@@ -27,10 +26,21 @@ import { LineaObjetivo } from "@/features/pacientes/components/linea-objetivo";
 import { DialogoPaciente } from "@/features/pacientes/components/dialogo-paciente";
 import { GraficaMedidas } from "@/features/pacientes/components/grafica-medidas";
 import { useExpediente, usePaciente } from "@/features/pacientes/hooks/use-expediente";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import { EstadoError } from "@/components/states/estado-error";
+import { EstadoVacio } from "@/components/states/estado-vacio";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -70,15 +80,38 @@ export function PacienteDetallePage() {
   const { data: expediente, isPending: cargandoExpediente } = useExpediente(id);
 
   if (esApiError(errorPaciente) && errorPaciente.status === 404) {
-    return <EstadoNoEncontrado nombre={paciente?.nombreCompleto} />;
+    return (
+      <EstadoError
+        variante="pagina"
+        /* Un 404 es informativo, no una falla: se neutraliza el borde
+           destructivo por defecto. */
+        className="border-border"
+        titulo="Paciente no encontrado"
+        mensaje={
+          paciente?.nombreCompleto
+            ? `El paciente ${paciente.nombreCompleto} ya no está activo en la clínica.`
+            : "El paciente que buscas no existe o fue dado de baja."
+        }
+      >
+        <Button asChild>
+          <Link to="/pacientes">Volver a pacientes</Link>
+        </Button>
+      </EstadoError>
+    );
   }
 
   if (errorPaciente) {
     return (
-      <EstadoErrorGeneral
+      <EstadoError
+        variante="pagina"
+        titulo="No pudimos cargar la ficha"
+        mensaje="Revisa que la API esté corriendo y vuelve a intentarlo."
         onReintentar={() => navigate(0)}
-        onVolver={() => navigate("/pacientes")}
-      />
+      >
+        <Button variant="outline" onClick={() => navigate("/pacientes")}>
+          Volver a pacientes
+        </Button>
+      </EstadoError>
     );
   }
 
@@ -95,27 +128,14 @@ export function PacienteDetallePage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-8">
-      <nav aria-label="Navegación del expediente" className="mb-4">
-        <ol className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-sm">
-          <li className="shrink-0">
-            <Link
-              to="/pacientes"
-              className="rounded-sm px-1.5 py-1 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              Pacientes
-            </Link>
-          </li>
-          <li aria-hidden="true" className="text-muted-foreground-subtle shrink-0">
-            <ChevronRight className="size-4" />
-          </li>
-          <li
-            className="bg-primary/10 text-primary border-primary/20 min-w-0 truncate rounded-md border px-2.5 py-1 font-semibold"
-            aria-current="page"
-          >
-            Expediente clínico
-          </li>
-        </ol>
-      </nav>
+      <Breadcrumbs
+        etiquetaNav="Navegación del expediente"
+        className="mb-4"
+        tramos={[
+          { etiqueta: "Pacientes", href: "/pacientes" },
+          { etiqueta: "Expediente clínico" },
+        ]}
+      />
 
       <EncabezadoFicha
         paciente={paciente}
@@ -653,39 +673,41 @@ function PanelMediciones({
               columna de variacion desborda el <main> y aparece una segunda
               barra de scroll a nivel de pagina. */}
           <div className="scrollbar-slim -mx-1 overflow-x-auto px-1">
-            <table className="mt-1.5 w-full text-sm">
+            <Table className="mt-1.5 text-sm">
               <caption className="sr-only">
                 Mediciones antropométricas recientes del paciente
               </caption>
-              <thead>
-                <tr className="text-muted-foreground text-xs">
-                  <th scope="col" className="pb-1.5 text-left font-medium whitespace-nowrap">
+
+              <TableHeader>
+                <TableRow className="text-muted-foreground border-transparent text-xs hover:bg-transparent">
+                  <TableHead className="h-auto px-0 pb-1.5 text-left font-medium whitespace-nowrap">
                     Fecha
-                  </th>
-                  <th scope="col" className="pb-1.5 text-right font-medium">
+                  </TableHead>
+                  <TableHead className="h-auto px-0 pb-1.5 text-right font-medium">
                     Peso
-                  </th>
-                  <th scope="col" className="pb-1.5 text-right font-medium">
+                  </TableHead>
+                  <TableHead className="h-auto px-0 pb-1.5 text-right font-medium">
                     IMC
-                  </th>
-                  <th scope="col" className="pb-1.5 text-right font-medium whitespace-nowrap">
-                    Variacion
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="border-border/50 divide-y divide-border/50">
+                  </TableHead>
+                  <TableHead className="h-auto px-0 pb-1.5 text-right font-medium whitespace-nowrap">
+                    Variación
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
                 {previas.map((medida, indice) => (
-                  <tr key={medida.id}>
-                    <td className="text-muted-foreground py-2.5 whitespace-nowrap">
+                  <TableRow key={medida.id} className="border-border/50">
+                    <TableCell className="text-muted-foreground px-0 py-2.5">
                       {formatearFechaCorta(medida.fechaMedicion)}
-                    </td>
-                    <td className="py-2.5 text-right font-medium tabular-nums whitespace-nowrap">
+                    </TableCell>
+                    <TableCell className="px-0 py-2.5 text-right font-medium tabular-nums">
                       {medida.peso} kg
-                    </td>
-                    <td className="py-2.5 text-right tabular-nums whitespace-nowrap">
+                    </TableCell>
+                    <TableCell className="px-0 py-2.5 text-right tabular-nums">
                       {Number(medida.imc.toFixed(1))}
-                    </td>
-                    <td className="py-2.5 pl-4">
+                    </TableCell>
+                    <TableCell className="px-0 py-2.5 pl-4 whitespace-normal">
                       <BarraDelta
                         delta={
                           sinPrecedente.has(medida.id) || !recientes[indice]
@@ -693,11 +715,11 @@ function PanelMediciones({
                             : medida.peso - recientes[indice].peso
                         }
                       />
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </div>
       )}
@@ -885,7 +907,7 @@ function BadgeCategoria({ imc }: { imc: number }) {
 function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
   if (medidas.length === 0) {
     return (
-      <Vacio
+      <EstadoVacio
         titulo="Sin mediciones"
         descripcion="Aún no se ha registrado ninguna medida antropométrica para este paciente."
       />
@@ -937,33 +959,54 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
         </dl>
 
         <div className="scrollbar-slim -mx-1 overflow-x-auto px-1">
-          <table className="mt-4 w-full text-sm">
+          <Table className="mt-4 text-sm">
             <caption className="sr-only">Mediciones antropométricas del paciente</caption>
-            <thead>
-              <tr className="border-border/60 border-b">
-                <th scope="col" className="text-muted-foreground pb-2 text-left text-[11px] font-semibold tracking-[0.14em] uppercase">Fecha</th>
-                <th scope="col" className="text-muted-foreground pb-2 text-right text-[11px] font-semibold tracking-[0.14em] uppercase">Peso</th>
-                <th scope="col" className="text-muted-foreground hidden pb-2 text-right text-[11px] font-semibold tracking-[0.14em] uppercase sm:table-cell">Estatura</th>
-                <th scope="col" className="text-muted-foreground pb-2 text-right text-[11px] font-semibold tracking-[0.14em] uppercase">IMC</th>
-                <th scope="col" className="text-muted-foreground hidden pb-2 pl-4 text-left text-[11px] font-semibold tracking-[0.14em] uppercase md:table-cell">Categoría</th>
-                <th scope="col" className="text-muted-foreground hidden pb-2 pl-6 text-left text-[11px] font-semibold tracking-[0.14em] uppercase lg:table-cell">Observaciones</th>
-              </tr>
-            </thead>
-            <tbody className="border-border/50 divide-y divide-border/50">
+
+            <TableHeader>
+              <TableRow className="border-border/60 hover:bg-transparent">
+                <TableHead className="text-muted-foreground h-auto px-0 pb-2 text-left text-[11px] font-semibold tracking-[0.14em] uppercase">
+                  Fecha
+                </TableHead>
+                <TableHead className="text-muted-foreground h-auto px-0 pb-2 text-right text-[11px] font-semibold tracking-[0.14em] uppercase">
+                  Peso
+                </TableHead>
+                <TableHead className="text-muted-foreground hidden h-auto px-0 pb-2 text-right text-[11px] font-semibold tracking-[0.14em] uppercase sm:table-cell">
+                  Estatura
+                </TableHead>
+                <TableHead className="text-muted-foreground h-auto px-0 pb-2 text-right text-[11px] font-semibold tracking-[0.14em] uppercase">
+                  IMC
+                </TableHead>
+                <TableHead className="text-muted-foreground hidden h-auto px-0 pb-2 pl-4 text-left text-[11px] font-semibold tracking-[0.14em] uppercase md:table-cell">
+                  Categoría
+                </TableHead>
+                <TableHead className="text-muted-foreground hidden h-auto px-0 pb-2 pl-6 text-left text-[11px] font-semibold tracking-[0.14em] uppercase lg:table-cell">
+                  Observaciones
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
               {ordenadas.map((medida) => {
                 const imc = Number(medida.imc.toFixed(1));
                 const categoria = categoriaImc(imc);
                 return (
-                  <tr key={medida.id} className="hover:bg-accent/60 transition-colors">
-                    <td className="text-muted-foreground py-2.5 whitespace-nowrap">
+                  <TableRow
+                    key={medida.id}
+                    className="border-border/50 hover:bg-accent/60"
+                  >
+                    <TableCell className="text-muted-foreground px-0 py-2.5">
                       {formatearFechaHora(medida.fechaMedicion)}
-                    </td>
-                    <td className="py-2.5 text-right font-medium tabular-nums">{medida.peso} kg</td>
-                    <td className="text-muted-foreground hidden py-2.5 text-right tabular-nums sm:table-cell">
+                    </TableCell>
+                    <TableCell className="px-0 py-2.5 text-right font-medium tabular-nums">
+                      {medida.peso} kg
+                    </TableCell>
+                    <TableCell className="text-muted-foreground hidden px-0 py-2.5 text-right tabular-nums sm:table-cell">
                       {formatearEstatura(medida.estatura)}
-                    </td>
-                    <td className="py-2.5 text-right font-medium tabular-nums">{imc}</td>
-                    <td className="hidden py-2.5 pl-4 md:table-cell">
+                    </TableCell>
+                    <TableCell className="px-0 py-2.5 text-right font-medium tabular-nums">
+                      {imc}
+                    </TableCell>
+                    <TableCell className="hidden px-0 py-2.5 pl-4 whitespace-normal md:table-cell">
                       <span className="inline-flex items-center gap-1.5 text-xs">
                         <span
                           aria-hidden
@@ -971,18 +1014,18 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
                         />
                         <span className="text-muted-foreground">{categoria.etiqueta}</span>
                       </span>
-                    </td>
-                    <td
-                      className="text-muted-foreground hidden truncate py-2.5 pl-6 lg:table-cell"
+                    </TableCell>
+                    <TableCell
+                      className="text-muted-foreground hidden truncate px-0 py-2.5 pl-6 lg:table-cell"
                       title={medida.notasObservaciones ?? undefined}
                     >
                       {medida.notasObservaciones ?? "—"}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </Panel>
     </div>
@@ -1051,7 +1094,7 @@ function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
 
   if (fotos.length === 0) {
     return (
-      <Vacio
+      <EstadoVacio
         titulo="Sin fotos"
         descripcion="No hay fotos de seguimiento registradas para este paciente."
       />
@@ -1201,7 +1244,7 @@ function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
 
 function TabDocumentos({ documentos }: { documentos: DocumentoPaciente[] }) {
   if (documentos.length === 0) {
-    return <Vacio titulo="Sin documentos" descripcion="No hay análisis, estudios ni recetas asociadas a este paciente." />;
+    return <EstadoVacio titulo="Sin documentos" descripcion="No hay análisis, estudios ni recetas asociadas a este paciente." />;
   }
 
   return (
@@ -1240,74 +1283,6 @@ function TabDocumentos({ documentos }: { documentos: DocumentoPaciente[] }) {
   );
 }
 
-function Vacio({ titulo, descripcion }: { titulo: string; descripcion: string }) {
-  return (
-    <Card>
-      <CardContent className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-        <div className="bg-muted text-muted-foreground grid size-14 place-items-center rounded-full">
-          <ClipboardPlus className="size-6" aria-hidden />
-        </div>
-        <div>
-          <h2 className="text-foreground font-semibold">{titulo}</h2>
-          <p className="text-muted-foreground mx-auto mt-1 max-w-sm text-sm">
-            {descripcion}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function EstadoNoEncontrado({ nombre }: { nombre?: string }) {
-  return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-16 text-center md:px-8">
-      <Card>
-        <CardContent className="px-6 py-14">
-          <h1 className="text-foreground text-xl font-semibold">
-            Paciente no encontrado
-          </h1>
-          <p className="text-muted-foreground mx-auto mt-2 max-w-sm text-sm">
-            {nombre
-              ? `El paciente ${nombre} ya no esta activo en la clinica.`
-              : "El paciente que buscas no existe o fue dado de baja."}
-          </p>
-          <Button asChild className="mt-6">
-            <Link to="/pacientes">Volver a pacientes</Link>
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function EstadoErrorGeneral({
-  onReintentar,
-  onVolver,
-}: {
-  onReintentar: () => void;
-  onVolver: () => void;
-}) {
-  return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-16 md:px-8">
-      <Card className="border-destructive/40">
-        <CardContent className="px-6 py-14 text-center">
-          <h1 className="text-foreground text-xl font-semibold">
-            No pudimos cargar la ficha
-          </h1>
-          <p className="text-muted-foreground mx-auto mt-2 max-w-sm text-sm">
-            Revisa que la API este corriendo y vuelve a intentarlo.
-          </p>
-          <div className="mt-6 flex justify-center gap-2">
-            <Button variant="outline" onClick={onVolver}>
-              Volver a pacientes
-            </Button>
-            <Button onClick={onReintentar}>Reintentar</Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
 
 function ContenidoSkeleton() {
   return (

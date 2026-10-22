@@ -1,3 +1,4 @@
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { iniciales, tonoDesdeId } from "@/lib/formatters";
 
@@ -19,19 +20,29 @@ interface AvatarPacienteProps {
   className?: string;
 }
 
+/**
+ * Avatar con iniciales, sobre las primitivas de shadcn. Conserva su propia
+ * lógica de color porque viene del sistema semántico, no de la paleta cruda:
+ * el anillo y los tonos son responsabilidad de esta capa, no de `ui/avatar`.
+ */
 export function AvatarPaciente({ nombre, id, className }: AvatarPacienteProps) {
   return (
-    <span
-      className={cn(
-        "grid shrink-0 place-items-center rounded-full text-xs font-semibold select-none",
-        "ring-1 ring-inset ring-black/5 dark:ring-white/10",
-        TONES[tonoDesdeId(id)],
-        className ?? "size-10",
-      )}
+    <Avatar
       aria-hidden
       title={nombre}
+      className={cn(
+        "ring-1 ring-inset ring-black/5 dark:ring-white/10",
+        className ?? "size-10",
+      )}
     >
-      {iniciales(nombre)}
-    </span>
+      <AvatarFallback
+        className={cn(
+          "text-xs font-semibold select-none",
+          TONES[tonoDesdeId(id)],
+        )}
+      >
+        {iniciales(nombre)}
+      </AvatarFallback>
+    </Avatar>
   );
 }

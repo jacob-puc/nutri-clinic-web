@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { CalendarDays, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, Pencil, Trash2 } from "lucide-react";
 
 import { AccionesCita } from "@/features/citas/components/acciones-cita";
 import { BadgeEstadoCita } from "@/features/citas/components/badge-estado-cita";
@@ -13,6 +13,8 @@ import {
   formatearFechaHoraLocal,
   formatearHoraLocal,
 } from "@/features/citas/lib/fechas-cita";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import { EstadoError } from "@/components/states/estado-error";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,7 +38,17 @@ export function CitaDetallePage() {
   const { data: cita, isPending, isError, error } = useCita(id);
 
   if (isError) {
-    return <EstadoErrorCita mensaje={mensajeDeError(error)} />;
+    return (
+      <EstadoError
+        variante="pagina"
+        titulo="No pudimos cargar la cita"
+        mensaje={mensajeDeError(error)}
+      >
+        <Button asChild>
+          <Link to="/citas">Volver a citas</Link>
+        </Button>
+      </EstadoError>
+    );
   }
 
   if (isPending || !cita) {
@@ -45,27 +57,14 @@ export function CitaDetallePage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-6 md:px-8 md:py-8">
-      <nav aria-label="Navegación de citas" className="mb-4">
-        <ol className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-sm">
-          <li className="shrink-0">
-            <Link
-              to="/citas"
-              className="rounded-sm px-1.5 py-1 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              Citas
-            </Link>
-          </li>
-          <li aria-hidden="true" className="text-muted-foreground-subtle shrink-0">
-            <ChevronRight className="size-4" />
-          </li>
-          <li
-            className="bg-primary/10 text-primary border-primary/20 min-w-0 truncate rounded-md border px-2.5 py-1 font-semibold"
-            aria-current="page"
-          >
-            Cita
-          </li>
-        </ol>
-      </nav>
+      <Breadcrumbs
+        etiquetaNav="Navegación de citas"
+        className="mb-4"
+        tramos={[
+          { etiqueta: "Citas", href: "/citas" },
+          { etiqueta: "Cita" },
+        ]}
+      />
 
       <EncabezadoCita cita={cita} />
       <DetalleCita cita={cita} />
@@ -245,26 +244,6 @@ function DatoCita({
     <div className={className}>
       <dt className="text-muted-foreground text-xs">{etiqueta}</dt>
       <dd className="text-foreground mt-0.5 text-sm break-words">{children}</dd>
-    </div>
-  );
-}
-
-function EstadoErrorCita({ mensaje }: { mensaje: string }) {
-  return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-16 md:px-8">
-      <Card className="border-destructive/40">
-        <CardContent className="px-6 py-14 text-center">
-          <h1 className="text-foreground text-xl font-semibold">
-            No pudimos cargar la cita
-          </h1>
-          <p className="text-muted-foreground mx-auto mt-2 max-w-sm text-sm">
-            {mensaje}
-          </p>
-          <Button asChild className="mt-6">
-            <Link to="/citas">Volver a citas</Link>
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 }
