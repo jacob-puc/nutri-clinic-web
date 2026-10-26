@@ -53,10 +53,14 @@ export function Topbar() {
           onKeyDown={(evento) => {
             if (evento.key === "Enter") {
               const termino = evento.currentTarget.value.trim();
+              /* replace: mismo criterio que la lista de pacientes. Sin él,
+                 cada Enter empuja una entrada al historial y Atrás deja de
+                 funcionar como el usuario espera. */
               navigate(
                 termino
                   ? `/pacientes?busqueda=${encodeURIComponent(termino)}`
                   : "/pacientes",
+                { replace: true },
               );
             }
           }}

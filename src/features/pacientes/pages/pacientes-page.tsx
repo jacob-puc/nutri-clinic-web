@@ -27,10 +27,12 @@ import type { Paciente } from "@/types/api";
 
 export function PacientesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [ascendente, setAscendente] = useState(true);
   const [altaAbierta, setAltaAbierta] = useState(false);
 
   const busqueda = searchParams.get("busqueda") ?? "";
+  /* El orden vive en la URL junto a la búsqueda: en estado local se perdía
+     al refrescar, con lo que el listado volvía siempre a A-Z sin aviso. */
+  const ascendente = searchParams.get("orden") !== "desc";
   /* replace: cada pulsacion reemplaza la entrada del historial. Sin esto,
      escribir "ana" deja tres pasos atras y rompe la flecha del navegador. */
   const cambiarBusqueda = (valor: string) => {
@@ -40,6 +42,20 @@ export function PacientesPage() {
           actuales.set("busqueda", valor);
         } else {
           actuales.delete("busqueda");
+        }
+        return actuales;
+      },
+      { replace: true },
+    );
+  };
+
+  const cambiarOrden = () => {
+    setSearchParams(
+      (actuales) => {
+        if (ascendente) {
+          actuales.set("orden", "desc");
+        } else {
+          actuales.delete("orden");
         }
         return actuales;
       },
@@ -107,7 +123,7 @@ export function PacientesPage() {
 
             <Button
               variant="outline"
-              onClick={() => setAscendente((v) => !v)}
+              onClick={cambiarOrden}
               className="shrink-0"
               aria-label={
                 ascendente ? "Ordenar de Z a A" : "Ordenar de A a Z"

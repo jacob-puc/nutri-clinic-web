@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   Activity,
   AlertTriangle,
@@ -69,12 +69,36 @@ import type {
   TipoFoto,
 } from "@/types/api";
 
+const PESTANAS = ["resumen", "medidas", "fotos", "documentos"] as const;
+type Pestana = (typeof PESTANAS)[number];
+
 export function PacienteDetallePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [parametros, setParametros] = useSearchParams();
   const [editando, setEditando] = useState(false);
   const [registrandoMedida, setRegistrandoMedida] = useState(false);
   const [agendandoCita, setAgendandoCita] = useState(false);
+
+  /* Las pestañas se controlan desde la URL (?pestana=). Eran defaultValue,
+     es decir, el estado vivía dentro de Radix: al refrescar o volver atrás
+     volvían siempre a "Resumen" y la URL no servía para compartir una ficha
+     concreta. Un valor desconocido cae en "resumen" para que no se pinte una
+     pestaña vacía. */
+  const pestanaPedida = parametros.get("pestana") ?? "";
+  const pestana = PESTANAS.includes(pestanaPedida as Pestana)
+    ? pestanaPedida
+    : "resumen";
+
+  const cambiarPestana = (siguiente: string) => {
+    const siguientes = new URLSearchParams(parametros);
+    if (siguiente === "resumen") {
+      siguientes.delete("pestana");
+    } else {
+      siguientes.set("pestana", siguiente);
+    }
+    setParametros(siguientes, { replace: true });
+  };
 
   const { data: paciente, isPending: cargandoPaciente, isError: errorPaciente } =
     usePaciente(id);
@@ -168,7 +192,7 @@ export function PacienteDetallePage() {
         />
       )}
 
-      <Tabs defaultValue="resumen" className="mt-6">
+      <Tabs value={pestana} onValueChange={cambiarPestana} className="mt-6">
         <TabsList className="w-full justify-start">
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
           <TabsTrigger value="medidas">
