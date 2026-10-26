@@ -1,6 +1,7 @@
 import { Menu, Search } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
+import { MenuUsuario } from "@/components/auth/menu-usuario";
 import { LogoConTexto } from "@/components/layout/logo";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { useSidebar } from "@/components/layout/sidebar-context";
@@ -69,15 +70,7 @@ export function Topbar() {
 
       <div className="ml-auto flex items-center gap-1.5">
         <ThemeToggle />
-        {/* Marcador de posición hasta que exista el menú de usuario (Fase 4):
-            lleva solo aria-label. Antes tenía además title="Autenticacion
-            pendiente", que contradecía al aria-label y decía otra cosa. */}
-        <div
-          className="bg-card ml-1 hidden size-9 items-center justify-center rounded-full border border-border text-xs font-semibold text-muted-foreground sm:flex"
-          aria-label="Sesión de usuario"
-        >
-          NC
-        </div>
+        <MenuUsuario />
       </div>
     </header>
   );
