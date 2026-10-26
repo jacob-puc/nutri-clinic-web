@@ -27,9 +27,11 @@ interface AvatarPacienteProps {
  */
 export function AvatarPaciente({ nombre, id, className }: AvatarPacienteProps) {
   return (
+    /* Sin title ni tooltip: el nombre del paciente se pinta siempre junto al
+       avatar, y en el estado de catalogo vacio seria "Paciente". Es decorativo
+       y por eso va oculto para lectores de pantalla. */
     <Avatar
       aria-hidden
-      title={nombre}
       className={cn(
         "ring-1 ring-inset ring-black/5 dark:ring-white/10",
         className ?? "size-10",

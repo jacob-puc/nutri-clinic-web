@@ -42,6 +42,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TooltipSimple } from "@/components/ui/tooltip-simple";
 import {
   Select,
   SelectContent,
@@ -1015,11 +1016,21 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
                         <span className="text-muted-foreground">{categoria.etiqueta}</span>
                       </span>
                     </TableCell>
-                    <TableCell
-                      className="text-muted-foreground hidden truncate px-0 py-2.5 pl-6 lg:table-cell"
-                      title={medida.notasObservaciones ?? undefined}
-                    >
-                      {medida.notasObservaciones ?? "—"}
+                    <TableCell className="text-muted-foreground hidden truncate px-0 py-2.5 pl-6 lg:table-cell">
+                      {medida.notasObservaciones ? (
+                        /* La celda trunca, así que el texto completo solo se
+                           ve al pasar el cursor. Antes era title= nativo. */
+                        <TooltipSimple
+                          side="left"
+                          contenido={medida.notasObservaciones}
+                        >
+                          <span className="block truncate">
+                            {medida.notasObservaciones}
+                          </span>
+                        </TooltipSimple>
+                      ) : (
+                        "—"
+                      )}
                     </TableCell>
                   </TableRow>
                 );
