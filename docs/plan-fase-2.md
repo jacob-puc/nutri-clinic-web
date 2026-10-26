@@ -1,7 +1,7 @@
 # Plan de cierre — Fase 2 dirección visual A+
 
-> Estado: **en ejecución**. Fase 0 completada. Cada ítem lleva la evidencia verificada
-> (archivo:línea o cálculo). Auditoría: 22-10-2026. Rama: `fase-2-direccion-visual`.
+> Estado: **en ejecución**. Fases 0, 1, 2, 3 y 4 completadas. Cada ítem lleva la evidencia
+> verificada (archivo:línea o cálculo). Auditoría: 22-10-2026. Rama: `fase-2-direccion-visual`.
 
 Leyenda de estado: `[RESUELTO]` ya está hecho y verificado · `[PENDIENTE]` confirmado sin resolver ·
 `[PARCIAL]` queda una parte concreta · `[DECISIÓN]` necesita que se defina el rumbo antes de tocar código.
@@ -15,9 +15,9 @@ Leyenda de estado: `[RESUELTO]` ya está hecho y verificado · `[PENDIENTE]` con
 | 1 | Estados globales vacío/error/esqueleto + primitivas huérfanas | `[RESUELTO]` (commit `e5e00a8`) |
 | 3 | Contraste del tema claro | `[RESUELTO]` (commit `01087ec`) |
 | 4 | Clave del tema `nutriclinia` | `[RESUELTO]` (commit `01087ec`) |
-| 5 | Acciones muertas + Cerrar sesión | `[PARCIAL]` — faltan menú de usuario y logout |
+| 5 | Acciones muertas + Cerrar sesión | `[RESUELTO]` (commit `476b864`) |
 | 6 | Mapas de transición + `Completada` | `[RESUELTO]` — pero destapa otro hueco mayor |
-| 7 | Estado de vista en URL | `[PARCIAL]` — agenda hecho (`b91bcf2`); falta expediente y orden |
+| 7 | Estado de vista en URL | `[RESUELTO]` (commits `b91bcf2`, `19ea9b5`) |
 | 8 | Editorial y tipografía | `[RESUELTO]` — tildes (`090cc6a`), escala de títulos y anchos (`ad0c4c9`) |
 
 **Hallazgo nuevo y de mayor peso que los anteriores:** el módulo **Consultas existe completo en el
@@ -180,50 +180,78 @@ listados compartieran medida. Verificado que el calendario aguanta: su rejilla e
 
 ---
 
-## 4. Fase 3 — Estado de vista en la URL
+## 4. Fase 3 — Estado de vista en la URL ✅ COMPLETADA (`19ea9b5`)
 
-### 4.1 `[PARCIAL]` Lo que ya funciona
+### 4.1 `[RESUELTO]` Lo que ya funciona
 `pacientes-page.tsx:26-36` persiste `busqueda` en la URL con `{ replace: true }` (línea 35). Ya está.
 
-### 4.2 `[PENDIENTE]` Búsqueda del topbar rompe ese criterio
-`src/components/layout/topbar.tsx:56-60` llama a `navigate(...)` **sin objeto de opciones**, así que
-cada Enter del buscador global empuja una entrada al historial y el botón Atrás deja de funcionar
-como se espera. Mismo destino que la lista, criterio distinto. Añadir `{ replace: true }`.
+### 4.2 `[RESUELTO]` Búsqueda del topbar: ahora también con `replace`
+`src/components/layout/topbar.tsx:56-64` llamaba a `navigate(...)` **sin objeto de opciones**, así
+que cada Enter del buscador global empujaba una entrada al historial. Añadido `{ replace: true }`
+en la línea 64.
 
-### 4.3 `[PARCIAL]` La pestaña del expediente no está ni en `useState` — la agenda ya sí
-**La agenda quedó resuelta** en el commit `b91bcf2`: `AgendaPage` controla `?vista=hoy|calendario`
-y `?cita=<id>` con `useSearchParams`, y esa cita abre un `DetalleCitaSheet` sin salir del
-calendario. Es el patrón a replicar.
+Verificado en el navegador: `history.length` **6 → 6** tras pulsar Enter en el buscador global con
+`luis`, con la URL cambiando a `/pacientes?busqueda=luis` y el listado filtrado a un solo registro.
 
-**Sigue pendiente el expediente.** `paciente-detalle-page.tsx:150` → `<Tabs defaultValue="resumen" className="mt-6">`
-es **sin controlar**: el estado vive dentro de Radix. Resultado: al refrescar o volver atrás, la
-pestaña vuelve a "Resumen" siempre.
+### 4.3 `[RESUELTO]` La pestaña del expediente vive en `?pestana=`
+`paciente-detalle-page.tsx` era `<Tabs defaultValue="resumen">` (hoy `value` + `onValueChange` en la
+línea 195): el estado vivía dentro de Radix y al refrescar o volver atrás volvía siempre a
+"Resumen". Ahora se controla desde `useSearchParams`.
 
-Mover a `value` + `onValueChange` controlado y sincronizar con el parámetro `?pestana=`, para que
-compartir la URL de "Evolución" abra Evolución.
+- Lista blanca `PESTANAS` en el módulo: un valor desconocido cae a `resumen`, así una URL mal
+  construida no deja la pestaña vacía.
+- `resumen` no se escribe en la URL (es el valor por defecto), con lo que la ficha limpia no lleva
+  parámetros de más.
 
-### 4.4 `[PENDIENTE]` Orden de tabla
-`pacientes-page.tsx:19` guarda `ascendente` en `useState` local; se pierde al refrescar. Y **ningún
-`<th>` de las tablas de la app es ordenable** (los encabezados son fijos). Opción: persistir
-`ascendente` en la URL junto a `busqueda`, y dejar la ordenación por columna para una iteración de
-tabla real.
+Verificado en el navegador:
+| Acción | Resultado |
+|---|---|
+| Clic en "Evolución" | URL → `?pestana=medidas`, pestaña seleccionada |
+| Refresco con `?pestana=fotos` | abre **Fotos**, no Resumen |
+| `?pestana=zzz` | cae a **Resumen** con su panel renderizado |
+
+### 4.4 `[RESUELTO]` Orden del listado en la URL
+`pacientes-page.tsx:19` guardaba `ascendente` en `useState` local y se perdía al refrescar. Ahora se
+deriva de `?orden=desc` en la línea 35 (ausente = ascendente), con `cambiarOrden` escribiendo el
+parámetro.
+
+Verificado: clic en el botón → URL `?orden=desc`, filas en orden **Paciente Borrable → Luis →
+Carlos** (antes C → L → P) y la etiqueta del botón cambia a "Ordenar de A a Z".
+
+Queda fuera de alcance, y fue deliberado: **la ordenación por columna de las tablas**. Ningún `<th>`
+de la app es ordenable (los encabezados son fijos); eso es una iteración de tabla real, no de URL.
 
 ---
 
-## 5. Fase 4 — Menú de usuario y cierre de sesión
+## 5. Fase 4 — Menú de usuario y cierre de sesión ✅ COMPLETADA (`476b864`)
 
-### 5.1 `[PARCIAL]` Las acciones muertas ya no existen
+### 5.1 `[RESUELTO]` Las acciones muertas ya no existen
 Verificado: **ya no hay** cadenas "Agendar cita" ni "Ver expediente" sueltas en `src/`. Ese punto de
 la auditoría anterior está resuelto.
 
-### 5.2 `[PENDIENTE]` Pero no se puede cerrar sesión
-`src/features/auth/hooks/use-auth.tsx:81` define `logout` y lo expone en el contexto (línea 117),
-y **no hay ningún componente que lo invoque**. No hay menú de usuario ni botón "Cerrar sesión" en
-ninguna parte. La única vía de salida es borrar el almacenamiento a mano.
+### 5.2 `[RESUELTO]` Menú de usuario con cierre de sesión
+Nuevo `src/components/auth/menu-usuario.tsx`, montado en el topbar en lugar del marcador de posición
+que había (`topbar.tsx`, el `div` "NC"). El trigger lleva el avatar con iniciales, el nombre en
+`md+` y `aria-label="Menú de usuario: <nombre>"`; el menú abre con nombre, correo y **"Cerrar
+sesión"**.
 
-Entregable: menú de usuario en el topbar (`avatar.tsx` ya está instalado, huérfano — se pondría a
-servir) con nombre del nutricionista, correo y "Cerrar sesión", que llame al `logout` existente y
-navegue a `/login`.
+- Llama al `logout` de `use-auth.tsx:81`, que ya existía y no lo invocaba nadie, y navega a
+  `/login` con `replace`, evitando un parpadeo del layout protegido con la sesión ya cerrada.
+- Usa `onSelect` de Radix (no `onClick`), que además cierra el menú al activarse.
+- `if (!usuario) return null`: nunca se pinta un disparador vacío.
+
+**Dónde vive y por qué no rompe la regla de dependencias:** `src/components/auth/` junto a
+`auth-guard.tsx`, que ya era el precedente de componente de presentación que consume el contexto de
+autenticación. El resto de `components/` sigue sin importar de `features/`.
+
+Los seis tonos de avatar pasan de estar copiados en `avatar-paciente.tsx` a `src/lib/avatar-tonos.ts`,
+para que el avatar del topbar y los del listado compartan una única copia verificada.
+
+Verificado en el navegador con sesión iniciada:
+| Paso | Resultado |
+|---|---|
+| Clic en el trigger | menú con "Administrador NutriClinica" + `admin@nutriclinica.cl` + "Cerrar sesión" |
+| Clic en "Cerrar sesión" | URL → `/login` y `localStorage` solo con `nutriclinica-theme` (tokens borrados) |
 
 ---
 
@@ -289,9 +317,9 @@ Alcance propuesto (por orden de esfuerzo):
 1. ~~**Fase 0 completa** (sección 1)~~ ✅ `01087ec`, `090cc6a`
 2. ~~**Fase 2** (sección 3) — editorial y tipografía~~ ✅ `ad0c4c9`
 3. ~~**Fase 1** (sección 2) — estados globales + huérfanas~~ ✅ `e5e00a8`
-4. **Fase 3** (sección 4) — URL. La agenda ya está; queda el expediente y el orden de tabla.
-5. **Fase 4** (sección 5) — menú de usuario y logout.
-6. **Fase 5** (sección 6) — Consultas, que es la que de verdad cierra el circuito clínico.
+4. ~~**Fase 3** (sección 4) — URL. Queda la agenda, el expediente y el orden de tabla.~~ ✅ `19ea9b5`
+5. ~~**Fase 4** (sección 5) — menú de usuario y logout.~~ ✅ `476b864`
+6. **Fase 5** (sección 6) — Consultas, que es la que de verdad cierra el circuito clínico. **Siguiente.**
 
 Cada fase es entregable independiente y commiteable por separado.
 
@@ -310,3 +338,7 @@ Cada fase es entregable independiente y commiteable por separado.
 | `d1ca0dd` | docs: fase 0 marcada como completada |
 | `ad0c4c9` | escala única de títulos y ancho de página por tipo |
 | `e5e00a8` | estados globales compartidos y tablas sobre shadcn |
+| `28e97e1` | fix: la agenda volvía a Mes al cambiar la vista del calendario |
+| `0c7fdd6` | `TooltipSimple` compartido y tooltips contradictorios eliminados |
+| `19ea9b5` | Fase 3: pestañas del expediente y orden en la URL |
+| `476b864` | Fase 4: menú de usuario con cierre de sesión |
