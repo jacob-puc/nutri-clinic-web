@@ -345,3 +345,4 @@ Cada fase es entregable independiente y commiteable por separado.
 | `d7bbd47` | cierre de la dirección visual A+ y Fase 5: módulo de Consultas + pestaña Consultas en el expediente |
 | `1a243a2` | tab "Historial del día" en /consultas para ver el historial completo del día |
 | `3c6ac56` | fix: quitar la seccion "Aun sin confirmar" de la cola del dia |
+| `8429eb6` | feat: filtros de fecha en Historial del dia (desde/hasta + Ver todos) |
