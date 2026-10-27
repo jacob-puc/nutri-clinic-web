@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   CheckCircle2,
-  ClipboardList,
   Loader2,
   PlayCircle,
   UserCheck,
@@ -78,7 +77,6 @@ export function ConsultasPage() {
 
   const lista = useMemo(() => citas.data ?? [], [citas.data]);
   const porAtender = useMemo(() => lista.filter((c) => c.estado === "Confirmada"), [lista]);
-  const sinConfirmar = useMemo(() => lista.filter((c) => c.estado === "Programada"), [lista]);
   const completadas = useMemo(
     () => lista.filter((c) => c.estado === "Completada").length,
     [lista],
@@ -96,7 +94,7 @@ export function ConsultasPage() {
     return pasadas;
   }, [lista]);
 
-  const pendientes = porAtender.length + sinConfirmar.length;
+  const pendientes = porAtender.length;
 
   const alIniciar = (cita: Cita) => {
     iniciar.mutate(
@@ -186,30 +184,6 @@ export function ConsultasPage() {
                       <PlayCircle className="size-4" />
                     )}
                     Iniciar atención
-                  </Button>
-                </FilaCola>
-              ))}
-            </ul>
-          )}
-        </Seccion>
-
-        <Seccion
-          titulo="Aún sin confirmar"
-          icono={ClipboardList}
-          meta={sinConfirmar.length > 0 ? `${sinConfirmar.length}` : undefined}
-        >
-          {cargando ? (
-            <FilasSkeleton n={1} />
-          ) : sinConfirmar.length === 0 ? (
-            <p className="text-muted-foreground py-2 text-sm">
-              Todas las citas de hoy están confirmadas.
-            </p>
-          ) : (
-            <ul className="divide-border/60 divide-y">
-              {sinConfirmar.map((cita) => (
-                <FilaCola key={cita.id} cita={cita}>
-                  <Button size="sm" variant="outline" onClick={() => navigate(`/citas/${cita.id}`)}>
-                    Ver cita
                   </Button>
                 </FilaCola>
               ))}
