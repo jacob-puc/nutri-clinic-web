@@ -5,6 +5,7 @@ import {
   Loader2,
   PlayCircle,
   UserCheck,
+  Filter,
 } from "lucide-react";
 
 import { BadgeEstadoCita } from "@/features/citas/components/badge-estado-cita";
@@ -20,9 +21,10 @@ import { EstadoVacio } from "@/components/states/estado-vacio";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { SelectorFecha } from "@/components/ui/selector-fecha";
 import { mensajeDeError } from "@/lib/api-error";
 import { toast } from "sonner";
-import type { Cita } from "@/types/api";
+import type { Cita, ConsultaFiltro } from "@/types/api";
 
 /** Rango de un día completo en hora local, como instantes para la API. */
 function rangoDelDia(base: Date): { desde: string; hasta: string } {
@@ -65,6 +67,18 @@ export function ConsultasPage() {
      con la primera, se abre como Inicial; si ya tiene, como Seguimiento. */
   const consultas = useConsultas({});
 
+  /* Filtros del historial: se guardan en la URL para ser compartibles y
+     persistentes. Por defecto, el día de hoy. */
+  const [filtroDesde, setFiltroDesde] = useSearchParams();
+  const desdeUrl = filtroDesde.get("desde");
+  const hastaUrl = filtroDesde.get("hasta");
+  const filtroInicial: ConsultaFiltro = useMemo(() => ({
+    desde: desdeUrl ?? undefined,
+    hasta: hastaUrl ?? undefined,
+  }), [desdeUrl, hastaUrl]);
+
+  const consultasHistorial = useConsultas(filtroInicial);
+
   const iniciar = useCrearConsulta();
 
   const porPaciente = useMemo(() => {
@@ -82,9 +96,8 @@ export function ConsultasPage() {
     [lista],
   );
 
-  /* Historial del día: todo lo que ya pasó en la consulta, ya sea con cierre
-     o con la atención abierta. Se lee de más reciente a más antigua para que el
-     nutricionista cierre el día leyendo hacia atrás. */
+  /* Historial del día (cola): todo lo que ya pasó en la consulta, ya sea con cierre
+     o con la atención abierta. Se lee de más reciente a más antigua. */
   const historial = useMemo(() => {
     const pasadas = lista
       .filter(
@@ -207,36 +220,130 @@ export function ConsultasPage() {
           <Seccion
             titulo="Historial del día"
             icono={CheckCircle2}
-            meta={historial.length > 0 ? `${historial.length} consultas` : undefined}
+            meta={consultasHistorial.data && consultasHistorial.data.length > 0
+              ? `${consultasHistorial.data.length} consultas`
+              : undefined}
+            acciones={
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const params = new URLSearchParams(filtroDesde);
+                    params.delete("desde");
+                    params.delete("hasta");
+                    setFiltroDesde(params, { replace: true });
+                  }}
+                  disabled={!filtroInicial.desde && !filtroInicial.hasta}
+                >
+                  <Filter className="size-3.5 mr-1.5" aria-hidden />
+                  Ver todos
+                </Button>
+              </div>
+            }
           >
-            {cargando ? (
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">Desde</span>
+                <SelectorFecha
+                  value={filtroInicial.desde ? new Date(filtroInicial.desde) : undefined}
+                  onChange={(fecha) => {
+                    const params = new URLSearchParams(filtroDesde);
+                    if (fecha) {
+                      const iso = fecha.toISOString().split("T")[0] + "T00:00:00.000Z";
+                      params.set("desde", iso);
+                    } else {
+                      params.delete("desde");
+                    }
+                    setFiltroDesde(params, { replace: true });
+                  }}
+                  placeholder="Fecha inicio"
+                  formato="corto"
+                  limpiable
+                />
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">Hasta</span>
+                <SelectorFecha
+                  value={filtroInicial.hasta ? new Date(filtroInicial.hasta) : undefined}
+                  onChange={(fecha) => {
+                    const params = new URLSearchParams(filtroDesde);
+                    if (fecha) {
+                      const iso = fecha.toISOString().split("T")[0] + "T23:59:59.999Z";
+                      params.set("hasta", iso);
+                    } else {
+                      params.delete("hasta");
+                    }
+                    setFiltroDesde(params, { replace: true });
+                  }}
+                  placeholder="Fecha fin"
+                  formato="corto"
+                  limpiable
+                />
+              </div>
+            </div>
+
+            {consultasHistorial.isPending ? (
               <FilasSkeleton n={2} />
-            ) : historial.length === 0 ? (
+            ) : consultasHistorial.isError ? (
+              <div className="flex flex-col items-center gap-3 py-6 text-center">
+                <p className="text-muted-foreground text-sm">
+                  No pudimos cargar el historial.
+                </p>
+                <Button variant="outline" size="sm" onClick={() => void consultasHistorial.refetch()}>
+                  Reintentar
+                </Button>
+              </div>
+            ) : !consultasHistorial.data || consultasHistorial.data.length === 0 ? (
               <p className="text-muted-foreground py-2 text-sm">
-                Todavía no se ha iniciado ninguna atención hoy.
+                {filtroInicial.desde || filtroInicial.hasta
+                  ? "Sin consultas en el rango seleccionado."
+                  : "Todavía no se ha iniciado ninguna atención."}
               </p>
             ) : (
               <ul className="divide-border/60 divide-y">
-                {historial.map((cita) => (
-                  <FilaCola key={cita.id} cita={cita}>
-                    {cita.consultaId ? (
-                      <Button
-                        size="sm"
-                        onClick={() => navigate(`/consultas/${cita.consultaId}`)}
-                      >
-                        Ver consulta
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => navigate(`/citas/${cita.id}`)}
-                      >
-                        Ver cita
-                      </Button>
-                    )}
-                  </FilaCola>
-                ))}
+                {consultasHistorial.data
+                  .sort((a, b) => b.fechaInicio.localeCompare(a.fechaInicio))
+                  .map((consulta) => (
+                    <li key={consulta.id} className="flex flex-wrap items-center gap-3 py-2.5">
+                      <span className="text-foreground w-12 shrink-0 text-sm font-semibold tabular-nums">
+                        {formatearHoraLocal(consulta.fechaInicio)}
+                      </span>
+                      <AvatarPaciente
+                        nombre={consulta.pacienteNombre}
+                        id={consulta.pacienteId}
+                        className="size-9 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <Link
+                            to={`/pacientes/${consulta.pacienteId}`}
+                            className="text-foreground rounded-sm text-sm font-semibold outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                          >
+                            {consulta.pacienteNombre}
+                          </Link>
+                          <BadgeEstadoCita
+                            estado={consulta.fechaFin ? "Completada" : "EnCurso"}
+                          />
+                          <span className="text-muted-foreground text-xs">
+                            {consulta.tipoConsulta}
+                          </span>
+                        </div>
+                        <p className="text-muted-foreground truncate text-xs">
+                          {consulta.nutricionistaNombre}
+                          {consulta.notasClinicas && ` · ${consulta.notasClinicas}`}
+                        </p>
+                      </div>
+                      <div className="ml-auto shrink-0">
+                        <Button
+                          size="sm"
+                          onClick={() => navigate(`/consultas/${consulta.id}`)}
+                        >
+                          Ver consulta
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
               </ul>
             )}
           </Seccion>
