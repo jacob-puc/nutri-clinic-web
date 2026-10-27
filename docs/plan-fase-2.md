@@ -1,6 +1,6 @@
 # Plan de cierre — Fase 2 dirección visual A+
 
-> Estado: **en ejecución**. Fases 0, 1, 2, 3 y 4 completadas. Cada ítem lleva la evidencia
+> Estado: **en ejecución**. Fases 0, 1, 2, 3, 4 y 5 completadas. Cada ítem lleva la evidencia
 > verificada (archivo:línea o cálculo). Auditoría: 22-10-2026. Rama: `fase-2-direccion-visual`.
 
 Leyenda de estado: `[RESUELTO]` ya está hecho y verificado · `[PENDIENTE]` confirmado sin resolver ·
@@ -16,13 +16,13 @@ Leyenda de estado: `[RESUELTO]` ya está hecho y verificado · `[PENDIENTE]` con
 | 3 | Contraste del tema claro | `[RESUELTO]` (commit `01087ec`) |
 | 4 | Clave del tema `nutriclinia` | `[RESUELTO]` (commit `01087ec`) |
 | 5 | Acciones muertas + Cerrar sesión | `[RESUELTO]` (commit `476b864`) |
-| 6 | Mapas de transición + `Completada` | `[RESUELTO]` — pero destapa otro hueco mayor |
+| 6 | Mapas de transición + `Completada` + módulo Consultas | `[RESUELTO]` — hueco cerrado con el módulo completo (Fase 5) |
 | 7 | Estado de vista en URL | `[RESUELTO]` (commits `b91bcf2`, `19ea9b5`) |
 | 8 | Editorial y tipografía | `[RESUELTO]` — tildes (`090cc6a`), escala de títulos y anchos (`ad0c4c9`) |
 
 **Hallazgo nuevo y de mayor peso que los anteriores:** el módulo **Consultas existe completo en el
-backend y no tiene una sola línea en el frontend**. Es la causa real de que una cita no pueda llegar
-nunca a `Completada` desde la interfaz. Ver sección 6.
+backend y no tenía una sola línea en el frontend**. Era la causa real de que una cita no pudiera
+llegar nunca a `Completada` desde la interfaz. Ver sección 6 — **ya cerrado en Fase 5**.
 
 ---
 
@@ -255,7 +255,7 @@ Verificado en el navegador con sesión iniciada:
 
 ---
 
-## 6. Fase 5 — Consultas (el hueco de mayor peso)
+## 6. Fase 5 — Consultas (el hueco de mayor peso) ✅ COMPLETADA
 
 ### 6.1 `[RESUELTO]` Los dos mapas de transición ya están sincronizados
 Frontend `src/features/citas/lib/estados-cita.ts:23` (`TRANSICIONES_CITA`) contra backend
@@ -277,29 +277,29 @@ No se alcanza con `PATCH /api/citas/{id}/estado`. Se asigna al cerrar una consul
 
 Es diseño, no error. Por eso `Completada: []` en el frontend es correcto.
 
-### 6.3 `[PENDIENTE]` Pero el frontend no tiene el módulo Consultas
-Verificado: **cero** referencias a "consulta" en todo `src/`. Mientras tanto el backend expone
-`ConsultasController` completo:
+### 6.3 `[RESUELTO]` Módulo Consultas construido (Fase 5)
+Antes: **cero** referencias a "consulta" en todo `src/`. Ahora existe el módulo completo en
+`src/features/consultas/` (`api/`, `hooks/`, `lib/`, `components/`, `pages/`), activo en el
+navegador y con rutas propias.
 
-- `POST /api/consultas` — abrir consulta (debe partir de `Confirmada` o `EnCurso`,
-  `CitaService.EstadosAtendibles`)
-- `PATCH /api/consultas/{id}/cerrar` — cerrarla y **pasar la cita a `Completada`**
-- `GET /api/consultas/cita/{citaId}`
-- `POST /api/consultas/{id}/medidas`, `/fotos`, `/documentos`
+**Lo que quedó construido, contra el contrato real del backend:**
 
-**Consecuencia funcional hoy:** una cita en `EnCurso` solo puede acabar en `Cancelada` o
-`NoAsistio`. No existe ninguna ruta en la interfaz para que una atención quede registrada como
-completada, que es el estado que un nutricionista espera alcanzar.
+| Pieza | Detalle |
+|---|---|
+| `consultas-api.ts` | `listar` (paginado, con `traerTodasLasHojas`), `obtenerPorId`, `obtenerPorCita` (404 → `null`), `listarPorPaciente`, `crear`, `cerrar` |
+| Cola del día (`/consultas`) | Citas de hoy agrupadas en *En curso* / *Por atender* / *Aún sin confirmar*, con contador de cerradas |
+| Espacio de trabajo (`/consultas/:id`) | Secciones apiladas con anclas laterales: motivo → medidas → fotos → documentos → cierre. Sin wizard ni pestañas: el paciente puede llegar con el análisis antes que la báscula |
+| "Iniciar atención" | Intercepta el target `EnCurso` en `AccionesCita`/`BotonesEstadoCita`: crea la consulta (el backend pone la cita en `EnCurso` en la misma transacción), no un `PATCH` de estado suelto |
+| "Cerrar consulta" | `PATCH /consultas/{id}/cerrar` → la cita pasa sola a `Completada`. Consulta con `fechaFin` se renderiza en solo lectura |
+| Tipo autodetectado | 0 consultas previas → `Inicial`; >0 → `Seguimiento`. Sin diálogo: quien atiende no elige tipo en plena consulta |
+| Subida real de archivos | `subirFoto`/`subirDocumento` en `pacientes-api.ts` con `Content-Type: multipart/form-data` **por petición** (obligatorio en axios 1.20: sin el override el `FormData` se serializa a JSON y el archivo se pierde — verificado con prueba local) |
+| Enlaces expediente↔consulta | `DialogoMedida` acepta `consultaId`; secciones de medidas/fotos/documentos filtran por `consultaId`; las subidas invalidan expediente y consultas |
 
-`GET /api/consultas` es además el **otro endpoint** que el backend pasó a paginado (junto a
-`/api/citas`), lo que confirma que es una funcionalidad viva esperando interfaz.
+`src/lib/paginacion.ts` (`traerTodasLasHojas`) es el helper compartido que absorbe el paginado de
+`GET /api/consultas` y `GET /api/citas`; `citas-api.ts` se refactorizó para usarlo.
 
-Alcance propuesto (por orden de esfuerzo):
-1. Acción "Iniciar atención" en la ficha de la cita (visible desde `Confirmada`/`EnCurso`) →
-   `POST /api/consultas`.
-2. Pestaña "Consulta" en el expediente que lea `GET /api/consultas/cita/{id}` y permita registrar
-   medidas/fotos/documentos contra la consulta en curso.
-3. Acción "Cerrar consulta" → la cita pasa sola a `Completada`.
+**Consecuencia funcional que desaparece:** una cita en `EnCurso` ya puede acabar en `Completada`
+desde la interfaz. El circuito clínico cita → consulta → `Completada` está cerrado.
 
 ---
 
@@ -319,7 +319,7 @@ Alcance propuesto (por orden de esfuerzo):
 3. ~~**Fase 1** (sección 2) — estados globales + huérfanas~~ ✅ `e5e00a8`
 4. ~~**Fase 3** (sección 4) — URL. Queda la agenda, el expediente y el orden de tabla.~~ ✅ `19ea9b5`
 5. ~~**Fase 4** (sección 5) — menú de usuario y logout.~~ ✅ `476b864`
-6. **Fase 5** (sección 6) — Consultas, que es la que de verdad cierra el circuito clínico. **Siguiente.**
+6. ~~**Fase 5** (sección 6) — Consultas, que es la que de verdad cierra el circuito clínico.~~ ✅ ver commits abajo
 
 Cada fase es entregable independiente y commiteable por separado.
 

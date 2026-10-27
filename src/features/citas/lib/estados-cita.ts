@@ -6,17 +6,28 @@ export const ETIQUETA_ESTADO_CITA: Record<EstadoCita, string> = {
   EnCurso: "En curso",
   Completada: "Completada",
   Cancelada: "Cancelada",
-  NoAsistio: "No asistio",
+  NoAsistio: "No asistió",
 };
 
-/** Colores sobre variante outline: el estado se lee de un vistazo en la tabla. */
+/** Pastilla suave por estado: fondo tenue y texto oscuro del mismo tono. */
 export const ESTILO_ESTADO_CITA: Record<EstadoCita, string> = {
-  Programada: "border-info/40 text-info",
-  Confirmada: "border-primary/40 text-primary",
-  EnCurso: "border-warning/40 text-warning",
-  Completada: "border-success/40 text-success",
-  Cancelada: "border-destructive/40 text-destructive",
-  NoAsistio: "border-border text-muted-foreground",
+  Programada: "bg-info-soft text-info-soft-foreground",
+  Confirmada: "bg-primary-soft text-primary-soft-foreground",
+  EnCurso: "bg-warning-soft text-warning-soft-foreground",
+  Completada: "bg-success-soft text-success-soft-foreground",
+  Cancelada: "bg-destructive-soft text-destructive-soft-foreground",
+  NoAsistio: "bg-muted text-muted-foreground",
+};
+
+/** Color pleno del estado: punto del badge, nodo de la linea del dia y
+    segmento de la barra de resumen. Siempre acompaña a la etiqueta. */
+export const COLOR_ESTADO_CITA: Record<EstadoCita, string> = {
+  Programada: "bg-info",
+  Confirmada: "bg-primary",
+  EnCurso: "bg-warning",
+  Completada: "bg-success",
+  Cancelada: "bg-destructive",
+  NoAsistio: "bg-muted-foreground",
 };
 
 /** Espejo de `TransicionesPermitidas` en CitaService: el backend es la autoridad. */
@@ -33,10 +44,10 @@ export const TRANSICIONES_CITA: Record<EstadoCita, EstadoCita[]> = {
 export const ETIQUETA_ACCION_CITA: Record<EstadoCita, string> = {
   Programada: "Reabrir como programada",
   Confirmada: "Confirmar cita",
-  EnCurso: "Iniciar atencion",
+  EnCurso: "Iniciar atención",
   Completada: "Marcar completada",
   Cancelada: "Cancelar cita",
-  NoAsistio: "Marcar que no asistio",
+  NoAsistio: "Marcar que no asistió",
 };
 
 /** Cancelada y NoAsistio cierran caminos: se pintan como destructivas. */

@@ -1,6 +1,6 @@
 import { useSidebar } from "@/components/layout/sidebar-context";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
-import { LogoNutriClinica } from "@/components/layout/logo";
+import { MarcaSidebar } from "@/components/layout/sidebar";
 import {
   Sheet,
   SheetContent,
@@ -16,26 +16,16 @@ export function SidebarMobile() {
     <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
       <SheetContent
         side="left"
-        className="bg-sidebar border-sidebar-border text-sidebar-foreground w-72 border-r p-0"
+        className="sidebar-surface text-sidebar-foreground w-72 border-r-0 p-0 [&>button]:bg-transparent! [&>button]:text-sidebar-muted-foreground [&>button:hover]:text-sidebar-foreground"
       >
         <SheetHeader className="border-sidebar-border border-b px-4 py-4 text-left">
           <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
           <SheetDescription className="sr-only">
-            Navega entre los modulos de NutriClinica
+            Navega entre los módulos de NutriClinica
           </SheetDescription>
-          <div className="flex items-center gap-2.5">
-            <LogoNutriClinica className="size-9 rounded-lg" />
-            <span className="flex flex-col leading-none">
-              <span className="text-sidebar-foreground text-base font-bold">
-                Nutri<span className="text-sidebar-primary">Clinica</span>
-              </span>
-              <span className="text-sidebar-muted-foreground mt-0.5 text-[11px] font-medium">
-                Consulta nutricional
-              </span>
-            </span>
-          </div>
+          <MarcaSidebar />
         </SheetHeader>
-        <div className="px-3 py-4">
+        <div className="flex flex-1 flex-col px-3 py-5">
           {/* El drawer nunca se pliega: siempre muestra los labels. */}
           <SidebarNav collapsed={false} onNavigate={() => setMobileOpen(false)} />
         </div>

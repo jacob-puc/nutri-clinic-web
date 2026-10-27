@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { CalendarX, Loader2 } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { AlertaFormulario } from "@/components/ui/grupo-campos";
+import { Sugerencias } from "@/components/ui/sugerencias";
 import { Textarea } from "@/components/ui/textarea";
 import { useCambiarEstadoCita } from "@/features/citas/hooks/use-mutaciones-cita";
 import { mensajeDeError } from "@/lib/api-error";
@@ -32,6 +34,13 @@ const esquema = z.object({
 });
 
 type FormularioValues = z.infer<typeof esquema>;
+
+const MOTIVOS_CANCELACION = [
+  "El paciente pidió reprogramar",
+  "Enfermedad del paciente",
+  "Emergencia del paciente",
+  "Ausencia del nutricionista",
+];
 
 export function DialogoCancelarCita({
   abierto,
@@ -45,7 +54,7 @@ export function DialogoCancelarCita({
   return (
     <Dialog open={abierto} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+        <DialogHeader icono={CalendarX} tono="destructivo">
           <DialogTitle>Cancelar cita</DialogTitle>
           <DialogDescription>
             El motivo queda registrado en el expediente de la cita.
@@ -98,12 +107,20 @@ function FormularioCancelar({
           name="motivo"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Motivo de cancelacion</FormLabel>
+              <FormLabel>Motivo de la cancelación</FormLabel>
+              <Sugerencias
+                etiqueta="Motivos frecuentes"
+                opciones={MOTIVOS_CANCELACION}
+                valor={field.value}
+                onElegir={(motivo) =>
+                  form.setValue("motivo", motivo, { shouldDirty: true, shouldValidate: true })
+                }
+              />
               <FormControl>
                 <Textarea
-                  placeholder="Emergencia del paciente, enfermedad, reprogramacion..."
+                  placeholder="Describe por qué no se realizará la cita"
                   rows={3}
-                  className="resize-none"
+                  className="bg-card resize-none"
                   {...field}
                 />
               </FormControl>
@@ -112,14 +129,7 @@ function FormularioCancelar({
           )}
         />
 
-        {errorGeneral && (
-          <p
-            role="alert"
-            className="border-destructive/40 bg-destructive/8 text-destructive rounded-lg border px-3 py-2 text-sm"
-          >
-            {errorGeneral}
-          </p>
-        )}
+        {errorGeneral && <AlertaFormulario>{errorGeneral}</AlertaFormulario>}
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onCerrar} disabled={cancelar.isPending}>

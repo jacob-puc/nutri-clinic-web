@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { CalendarDays, Pencil, Trash2 } from "lucide-react";
+import { CalendarX, ClipboardList, Pencil, Trash2 } from "lucide-react";
 
 import { AccionesCita } from "@/features/citas/components/acciones-cita";
 import { BadgeEstadoCita } from "@/features/citas/components/badge-estado-cita";
@@ -13,6 +13,8 @@ import {
   formatearFechaHoraLocal,
   formatearHoraLocal,
 } from "@/features/citas/lib/fechas-cita";
+import { CampoFicha, Seccion } from "@/components/ficha/seccion";
+import { HojaCalendario } from "@/components/ficha/hoja-calendario";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { EstadoError } from "@/components/states/estado-error";
 import {
@@ -27,7 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { mensajeDeError } from "@/lib/api-error";
 import { toast } from "sonner";
@@ -77,14 +79,12 @@ function EncabezadoCita({ cita }: { cita: Cita }) {
 
   return (
     <>
-      <Card className="py-0 shadow-subtle">
+      <Card className="py-0">
         <CardContent className="flex flex-wrap items-center gap-4 px-4 py-5 md:px-6">
-          <div className="bg-primary/10 text-primary grid size-11 shrink-0 place-items-center rounded-lg">
-            <CalendarDays className="size-5" aria-hidden />
-          </div>
+          <HojaCalendario fecha={new Date(cita.fechaInicio)} tamano="lg" />
 
           <div className="min-w-0 flex-1">
-            <p className="text-foreground text-lg font-semibold capitalize">
+            <p className="text-foreground text-xl font-semibold tracking-tight capitalize">
               {formatearFechaLargaLocal(cita.fechaInicio)}
             </p>
             <p className="text-muted-foreground mt-0.5 text-sm tabular-nums">
@@ -169,12 +169,8 @@ function EliminarCita({ cita }: { cita: Cita }) {
 function DetalleCita({ cita }: { cita: Cita }) {
   return (
     <div className="mt-4 space-y-4">
-      <Card className="py-0">
-        <CardContent className="px-4 pt-2 pb-5 md:px-6">
-          <h2 className="text-foreground text-sm font-semibold">Detalles</h2>
-          <Separator className="my-2" />
-
-          <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+      <Seccion titulo="Detalles" icono={ClipboardList}>
+          <dl className="grid gap-x-8 sm:grid-cols-2">
             <DatoCita etiqueta="Paciente">
               <Link
                 to={`/pacientes/${cita.pacienteId}`}
@@ -206,26 +202,19 @@ function DetalleCita({ cita }: { cita: Cita }) {
               </DatoCita>
             )}
           </dl>
-        </CardContent>
-      </Card>
+      </Seccion>
 
       {cita.estado === "Cancelada" && (
-        <Card className="border-destructive/30 py-0">
-          <CardContent className="px-4 pt-2 pb-5 md:px-6">
-            <h2 className="text-foreground text-sm font-semibold">
-              Cancelacion
-            </h2>
-            <Separator className="my-2" />
-            <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-              <DatoCita etiqueta="Fecha de cancelacion">
+        <Seccion titulo="Cancelación" icono={CalendarX} tono="destructivo">
+            <dl className="grid gap-x-8 sm:grid-cols-2">
+              <DatoCita etiqueta="Fecha de cancelación">
                 {formatearFechaHoraLocal(cita.fechaCancelacion)}
               </DatoCita>
-              <DatoCita etiqueta="Motivo de cancelacion">
+              <DatoCita etiqueta="Motivo de cancelación">
                 {cita.motivoCancelacion ?? "Sin motivo registrado"}
               </DatoCita>
             </dl>
-          </CardContent>
-        </Card>
+        </Seccion>
       )}
     </div>
   );
@@ -241,10 +230,9 @@ function DatoCita({
   children: ReactNode;
 }) {
   return (
-    <div className={className}>
-      <dt className="text-muted-foreground text-xs">{etiqueta}</dt>
-      <dd className="text-foreground mt-0.5 text-sm break-words">{children}</dd>
-    </div>
+    <CampoFicha etiqueta={etiqueta} className={className}>
+      {children}
+    </CampoFicha>
   );
 }
 
@@ -252,7 +240,7 @@ function DetalleSkeleton() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-6 md:px-8 md:py-8">
       <Skeleton className="mb-4 h-5 w-24" />
-      <div className="bg-card overflow-hidden rounded-xl border border-border shadow-card">
+      <div className="hoja overflow-hidden rounded-xl">
         <div className="flex items-center gap-4 px-4 py-5 md:px-6">
           <Skeleton className="size-11 rounded-lg" />
           <div className="flex-1 space-y-2">
@@ -261,7 +249,7 @@ function DetalleSkeleton() {
           </div>
         </div>
       </div>
-      <div className="bg-card mt-4 overflow-hidden rounded-xl border border-border shadow-card">
+      <div className="hoja mt-4 overflow-hidden rounded-xl">
         <div className="space-y-3 px-4 py-5 md:px-6">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-3 w-full" />

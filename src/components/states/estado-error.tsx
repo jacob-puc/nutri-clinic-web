@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { X } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,7 +41,7 @@ export function EstadoError({
   const esPagina = variante === "pagina";
 
   const contenido = (
-    <Card className={cn("border-destructive/40", className)}>
+    <Card className={cn("hoja-destructiva", className)}>
       <CardContent
         className={cn(
           "px-6",
@@ -51,8 +51,8 @@ export function EstadoError({
         )}
       >
         {!esPagina && (
-          <div className="bg-destructive/10 text-destructive grid size-11 shrink-0 place-items-center rounded-full">
-            <X className="size-5" aria-hidden />
+          <div className="bg-destructive-soft text-destructive-soft-foreground ring-destructive/20 grid size-11 shrink-0 place-items-center rounded-lg ring-1 ring-inset">
+            <AlertTriangle className="size-5" aria-hidden />
           </div>
         )}
 

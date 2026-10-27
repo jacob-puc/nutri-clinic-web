@@ -26,6 +26,23 @@
   :focus-visible {
     @apply outline-ring outline-2 outline-offset-2;
   }
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  a[href],
+  label[for],
+  select {
+    @apply cursor-pointer;
+  }
+
+  button:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+
+  input,
+  textarea {
+    @apply focus:outline-none;
+  }
+
 }
 
 @layer components {
@@ -116,13 +133,10 @@ body .rdp-root .rdp-caption_label {
   font-weight: 600;
 }
 
-body .rdp-root .rdp-dropdown {
-  background-color: var(--background);
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  color: var(--foreground);
-  font-size: 0.8125rem;
-  padding: 0.2rem 0.35rem;
+/* Mes y anio usan el Select de la app (components.Dropdown en calendar.tsx):
+   aqui solo se separan entre si. */
+body .rdp-root .rdp-dropdowns {
+  gap: 0.375rem;
 }
 
 body .rdp-root .rdp-weekday {
@@ -134,11 +148,11 @@ body .rdp-root .rdp-weekday {
 
 body .fc {
   --fc-page-bg-color: transparent;
-  --fc-border-color: var(--border);
-  --fc-neutral-bg-color: var(--muted);
+  --fc-border-color: color-mix(in oklab, var(--border) 78%, transparent);
+  --fc-neutral-bg-color: var(--surface-subtle);
   --fc-neutral-text-color: var(--muted-foreground);
-  --fc-today-bg-color: color-mix(in oklab, var(--primary) 9%, transparent);
-  --fc-highlight-color: color-mix(in oklab, var(--primary) 20%, transparent);
+  --fc-today-bg-color: color-mix(in oklab, var(--primary) 5%, transparent);
+  --fc-highlight-color: color-mix(in oklab, var(--primary) 13%, transparent);
   --fc-now-indicator-color: var(--destructive);
   --fc-event-border-color: transparent;
   color: var(--foreground);
@@ -155,6 +169,11 @@ body .fc .fc-toolbar-title {
   color: var(--foreground);
   font-size: 1.05rem;
   font-weight: 700;
+}
+
+body .fc .fc-scrollgrid-section-header > *,
+body .fc .fc-col-header-cell {
+  background: var(--surface-subtle);
 }
 
 body .fc .fc-button {
@@ -193,19 +212,25 @@ body .fc .fc-button-primary:not(:disabled):active {
 
 body .fc .fc-col-header-cell-cushion {
   color: var(--muted-foreground);
-  font-size: 0.7rem;
+  font-size: 0.6875rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  padding: 0.45rem 0;
+  letter-spacing: 0.025em;
+  padding: 0.7rem 0.25rem;
   text-decoration: none;
   text-transform: uppercase;
 }
 
 body .fc .fc-daygrid-day-number {
+  display: inline-flex;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  align-items: center;
+  justify-content: center;
+  margin: 0.3rem 0.35rem 0;
+  border-radius: 999px;
   color: var(--foreground);
   font-size: 0.8125rem;
   font-weight: 600;
-  padding: 0.2rem 0.4rem;
   text-decoration: none;
 }
 
@@ -216,19 +241,76 @@ body .fc .fc-day-other .fc-daygrid-day-number {
 }
 
 body .fc .fc-day-today .fc-daygrid-day-number {
-  color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+body .fc .fc-day-selected-nutri:not(.fc-day-today) {
+  background: color-mix(in oklab, var(--primary) 5%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 28%, transparent);
+}
+
+body .fc .fc-day-selected-nutri:not(.fc-day-today) .fc-daygrid-day-number {
+  background: var(--primary-soft);
+  color: var(--primary-soft-foreground);
 }
 
 body .fc .fc-event {
-  border-width: 0;
-  border-radius: 0.4rem;
+  border: 1px solid color-mix(in oklab, currentColor 13%, transparent);
+  border-left-width: 3px;
+  border-radius: 0.55rem;
   cursor: pointer;
   font-size: 0.75rem;
-  padding: 0.1rem 0.35rem;
+  margin: 0.22rem 0.35rem;
+  padding: 0.18rem 0.35rem;
+  box-shadow: 0 1px 2px oklch(0.22 0.03 185 / 0.09);
+  transition: filter 120ms ease, transform 120ms ease, box-shadow 120ms ease;
 }
 
 body .fc .fc-event:hover {
-  filter: brightness(0.97);
+  filter: saturate(1.12) brightness(0.99);
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 3px 8px oklch(0.22 0.03 185 / 0.15);
+  z-index: 5;
+}
+
+body .fc .cita-evento__contenido {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.3rem;
+  overflow: hidden;
+  line-height: 1.35;
+}
+
+body .fc .cita-evento__hora {
+  flex: 0 0 auto;
+  font-size: 0.67rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  opacity: 0.82;
+}
+
+body .fc .cita-evento__nombre {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body .fc .cita-evento__detalle {
+  display: block;
+  overflow: hidden;
+  font-size: 0.7rem;
+  opacity: 0.8;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body .fc .fc-timegrid-event .cita-evento__contenido {
+  display: block;
+  padding: 0.08rem 0.1rem;
 }
 
 body .fc .fc-event:focus-visible {
@@ -248,37 +330,50 @@ body .fc .fc-daygrid-more-link {
 
 /* Barra de color del estado a la izquierda de cada cita. */
 body .fc .fc-event.cita-programada {
-  box-shadow: inset 3px 0 0 var(--info);
+  border-left-color: var(--info);
 }
 
 body .fc .fc-event.cita-confirmada {
-  box-shadow: inset 3px 0 0 var(--primary);
+  border-left-color: var(--primary);
 }
 
 body .fc .fc-event.cita-en-curso {
-  box-shadow: inset 3px 0 0 var(--warning);
+  border-left-color: var(--warning);
 }
 
 body .fc .fc-event.cita-completada {
-  box-shadow: inset 3px 0 0 var(--success);
+  border-left-color: var(--success);
 }
 
 body .fc .fc-event.cita-cancelada {
-  box-shadow: inset 3px 0 0 var(--destructive);
+  border-left-color: var(--destructive);
 }
 
 body .fc .fc-event.cita-no-asistio {
-  box-shadow: inset 3px 0 0 var(--muted-foreground);
+  border-left-color: var(--muted-foreground);
 }
 
 body .fc .fc-scrollgrid {
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+
+body .fc .fc-daygrid-day-frame {
+  min-height: 6.8rem;
+}
+
+body .fc .fc-daygrid-day:hover {
+  background-color: color-mix(in oklab, var(--primary) 3%, transparent);
 }
 
 body .fc .fc-timegrid-slot {
-  height: 2.4em;
+  height: 3em;
+}
+
+body .fc .fc-timegrid-slot-label-cushion,
+body .fc .fc-timegrid-axis-cushion {
+  font-variant-numeric: tabular-nums;
 }
 
 body .fc .fc-time-axis-cushion,
@@ -303,5 +398,27 @@ body .fc .fc-popover-header {
   color: var(--foreground);
   font-size: 0.8125rem;
   font-weight: 600;
-  padding: 0.4rem 0.6rem;
+  padding: 0.55rem 0.7rem;
+}
+
+@media (max-width: 640px) {
+  body .fc .fc-daygrid-day-frame {
+    min-height: 4.5rem;
+  }
+
+  body .fc .fc-daygrid-day-number {
+    min-width: 1.55rem;
+    height: 1.55rem;
+    margin: 0.2rem 0.15rem 0;
+    font-size: 0.75rem;
+  }
+
+  body .fc .fc-event {
+    margin: 0.15rem 0.15rem;
+    padding: 0.15rem 0.25rem;
+  }
+
+  body .fc .cita-evento__hora {
+    display: none;
+  }
 }

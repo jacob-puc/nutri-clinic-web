@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ChevronDown, XCircle } from "lucide-react";
+import { Check, ChevronDown, Loader2, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DialogoCancelarCita } from "@/features/citas/components/dialogo-cancelar-cita";
 import { useCambiarEstadoCita } from "@/features/citas/hooks/use-mutaciones-cita";
+import { useIniciarAtencion } from "@/features/consultas/hooks/use-iniciar-atencion";
 import {
   ETIQUETA_ACCION_CITA,
   esAccionDestructiva,
@@ -24,9 +25,12 @@ import type { Cita, EstadoCita } from "@/types/api";
 /**
  * Solo ofrece las transiciones que el backend acepta desde el estado actual.
  * Cancelada pide motivo en su propio dialogo; el resto se aplica directo.
+ * `EnCurso` no es un cambio de estado suelto: crea la consulta y abre su
+ * espacio de trabajo, asi que se intercepta.
  */
 export function AccionesCita({ cita, compacto = false }: { cita: Cita; compacto?: boolean }) {
   const cambiar = useCambiarEstadoCita(cita.id);
+  const atencion = useIniciarAtencion(cita);
   const [cancelando, setCancelando] = useState(false);
 
   const transiciones = TRANSICIONES_CITA[cita.estado] ?? [];
@@ -74,10 +78,15 @@ export function AccionesCita({ cita, compacto = false }: { cita: Cita; compacto?
               <DropdownMenuItem
                 key={estado}
                 variant={destructiva ? "destructive" : "default"}
-                disabled={cambiar.isPending}
+                disabled={cambiar.isPending || atencion.pendiente}
                 onSelect={() => {
                   if (estado === "Cancelada") {
                     setCancelando(true);
+                    return;
+                  }
+                  // Iniciar la atención crea la consulta, no solo cambia estado.
+                  if (estado === "EnCurso") {
+                    atencion.iniciar();
                     return;
                   }
                   aplicar(estado);
@@ -130,9 +139,11 @@ const BOTONES_ESTADO: Record<
 /**
  * Acciones directas para el dia a dia, sin menu desplegable: el siguiente
  * estado como boton principal y la excepcion al lado. Cancelar pide motivo.
+ * El boton "Iniciar" de una cita confirmada crea la consulta (EnCurso).
  */
 export function BotonesEstadoCita({ cita }: { cita: Cita }) {
   const cambiar = useCambiarEstadoCita(cita.id);
+  const atencion = useIniciarAtencion(cita);
   const [cancelando, setCancelando] = useState(false);
 
   const botones = BOTONES_ESTADO[cita.estado] ?? [];
@@ -155,13 +166,15 @@ export function BotonesEstadoCita({ cita }: { cita: Cita }) {
       <div className="flex flex-wrap items-center gap-1.5">
         {botones.map(({ estado, etiqueta, principal }) => {
           const destructiva = esAccionDestructiva(estado);
+          const esInicio = estado === "EnCurso";
+          const ocupado = esInicio ? atencion.pendiente : cambiar.isPending;
           return (
             <Button
               key={estado}
               type="button"
               size="sm"
               variant={principal ? (destructiva ? "destructive" : "default") : "outline"}
-              disabled={cambiar.isPending}
+              disabled={ocupado}
               className={
                 !principal && destructiva
                   ? "text-destructive border-destructive/30 hover:bg-destructive/10"
@@ -172,9 +185,14 @@ export function BotonesEstadoCita({ cita }: { cita: Cita }) {
                   setCancelando(true);
                   return;
                 }
+                if (esInicio) {
+                  atencion.iniciar();
+                  return;
+                }
                 aplicar(estado);
               }}
             >
+              {ocupado && <Loader2 className="size-4 animate-spin" />}
               {etiqueta}
             </Button>
           );

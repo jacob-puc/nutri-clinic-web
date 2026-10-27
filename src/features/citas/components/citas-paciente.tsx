@@ -10,16 +10,12 @@ import {
   formatearFechaHoraLocal,
   formatearHoraLocal,
 } from "@/features/citas/lib/fechas-cita";
+import { HojaCalendario } from "@/components/ficha/hoja-calendario";
+import { Seccion } from "@/components/ficha/seccion";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { Cita, Guid } from "@/types/api";
-
-const MES_CORTO = [
-  "ene", "feb", "mar", "abr", "may", "jun",
-  "jul", "ago", "sep", "oct", "nov", "dic",
-];
 
 /**
  * Citas del paciente dentro de su ficha, presentadas como linea de tiempo:
@@ -48,26 +44,19 @@ export function CitasPaciente({
   const [proxima, ...otrasFuturas] = futuras;
 
   return (
-    <Card className="gap-0 overflow-hidden py-0">
-      <div className="border-border/70 flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 md:px-5">
-        <div className="flex min-w-0 items-center gap-2">
-          <CalendarPlus className="text-primary size-4 shrink-0" aria-hidden />
-          <h2 className="text-foreground text-sm font-semibold tracking-tight">
-            Citas
-          </h2>
-          {citas.length > 0 && (
-            <span className="text-muted-foreground-subtle text-xs tabular-nums">
-              · {citas.length}
-            </span>
-          )}
-        </div>
+    <Seccion
+      titulo="Citas"
+      icono={CalendarPlus}
+      meta={citas.length > 0 ? `${citas.length} en total` : undefined}
+      cuerpoClassName="p-0 md:p-0"
+      acciones={
         <Button variant="outline" size="sm" onClick={() => setAgendando(true)}>
           <CalendarPlus className="size-4" />
           <span className="hidden sm:inline">Agendar cita</span>
           <span className="sm:hidden">Agendar</span>
         </Button>
-      </div>
-
+      }
+    >
       {isPending && (
         <div className="space-y-2.5 px-4 py-5 md:px-5">
           <Skeleton className="h-16 w-full rounded-lg" />
@@ -122,7 +111,7 @@ export function CitasPaciente({
         pacienteId={pacienteId}
         pacienteNombre={pacienteNombre}
       />
-    </Card>
+    </Seccion>
   );
 }
 
@@ -131,19 +120,12 @@ function CitaProximal({ cita }: { cita: Cita }) {
   const fecha = new Date(cita.fechaInicio);
 
   return (
-    <article className="border-primary/25 bg-primary/[0.04] rounded-lg border px-3.5 py-3">
+    <article className="border-primary/25 bg-primary-soft/60 rounded-lg border px-3.5 py-3">
       <div className="flex flex-wrap items-start gap-3">
-        <div className="border-primary/20 bg-primary/10 text-primary grid size-12 shrink-0 place-items-center rounded-lg border">
-          <span className="text-lg leading-none font-semibold tabular-nums">
-            {fecha.getDate()}
-          </span>
-          <span className="text-[10px] leading-none font-semibold uppercase">
-            {MES_CORTO[fecha.getMonth()]}
-          </span>
-        </div>
+        <HojaCalendario fecha={fecha} />
 
         <div className="min-w-0 flex-1">
-          <p className="text-primary text-[11px] font-semibold tracking-[0.16em] uppercase">
+          <p className="text-primary text-xs font-medium">
             Próxima cita
           </p>
           <p className="text-foreground mt-0.5 text-sm font-medium tabular-nums">

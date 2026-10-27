@@ -1,28 +1,31 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import esLocale from "@fullcalendar/core/locales/es";
-import { CalendarDays, CalendarPlus, CalendarX, Clock, TrendingUp } from "lucide-react";
+import { CalendarDays, CalendarPlus, CalendarX, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 
-import { BotonesEstadoCita } from "@/features/citas/components/acciones-cita";
-import { BadgeEstadoCita } from "@/features/citas/components/badge-estado-cita";
 import { DetalleCitaSheet } from "@/features/citas/components/detalle-cita-sheet";
 import { DialogoCita } from "@/features/citas/components/dialogo-cita";
+import { JornadaDia } from "@/features/citas/components/jornada-dia";
+import { ResumenEstados } from "@/features/citas/components/resumen-estados";
 import { useCitas } from "@/features/citas/hooks/use-citas";
-import {
-  formatearFechaLargaClave,
-  formatearHoraLocal,
-} from "@/features/citas/lib/fechas-cita";
+import { formatearHoraLocal } from "@/features/citas/lib/fechas-cita";
 import { ETIQUETA_ESTADO_CITA } from "@/features/citas/lib/estados-cita";
-import { dateOnlyDe } from "@/lib/fechas";
-import { Badge } from "@/components/ui/badge";
+import { dateOnlyDe, fechaDeDateOnly } from "@/lib/fechas";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TooltipSimple } from "@/components/ui/tooltip-simple";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -57,13 +60,13 @@ function claseDeEstado(estado: EstadoCita): string {
   return `cita-${estado.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase()}`;
 }
 
-const COLOR_ESTADO: Record<EstadoCita, { fondo: string; borde: string; texto: string }> = {
-  Programada: { fondo: "var(--info-soft)", borde: "var(--info)", texto: "var(--info-soft-foreground)" },
-  Confirmada: { fondo: "var(--primary-soft)", borde: "var(--primary)", texto: "var(--primary-soft-foreground)" },
-  EnCurso: { fondo: "var(--warning-soft)", borde: "var(--warning)", texto: "var(--warning-soft-foreground)" },
-  Completada: { fondo: "var(--success-soft)", borde: "var(--success)", texto: "var(--success-soft-foreground)" },
-  Cancelada: { fondo: "var(--destructive-soft)", borde: "var(--destructive)", texto: "var(--destructive-soft-foreground)" },
-  NoAsistio: { fondo: "var(--muted)", borde: "var(--muted-foreground)", texto: "var(--muted-foreground)" },
+const COLOR_ESTADO: Record<EstadoCita, { fondo: string; texto: string }> = {
+  Programada: { fondo: "var(--info-soft)", texto: "var(--info-soft-foreground)" },
+  Confirmada: { fondo: "var(--primary-soft)", texto: "var(--primary-soft-foreground)" },
+  EnCurso: { fondo: "var(--warning-soft)", texto: "var(--warning-soft-foreground)" },
+  Completada: { fondo: "var(--success-soft)", texto: "var(--success-soft-foreground)" },
+  Cancelada: { fondo: "var(--destructive-soft)", texto: "var(--destructive-soft-foreground)" },
+  NoAsistio: { fondo: "var(--muted)", texto: "var(--muted-foreground)" },
 };
 
 export function AgendaPage() {
@@ -82,7 +85,10 @@ export function AgendaPage() {
 
   const [altaAbierta, setAltaAbierta] = useState(false);
   const [estado, setEstado] = useState<FiltroEstado>(TODOS);
-  const [diaSeleccionado, setDiaSeleccionado] = useState(claveHoy);
+  // La selección del calendario solo controla el resumen lateral de esa vista.
+  // La pestaña Hoy siempre representa la fecha actual, sin depender del calendario.
+  const [diaCalendario, setDiaCalendario] = useState(claveHoy);
+  const [detalleDiaAbierto, setDetalleDiaAbierto] = useState(false);
   const [rango, setRango] = useState(() => rangoDelMes(hoy));
   const [vista, setVista] = useState<VistaCitas>(() =>
     parametros.get("vista") === "calendario" ? "calendario" : "hoy",
@@ -92,6 +98,8 @@ export function AgendaPage() {
      recordarla aqui, que es un componente que NO se desmonta al alternar
      Hoy/Calendario, al volver a montar el calendario arranca donde estaba. */
   const [vistaDelCalendario, setVistaDelCalendario] = useState("dayGridMonth");
+  const [tituloCalendario, setTituloCalendario] = useState("");
+  const calendarioRef = useRef<FullCalendar>(null);
   const citaSeleccionadaId = parametros.get("cita");
 
   const filtroVisible = useMemo<CitaFiltro>(
@@ -129,12 +137,12 @@ export function AgendaPage() {
     [citasHoy, ahora],
   );
 
-  const citasDelDia = useMemo(
+  const citasDelDiaCalendario = useMemo(
     () =>
-      diaSeleccionado === claveHoy
+      diaCalendario === claveHoy
         ? proximosHoy
-        : visibles.filter((c) => dateOnlyDe(new Date(c.fechaInicio)) === diaSeleccionado).sort(porOrden),
-    [diaSeleccionado, claveHoy, proximosHoy, visibles],
+        : visibles.filter((c) => dateOnlyDe(new Date(c.fechaInicio)) === diaCalendario).sort(porOrden),
+    [diaCalendario, claveHoy, proximosHoy, visibles],
   );
 
   const eventos = useMemo(
@@ -147,12 +155,12 @@ export function AgendaPage() {
           start: cita.fechaInicio,
           end: cita.fechaFin,
           backgroundColor: color.fondo,
-          borderColor: color.borde,
           textColor: color.texto,
           classNames: [claseDeEstado(cita.estado)],
           extendedProps: {
             nutricionista: cita.nutricionistaNombre,
             motivo: cita.motivo ?? "",
+            estado: cita.estado,
           },
         };
       }),
@@ -183,31 +191,33 @@ export function AgendaPage() {
 
   const cambiarVista = (siguiente: VistaCitas) => {
     setVista(siguiente);
+    /* La vista Hoy resume el mes en curso: al volver del calendario se
+       descarta el rango que dejo la navegacion por meses. */
+    if (siguiente === "hoy") setRango(rangoDelMes(hoy));
     const siguientes = new URLSearchParams(parametros);
     siguientes.set("vista", siguiente);
     setParametros(siguientes, { replace: true });
   };
 
+  const cambiarVistaCalendario = (siguiente: string) => {
+    calendarioRef.current?.getApi().changeView(siguiente);
+  };
+
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
       <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
-        <div className="flex items-center gap-3">
-          <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">Citas</h1>
-          <Badge variant="outline" className="border-border text-muted-foreground tabular-nums">
-            {visibles.length} {visibles.length === 1 ? "cita" : "citas"}
-          </Badge>
-        </div>
+        <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">Citas</h1>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="bg-muted flex items-center gap-1 rounded-lg p-1" aria-label="Vista de citas">
+          <div className="bg-surface-muted flex items-center gap-1 rounded-lg p-1 shadow-[inset_0_1px_2px_0_oklch(0.21_0.008_190/0.08)]" aria-label="Vista de citas">
             <button
               type="button"
               aria-pressed={vista === "hoy"}
               onClick={() => cambiarVista("hoy")}
-              className={`flex h-8 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium transition-colors ${
+              className={`flex h-8 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium transition-[background-color,color,box-shadow] duration-150 active:translate-y-px ${
                 vista === "hoy"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-card text-foreground shadow-card"
+                  : "text-muted-foreground hover:bg-card/55 hover:text-foreground"
               }`}
             >
               <Clock className="size-4" aria-hidden />
@@ -217,10 +227,10 @@ export function AgendaPage() {
               type="button"
               aria-pressed={vista === "calendario"}
               onClick={() => cambiarVista("calendario")}
-              className={`flex h-8 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium transition-colors ${
+              className={`flex h-8 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium transition-[background-color,color,box-shadow] duration-150 active:translate-y-px ${
                 vista === "calendario"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-card text-foreground shadow-card"
+                  : "text-muted-foreground hover:bg-card/55 hover:text-foreground"
               }`}
             >
               <CalendarDays className="size-4" aria-hidden />
@@ -255,21 +265,104 @@ export function AgendaPage() {
       <DialogoCita abierto={altaAbierta} onOpenChange={setAltaAbierta} />
 
       {vista === "hoy" ? (
-        <div className="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <PanelDia
-            esHoy={diaSeleccionado === claveHoy}
-            clave={diaSeleccionado}
-            cargando={pendienteHoy || citas.isPending}
-            citas={citasDelDia}
-            onVerHoy={() => setDiaSeleccionado(claveHoy)}
+        <div className="mt-4">
+          <JornadaDia
+            esHoy
+            clave={claveHoy}
+            cargando={pendienteHoy}
+            citas={proximosHoy}
+            ahora={ahora}
             onAbrirCita={abrirCita}
+            onAgendar={() => setAltaAbierta(true)}
+            onVerCalendario={() => cambiarVista("calendario")}
           />
-          <ResumenCitas resumen={resumen} titulo="Resumen de citas" />
         </div>
       ) : (
-        <div className="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_400px]">
-          <Card className="overflow-hidden py-0">
-            <CardContent className="p-3 md:p-4">
+        <div className="mt-4 flex flex-col gap-4">
+          <Card className="gap-0 overflow-hidden rounded-2xl border border-border/80 py-0 shadow-[0_8px_28px_-20px_oklch(0.27_0.06_185/0.42)]">
+            <div className="flex flex-col gap-4 bg-primary-soft/45 px-4 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <p className="text-primary-soft-foreground text-sm font-medium">Agenda de consultas</p>
+                <h2 className="text-foreground mt-1 text-2xl font-semibold tracking-tight capitalize sm:text-[1.7rem]">
+                  {tituloCalendario || hoy.toLocaleDateString("es-MX", { month: "long", year: "numeric" })}
+                </h2>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  {visibles.length} {visibles.length === 1 ? "cita en este periodo" : "citas en este periodo"}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1 rounded-xl border border-border/80 bg-card p-1 shadow-sm">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Periodo anterior"
+                    onClick={() => {
+                      const api = calendarioRef.current?.getApi();
+                      if (!api) return;
+                      api.prev();
+                      setDiaCalendario(dateOnlyDe(api.getDate()));
+                    }}
+                  >
+                    <ChevronLeft />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 px-3"
+                    onClick={() => {
+                      const api = calendarioRef.current?.getApi();
+                      if (!api) return;
+                      api.today();
+                      setDiaCalendario(claveHoy);
+                    }}
+                  >
+                    Hoy
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Periodo siguiente"
+                    onClick={() => {
+                      const api = calendarioRef.current?.getApi();
+                      if (!api) return;
+                      api.next();
+                      setDiaCalendario(dateOnlyDe(api.getDate()));
+                    }}
+                  >
+                    <ChevronRight />
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-0.5 rounded-xl border border-border/80 bg-card/75 p-1" aria-label="Vista del calendario">
+                  {([
+                    ["dayGridMonth", "Mes"],
+                    ["timeGridWeek", "Semana"],
+                    ["timeGridDay", "Día"],
+                  ] as const).map(([valor, etiqueta]) => (
+                    <button
+                      key={valor}
+                      type="button"
+                      aria-pressed={vistaDelCalendario === valor}
+                      onClick={() => cambiarVistaCalendario(valor)}
+                      className={`h-8 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+                        vistaDelCalendario === valor
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                      }`}
+                    >
+                      {etiqueta}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-primary-soft/45 px-4 pb-4 sm:px-6">
+              <ResumenEstados resumen={resumen} />
+            </div>
+
+            <CardContent className="p-3 sm:p-4 md:p-5">
               {citas.isError ? (
                 <div className="flex min-h-[420px] flex-col items-center justify-center gap-3 text-center">
                   <CalendarX className="text-muted-foreground size-7" aria-hidden />
@@ -295,16 +388,15 @@ export function AgendaPage() {
                 </div>
               ) : (
                 <FullCalendar
+                  ref={calendarioRef}
                   plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                   initialView={vistaDelCalendario}
                   locale={esLocale}
                   firstDay={1}
                   height="auto"
-                  headerToolbar={{
-                    left: "prev,next today",
-                    center: "title",
-                    right: "dayGridMonth,timeGridWeek,timeGridDay",
-                  }}
+                  slotMinTime="08:00:00"
+                  slotMaxTime="20:00:00"
+                  headerToolbar={false}
                   events={eventos}
                   eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
                   dayMaxEvents={3}
@@ -312,41 +404,132 @@ export function AgendaPage() {
                   /* Dispara al montar y en cada cambio de vista, asi que
                      refleja en estado lo que el usuario eligio. Si el valor no
                      cambia, React corta el ciclo y no hay render extra. */
-                  viewDidMount={(arg) => setVistaDelCalendario(arg.view.type)}
+                  viewDidMount={(arg) => {
+                    setVistaDelCalendario(arg.view.type);
+                    setTituloCalendario(arg.view.title);
+                  }}
                   datesSet={(arg) => {
                     const desde = arg.start.toISOString();
                     const hasta = arg.end.toISOString();
+                    setTituloCalendario((actual) => actual === arg.view.title ? actual : arg.view.title);
+                    setVistaDelCalendario((actual) => actual === arg.view.type ? actual : arg.view.type);
                     setRango((prev) =>
                       prev.desde === desde && prev.hasta === hasta ? prev : { desde, hasta },
                     );
                   }}
-                  dateClick={(arg) => setDiaSeleccionado(dateOnlyDe(arg.date))}
+                  dateClick={(arg) => {
+                    setDiaCalendario(dateOnlyDe(arg.date));
+                    setDetalleDiaAbierto(true);
+                  }}
+                  dayCellClassNames={(arg) =>
+                    dateOnlyDe(arg.date) === diaCalendario ? ["fc-day-selected-nutri"] : []
+                  }
                   eventClick={(arg) => abrirCita(arg.event.id)}
-                  /* title nativo, no TooltipSimple: FullCalendar monta estos
-                     nodos fuera de React, así que no hay dónde enganchar un
-                     trigger. El plugin de tooltip de FullCalendar es de pago. */
+                  eventContent={(arg) => {
+                    const props = arg.event.extendedProps as {
+                      nutricionista: string;
+                      motivo: string;
+                      estado: EstadoCita;
+                    };
+                    const inicio = arg.event.start;
+                    const fin = arg.event.end;
+                    const fecha = inicio?.toLocaleDateString("es-MX", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    });
+                    const horaInicio = inicio ? formatearHoraLocal(inicio.toISOString()) : "";
+                    const horaFin = fin ? formatearHoraLocal(fin.toISOString()) : "";
+                    const etiquetaEstado = ETIQUETA_ESTADO_CITA[props.estado];
+
+                    return (
+                      <TooltipSimple
+                        side="top"
+                        className="max-w-[min(20rem,calc(100vw-2rem))] rounded-xl px-3.5 py-3 text-left shadow-xl"
+                        contenido={
+                          <div className="space-y-2">
+                            <div>
+                              <p className="font-semibold">{arg.event.title}</p>
+                              <p className="text-background/75 mt-0.5">
+                                {fecha} · {horaInicio}–{horaFin}
+                              </p>
+                            </div>
+                            <p className="text-background/85">{props.nutricionista}</p>
+                            <span className="inline-flex rounded-full bg-background/15 px-2 py-0.5 font-medium">
+                              {etiquetaEstado}
+                            </span>
+                            {props.motivo && (
+                              <p className="border-t border-background/15 pt-1.5 text-background/75">
+                                {props.motivo}
+                              </p>
+                            )}
+                          </div>
+                        }
+                      >
+                        <div
+                          className="cita-evento__contenido"
+                          aria-label={`${arg.event.title}, ${fecha}, ${horaInicio} a ${horaFin}, ${props.nutricionista}, ${etiquetaEstado}`}
+                        >
+                          <span className="cita-evento__hora">{arg.timeText}</span>
+                          <span className="cita-evento__nombre">{arg.event.title}</span>
+                          {arg.view.type !== "dayGridMonth" && props.nutricionista && (
+                            <span className="cita-evento__detalle">{props.nutricionista}</span>
+                          )}
+                        </div>
+                      </TooltipSimple>
+                    );
+                  }}
                   eventDidMount={(arg) => {
-                    const props = arg.event.extendedProps;
-                    arg.el.title = `${formatearHoraLocal(String(arg.event.start))} — ${props.nutricionista}${props.motivo ? ` · ${props.motivo}` : ""}`;
+                    const props = arg.event.extendedProps as {
+                      nutricionista: string;
+                      motivo: string;
+                      estado: EstadoCita;
+                    };
+                    const fecha = arg.event.start?.toLocaleDateString("es-MX");
+                    const hora = formatearHoraLocal(arg.event.start?.toISOString());
+                    arg.el.removeAttribute("title");
+                    arg.el.setAttribute(
+                      "aria-label",
+                      `${arg.event.title}, ${fecha}, ${hora}, ${props.nutricionista}, ${ETIQUETA_ESTADO_CITA[props.estado]}${props.motivo ? `, ${props.motivo}` : ""}`,
+                    );
                   }}
                 />
               )}
             </CardContent>
           </Card>
 
-          <aside className="flex w-full flex-col gap-4 lg:w-auto">
-            <PanelDia
-              esHoy={diaSeleccionado === claveHoy}
-              clave={diaSeleccionado}
-              cargando={pendienteHoy || citas.isPending}
-              citas={citasDelDia}
-              onVerHoy={() => setDiaSeleccionado(claveHoy)}
-              onAbrirCita={abrirCita}
-            />
-            <ResumenCitas resumen={resumen} titulo="Resumen de la vista" />
-          </aside>
         </div>
       )}
+
+      <Sheet open={detalleDiaAbierto} onOpenChange={setDetalleDiaAbierto}>
+        <SheetContent className="w-full gap-0 overflow-y-auto p-0 sm:max-w-lg">
+          <SheetHeader className="border-b border-border bg-primary-soft/45 px-6 py-6 pr-14">
+            <SheetTitle className="text-xl">Agenda del día</SheetTitle>
+            <SheetDescription>
+              {fechaDeDateOnly(diaCalendario)?.toLocaleDateString("es-MX", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="px-4 pb-5">
+            <JornadaDia
+              esHoy={diaCalendario === claveHoy}
+              clave={diaCalendario}
+              cargando={diaCalendario === claveHoy ? pendienteHoy : citas.isPending}
+              citas={citasDelDiaCalendario}
+              ahora={ahora}
+              compacta
+              enSheet
+              onAbrirCita={abrirCita}
+              onAgendar={() => setAltaAbierta(true)}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <DetalleCitaSheet
         cita={citaSeleccionada}
@@ -354,116 +537,5 @@ export function AgendaPage() {
         onOpenChange={cerrarCita}
       />
     </div>
-  );
-}
-
-function ResumenCitas({
-  resumen,
-  titulo,
-}: {
-  resumen: Array<{ valor: EstadoCita; cantidad: number }>;
-  titulo: string;
-}) {
-  return (
-    <Card className="py-0">
-      <CardContent className="px-4 pt-3 pb-4">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="text-primary size-4" aria-hidden />
-          <h2 className="text-sm font-semibold">{titulo}</h2>
-        </div>
-        <Separator className="my-2" />
-        {resumen.length === 0 ? (
-          <p className="text-muted-foreground py-3 text-sm">Sin citas en este rango.</p>
-        ) : (
-          <ul className="space-y-1.5">
-            {resumen.map(({ valor, cantidad }) => (
-              <li key={valor} className="flex items-center justify-between gap-2 text-sm">
-                <BadgeEstadoCita estado={valor} />
-                <span className="text-muted-foreground tabular-nums">{cantidad}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-/** Tabla de los proximos del dia, o de toda la jornada si se eligio otro dia. */
-function PanelDia({
-  esHoy,
-  clave,
-  cargando,
-  citas,
-  onVerHoy,
-  onAbrirCita,
-}: {
-  esHoy: boolean;
-  clave: string;
-  cargando: boolean;
-  citas: Cita[];
-  onVerHoy: () => void;
-  onAbrirCita: (citaId: string) => void;
-}) {
-  return (
-    <Card className="py-0">
-      <CardContent className="px-4 pt-3 pb-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="flex items-center gap-2 text-sm font-semibold">
-            <Clock className="text-primary size-4" aria-hidden />
-            {esHoy ? "Próximos de hoy" : "Citas del día"}
-          </h2>
-          {!esHoy && (
-            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onVerHoy}>
-              Ver hoy
-            </Button>
-          )}
-        </div>
-        <p className="text-muted-foreground mt-1 text-xs">
-          {formatearFechaLargaClave(clave)}
-        </p>
-        <Separator className="my-2" />
-
-        {cargando ? (
-          <div className="space-y-2" aria-busy="true" aria-live="polite">
-            <span className="sr-only">Cargando citas del día...</span>
-            <Skeleton className="h-9" />
-            <Skeleton className="h-9" />
-          </div>
-        ) : citas.length === 0 ? (
-          <p className="text-muted-foreground py-5 text-center text-sm">
-            {esHoy
-              ? "No quedan citas pendientes para hoy."
-              : "Sin citas en este día."}
-          </p>
-        ) : (
-          <ul className="space-y-3">
-            {citas.map((cita) => (
-              <li key={cita.id} className="space-y-1.5 border-b border-border pb-3 last:border-0 last:pb-0">
-                <div className="flex flex-wrap items-baseline gap-x-2">
-                  <button
-                    type="button"
-                    onClick={() => onAbrirCita(cita.id)}
-                    className="rounded-sm text-sm font-semibold tabular-nums outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    {formatearHoraLocal(cita.fechaInicio)}
-                  </button>
-                  <Link
-                    to={`/pacientes/${cita.pacienteId}`}
-                    className="min-w-0 truncate rounded-sm text-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    {cita.pacienteNombre}
-                  </Link>
-                </div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <BadgeEstadoCita estado={cita.estado} />
-                  <BotonesEstadoCita cita={cita} />
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
   );
 }

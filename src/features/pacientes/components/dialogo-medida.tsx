@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { Loader2 } from "lucide-react";
+import { useForm, useWatch } from "react-hook-form";
+import { Activity, ClipboardPlus, Loader2, Ruler, Scale } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -22,13 +22,15 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { AlertaFormulario, GrupoCampos } from "@/components/ui/grupo-campos";
+import { InputUnidad } from "@/components/ui/input-unidad";
 import { Textarea } from "@/components/ui/textarea";
 import { useRegistrarMedida } from "@/features/pacientes/hooks/use-mutaciones-paciente";
 import { erroresPorCampo } from "@/lib/errores-formulario";
 import { mensajeDeError } from "@/lib/api-error";
 import { campoNumero } from "@/lib/campos-formulario";
-import { calcularImc, categoriaImc } from "@/lib/formatters";
+import { calcularImc } from "@/lib/formatters";
+import { MedidorImc } from "@/features/pacientes/components/medidor-imc";
 import type { CrearMedidaDto, Guid } from "@/types/api";
 
 /** Replica `CrearMedidaValidator`; el backend sigue siendo la autoridad. */
@@ -40,7 +42,7 @@ const esquema = z.object({
   estatura: z
     .number({ required_error: "La estatura es requerida" })
     .positive("La estatura debe ser mayor a 0 cm.")
-    .max(300, "Ingresa una estatura valida en centimetros."),
+    .max(300, "Ingresa una estatura válida en centímetros."),
   porcentajeGrasa: z
     .number()
     .min(0, "El porcentaje de grasa debe estar entre 0% y 100%.")
@@ -73,26 +75,30 @@ export function DialogoMedida({
   abierto,
   onOpenChange,
   pacienteId,
+  consultaId,
   estaturaSugerida,
 }: {
   abierto: boolean;
   onOpenChange: (abierto: boolean) => void;
   pacienteId: Guid;
+  /** Si se pasa, la medición queda ligada a esa consulta en curso. */
+  consultaId?: Guid;
   estaturaSugerida?: number;
 }) {
   return (
     <Dialog open={abierto} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-xl">
+        <DialogHeader icono={ClipboardPlus}>
           <DialogTitle>Registrar medición</DialogTitle>
           <DialogDescription>
-            Peso y estatura son los unicos campos obligatorios.
+            Peso y estatura bastan para calcular el IMC. Lo demás es opcional.
           </DialogDescription>
         </DialogHeader>
 
         <FormularioMedida
           key={abierto ? "abierta" : "cerrada"}
           pacienteId={pacienteId}
+          consultaId={consultaId}
           estaturaSugerida={estaturaSugerida}
           onCerrar={() => onOpenChange(false)}
         />
@@ -103,10 +109,12 @@ export function DialogoMedida({
 
 function FormularioMedida({
   pacienteId,
+  consultaId,
   estaturaSugerida,
   onCerrar,
 }: {
   pacienteId: Guid;
+  consultaId?: Guid;
   estaturaSugerida?: number;
   onCerrar: () => void;
 }) {
@@ -140,6 +148,7 @@ function FormularioMedida({
       porcentajeMasaMuscular: aNull(values.porcentajeMasaMuscular),
       medidaCintura: aNull(values.medidaCintura),
       medidaCadera: aNull(values.medidaCadera),
+      consultaId: consultaId ?? null,
       notasObservaciones:
         values.notasObservaciones.trim() === VACIO
           ? null
@@ -157,186 +166,183 @@ function FormularioMedida({
     });
   });
 
-  const peso = form.watch("peso");
-  const estatura = form.watch("estatura");
-  const imc = calcularImc(peso ?? 0, estatura ?? 0);
+  const [peso, estatura, cintura, cadera] = useWatch({
+    control: form.control,
+    name: ["peso", "estatura", "medidaCintura", "medidaCadera"],
+  });
+  const imc = peso && estatura ? calcularImc(peso, estatura) : null;
+  const indiceCinturaCadera = cintura && cadera ? cintura / cadera : null;
 
   return (
     <Form {...form}>
-      <form onSubmit={alEnviar} noValidate className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="peso"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Peso (kg)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    step="0.1"
-                    placeholder="Ej. 72.4"
-                    {...campoNumero(field)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+      <form onSubmit={alEnviar} noValidate className="space-y-5">
+        <GrupoCampos titulo="Peso y estatura" icono={Scale}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="peso"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Peso</FormLabel>
+                  <FormControl>
+                    <InputUnidad
+                      unidad="kg"
+                      inputMode="decimal"
+                      step="0.1"
+                      placeholder="72.4"
+                      autoFocus
+                      {...campoNumero(field)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="estatura"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Estatura (cm)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    step="1"
-                    placeholder="Ej. 175"
-                    {...campoNumero(field)}
-                  />
-                </FormControl>
-                <FormDescription className="text-muted-foreground text-xs">
-                  {estaturaSugerida
-                    ? "Tomada de la última medición."
-                    : "Última medición registrada."}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {imc !== null && peso && estatura && (
-          <div className="bg-muted/60 flex items-center justify-between rounded-lg px-3 py-2 text-sm">
-            <span className="text-muted-foreground">
-              IMC{" "}
-              <span className="text-foreground font-semibold tabular-nums">
-                {imc.toFixed(1)}
-              </span>
-            </span>
-            <span className="text-muted-foreground text-xs">
-              {categoriaImc(imc).etiqueta}
-            </span>
+            <FormField
+              control={form.control}
+              name="estatura"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Estatura</FormLabel>
+                  <FormControl>
+                    <InputUnidad
+                      unidad="cm"
+                      inputMode="numeric"
+                      step="1"
+                      placeholder="175"
+                      {...campoNumero(field)}
+                    />
+                  </FormControl>
+                  {estaturaSugerida !== undefined && (
+                    <FormDescription>Tomada de la última medición.</FormDescription>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
-        )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="porcentajeGrasa"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>% grasa</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    step="0.1"
-                    placeholder="Ej. 22.4"
-                    {...campoNumero(field)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <MedidorImc imc={imc} />
+        </GrupoCampos>
 
-          <FormField
-            control={form.control}
-            name="porcentajeMasaMuscular"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>% masa muscular</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    step="0.1"
-                    placeholder="Ej. 34.1"
-                    {...campoNumero(field)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <GrupoCampos titulo="Composición corporal" icono={Activity} descripcion="Opcional">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="porcentajeGrasa"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Grasa corporal</FormLabel>
+                  <FormControl>
+                    <InputUnidad
+                      unidad="%"
+                      inputMode="decimal"
+                      step="0.1"
+                      placeholder="22.4"
+                      {...campoNumero(field)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="medidaCintura"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cintura (cm)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    step="0.1"
-                    placeholder="Ej. 84"
-                    {...campoNumero(field)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="porcentajeMasaMuscular"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Masa muscular</FormLabel>
+                  <FormControl>
+                    <InputUnidad
+                      unidad="%"
+                      inputMode="decimal"
+                      step="0.1"
+                      placeholder="34.1"
+                      {...campoNumero(field)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </GrupoCampos>
 
-          <FormField
-            control={form.control}
-            name="medidaCadera"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cadera (cm)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    step="0.1"
-                    placeholder="Ej. 98"
-                    {...campoNumero(field)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <GrupoCampos titulo="Perímetros" icono={Ruler} descripcion="Opcional">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="medidaCintura"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cintura</FormLabel>
+                  <FormControl>
+                    <InputUnidad
+                      unidad="cm"
+                      inputMode="decimal"
+                      step="0.1"
+                      placeholder="84"
+                      {...campoNumero(field)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="medidaCadera"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cadera</FormLabel>
+                  <FormControl>
+                    <InputUnidad
+                      unidad="cm"
+                      inputMode="decimal"
+                      step="0.1"
+                      placeholder="98"
+                      {...campoNumero(field)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {indiceCinturaCadera !== null && (
+            <p className="text-muted-foreground text-xs" aria-live="polite">
+              Índice cintura-cadera:{" "}
+              <span className="text-foreground font-semibold tabular-nums">
+                {indiceCinturaCadera.toFixed(2)}
+              </span>
+            </p>
+          )}
+        </GrupoCampos>
 
         <FormField
           control={form.control}
           name="notasObservaciones"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Observaciones</FormLabel>
+              <FormLabel opcional>Observaciones</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Como se siente el paciente, contexto de la toma..."
+                  placeholder="Cómo se siente el paciente, contexto de la toma..."
                   rows={2}
-                  className="resize-none"
+                  className="bg-card resize-none"
                   {...field}
                 />
               </FormControl>
-              <FormDescription className="text-muted-foreground text-xs">
-                Opcional.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {errorGeneral && (
-          <p
-            role="alert"
-            className="border-destructive/40 bg-destructive/8 text-destructive rounded-lg border px-3 py-2 text-sm"
-          >
-            {errorGeneral}
-          </p>
-        )}
+        {errorGeneral && <AlertaFormulario>{errorGeneral}</AlertaFormulario>}
 
         <DialogFooter>
           <Button

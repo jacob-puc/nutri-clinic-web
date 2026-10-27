@@ -12,6 +12,7 @@ interface TooltipSimpleProps {
   /** Texto o contenido flotante. */
   contenido: ReactNode;
   side?: "top" | "right" | "bottom" | "left";
+  className?: string;
 }
 
 /**
@@ -23,19 +24,19 @@ interface TooltipSimpleProps {
  * `TooltipProvider` ya envuelve la app entera en `App.tsx`, así que aquí solo
  * se monta el par trigger + contenido.
  *
- * Excepción conocida: los eventos del calendario. FullCalendar monta su propio
- * DOM fuera de React, así que no hay dónde enganchar este componente y ahí
- * sigue usándose `title=` nativo.
+ * FullCalendar permite renderizar contenido React dentro de cada evento, por
+ * lo que también podemos usar este componente en los eventos de la agenda.
  */
 export function TooltipSimple({
   children,
   contenido,
   side = "top",
+  className,
 }: TooltipSimpleProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side={side}>{contenido}</TooltipContent>
+      <TooltipContent side={side} className={className}>{contenido}</TooltipContent>
     </Tooltip>
   );
 }

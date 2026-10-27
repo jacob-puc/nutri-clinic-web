@@ -64,7 +64,7 @@ export function LineaObjetivo({
           onClick={() => setEditando(true)}
           className="group flex w-full items-baseline gap-2 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <span className="text-muted-foreground text-[11px] font-semibold tracking-[0.16em] uppercase">
+          <span className="text-muted-foreground text-xs font-medium">
             Objetivo
           </span>
 

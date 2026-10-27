@@ -50,7 +50,7 @@ export function Topbar() {
           type="search"
           placeholder="Buscar paciente..."
           aria-label="Buscar paciente"
-          className="bg-card h-9 pl-9"
+          className="bg-card shadow-subtle h-9 pl-9"
           onKeyDown={(evento) => {
             if (evento.key === "Enter") {
               const termino = evento.currentTarget.value.trim();

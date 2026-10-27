@@ -7,6 +7,8 @@ import { PacienteDetallePage } from "@/features/pacientes/pages/paciente-detalle
 import { PacientesPage } from "@/features/pacientes/pages/pacientes-page";
 import { AgendaPage } from "@/features/citas/pages/agenda-page";
 import { CitaDetallePage } from "@/features/citas/pages/cita-detalle-page";
+import { ConsultasPage } from "@/features/consultas/pages/consultas-page";
+import { ConsultaDetallePage } from "@/features/consultas/pages/consulta-detalle-page";
 
 export const router = createBrowserRouter([
   {
@@ -25,11 +27,12 @@ export const router = createBrowserRouter([
           { path: "pacientes/:id", element: <PacienteDetallePage /> },
           { path: "citas", element: <AgendaPage /> },
           { path: "citas/:id", element: <CitaDetallePage /> },
+          { path: "consultas", element: <ConsultasPage /> },
+          { path: "consultas/:id", element: <ConsultaDetallePage /> },
           /* La sección pasó de llamarse Agenda a Citas: las rutas viejas
              redirigen para no dejar enlaces muertos. */
           { path: "agenda", element: <Navigate to="/citas" replace /> },
           { path: "agenda/:id", element: <Navigate to="/citas" replace /> },
-          { path: "consultas", element: <Navigate to="/pacientes" replace /> },
           { path: "nutricionistas", element: <Navigate to="/pacientes" replace /> },
           { path: "planes", element: <Navigate to="/pacientes" replace /> },
           { path: "*", element: <Navigate to="/pacientes" replace /> },

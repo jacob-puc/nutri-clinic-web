@@ -42,7 +42,7 @@ export function SkeletonTabla({
   return (
     <div
       className={cn(
-        "bg-card overflow-hidden rounded-xl border border-border shadow-card",
+        "hoja overflow-hidden rounded-xl",
         className,
       )}
       aria-busy="true"

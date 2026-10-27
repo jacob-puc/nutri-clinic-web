@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { ClipboardPlus } from "lucide-react";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface EstadoVacioProps {
   titulo: string;
@@ -36,11 +36,21 @@ export function EstadoVacio({
   className,
 }: EstadoVacioProps) {
   return (
-    <Card className={className}>
-      <CardContent className="flex flex-col items-center gap-4 px-6 py-16 text-center">
+    /* Hueco por rellenar, no una hoja: borde discontinuo y sin sombra. El
+       icono va sobre una hoja pequena con otra asomando detras, como el
+       primer registro que falta por archivar. */
+    <div
+      className={cn(
+        "hoja-vacia flex flex-col items-center gap-4 rounded-xl px-6 py-14 text-center",
+        className,
+      )}
+    >
         {visual ?? (
-          <div className="bg-muted text-muted-foreground grid size-14 place-items-center rounded-full">
-            <Icono className="size-6" aria-hidden />
+          <div aria-hidden className="relative">
+            <span className="hoja absolute inset-0 translate-x-1.5 -translate-y-1 rotate-6 rounded-xl opacity-70" />
+            <span className="hoja text-primary relative grid size-14 place-items-center rounded-xl">
+              <Icono className="size-6" />
+            </span>
           </div>
         )}
 
@@ -52,7 +62,6 @@ export function EstadoVacio({
         </div>
 
         {children}
-      </CardContent>
-    </Card>
+    </div>
   );
 }

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { Loader2, Target } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,19 +22,22 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { AlertaFormulario } from "@/components/ui/grupo-campos";
 import { Input } from "@/components/ui/input";
+import { InputUnidad } from "@/components/ui/input-unidad";
+import { Sugerencias } from "@/components/ui/sugerencias";
 import { campoNumero } from "@/lib/campos-formulario";
 import { mensajeDeError } from "@/lib/api-error";
 import type { ActualizarObjetivoPacienteDto, Paciente } from "@/types/api";
 
 /** El campo acepta cualquier texto; estas solo evitan teclear lo de siempre. */
 const TITULOS_SUGERIDOS = [
-  "Recomposicion total",
-  "Perdida de peso",
+  "Recomposición total",
+  "Pérdida de peso",
   "Ganancia de masa muscular",
   "Mantenimiento de peso",
-  "Salud metabolica",
-  "Preparacion para competencia",
+  "Salud metabólica",
+  "Preparación para competencia",
 ];
 
 const schema = z.object({
@@ -73,6 +77,8 @@ export function DialogoObjetivo({
     },
   });
 
+  const tituloVigente = useWatch({ control: form.control, name: "tituloObjetivo" });
+
   const enviar = form.handleSubmit(async (values) => {
     setErrorGeneral(null);
     try {
@@ -93,36 +99,31 @@ export function DialogoObjetivo({
   return (
     <Dialog open={abierto} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+        <DialogHeader icono={Target}>
           <DialogTitle>Objetivo del paciente</DialogTitle>
           <DialogDescription>
             Se define en consulta, con el paciente presente, cuando ya hay una
-            evaluacion que lo sustente.
+            evaluación que lo sustente.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={enviar} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+          <form onSubmit={enviar} noValidate className="space-y-5">
+            <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_10rem]">
               <FormField
                 control={form.control}
                 name="tituloObjetivo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Título del objetivo</FormLabel>
+                    <FormLabel opcional>Título del objetivo</FormLabel>
                     <FormControl>
                       <Input
-                        list="titulos-objetivo"
-                        placeholder="Recomposicion total"
+                        placeholder="Recomposición total"
                         maxLength={80}
+                        className="bg-card h-10"
                         {...field}
                       />
                     </FormControl>
-                    <datalist id="titulos-objetivo">
-                      {TITULOS_SUGERIDOS.map((titulo) => (
-                        <option key={titulo} value={titulo} />
-                      ))}
-                    </datalist>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -133,13 +134,13 @@ export function DialogoObjetivo({
                 name="pesoObjetivo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Peso a llegar (kg)</FormLabel>
+                    <FormLabel opcional>Peso a llegar</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
+                      <InputUnidad
+                        unidad="kg"
                         inputMode="decimal"
                         step="0.1"
-                        placeholder="Ej. 72"
+                        placeholder="72"
                         {...campoNumero(field)}
                       />
                     </FormControl>
@@ -149,14 +150,16 @@ export function DialogoObjetivo({
               />
             </div>
 
-            {errorGeneral && (
-              <p
-                role="alert"
-                className="border-destructive/40 bg-destructive/8 text-destructive rounded-lg border px-3 py-2 text-sm"
-              >
-                {errorGeneral}
-              </p>
-            )}
+            <Sugerencias
+              etiqueta="Objetivos frecuentes"
+              opciones={TITULOS_SUGERIDOS}
+              valor={tituloVigente}
+              onElegir={(titulo) =>
+                form.setValue("tituloObjetivo", titulo, { shouldDirty: true, shouldValidate: true })
+              }
+            />
+
+            {errorGeneral && <AlertaFormulario>{errorGeneral}</AlertaFormulario>}
 
             <DialogFooter>
               <Button
@@ -167,7 +170,8 @@ export function DialogoObjetivo({
                 Cancelar
               </Button>
               <Button type="submit" disabled={guardando}>
-                {guardando ? "Guardando..." : "Guardar"}
+                {guardando && <Loader2 className="size-4 animate-spin" />}
+                Guardar objetivo
               </Button>
             </DialogFooter>
           </form>

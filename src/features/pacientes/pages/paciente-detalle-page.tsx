@@ -5,9 +5,12 @@ import {
   AlertTriangle,
   Ban,
   CalendarPlus,
+  ChevronRight,
+  ClipboardList,
   ClipboardPlus,
   Contact,
   FileText,
+  FolderOpen,
   Heart,
   Ruler,
   Scale,
@@ -19,13 +22,17 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
+import { BadgeEstadoCita } from "@/features/citas/components/badge-estado-cita";
 import { CitasPaciente } from "@/features/citas/components/citas-paciente";
 import { DialogoCita } from "@/features/citas/components/dialogo-cita";
+import { BadgeTipoConsulta } from "@/features/consultas/components/badge-tipo-consulta";
+import { useConsultasDePaciente } from "@/features/consultas/hooks/use-consultas";
 import { DialogoMedida } from "@/features/pacientes/components/dialogo-medida";
 import { LineaObjetivo } from "@/features/pacientes/components/linea-objetivo";
 import { DialogoPaciente } from "@/features/pacientes/components/dialogo-paciente";
 import { GraficaMedidas } from "@/features/pacientes/components/grafica-medidas";
 import { useExpediente, usePaciente } from "@/features/pacientes/hooks/use-expediente";
+import { CampoFicha, Seccion } from "@/components/ficha/seccion";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { EstadoError } from "@/components/states/estado-error";
 import { EstadoVacio } from "@/components/states/estado-vacio";
@@ -61,6 +68,7 @@ import {
   formatearFechaHora,
 } from "@/lib/formatters";
 import type {
+  Consulta,
   DocumentoPaciente,
   FotoSeguimiento,
   HistorialClinico,
@@ -69,7 +77,13 @@ import type {
   TipoFoto,
 } from "@/types/api";
 
-const PESTANAS = ["resumen", "medidas", "fotos", "documentos"] as const;
+const PESTANAS = [
+  "resumen",
+  "consultas",
+  "medidas",
+  "fotos",
+  "documentos",
+] as const;
 type Pestana = (typeof PESTANAS)[number];
 
 export function PacienteDetallePage() {
@@ -103,6 +117,7 @@ export function PacienteDetallePage() {
   const { data: paciente, isPending: cargandoPaciente, isError: errorPaciente } =
     usePaciente(id);
   const { data: expediente, isPending: cargandoExpediente } = useExpediente(id);
+  const consultas = useConsultasDePaciente(id);
 
   if (esApiError(errorPaciente) && errorPaciente.status === 404) {
     return (
@@ -148,6 +163,7 @@ export function PacienteDetallePage() {
   const fotos = expediente?.fotos ?? [];
   const documentos = expediente?.documentos ?? [];
   const historial = expediente?.historialClinico ?? null;
+  const consultasPaciente = consultas.data ?? [];
   const estaturaUltima = [...medidas]
     .sort((a, b) => b.fechaMedicion.localeCompare(a.fechaMedicion))[0]?.estatura;
 
@@ -195,6 +211,12 @@ export function PacienteDetallePage() {
       <Tabs value={pestana} onValueChange={cambiarPestana} className="mt-6">
         <TabsList className="w-full justify-start">
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
+          <TabsTrigger value="consultas">
+            Consultas
+            {consultasPaciente.length > 0 && (
+              <Contador>{consultasPaciente.length}</Contador>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="medidas">
             Evolución
             {medidas.length > 0 && <Contador>{medidas.length}</Contador>}
@@ -223,6 +245,15 @@ export function PacienteDetallePage() {
               paciente={paciente}
             />
           )}
+        </TabsContent>
+
+        <TabsContent value="consultas" className="mt-4">
+          <TabConsultas
+            consultas={consultasPaciente}
+            cargando={consultas.isPending}
+            error={consultas.isError}
+            onReintentar={() => void consultas.refetch()}
+          />
         </TabsContent>
 
         <TabsContent value="medidas" className="mt-4">
@@ -276,20 +307,22 @@ function EncabezadoFicha({
   const categoria = imcActual !== null ? categoriaImc(imcActual) : null;
 
   return (
-    <section className="border-border bg-card overflow-hidden rounded-xl border shadow-sm">
-      {/* Folio del expediente + acciones: portada de la ficha, no una card mas. */}
-      <div className="border-border/70 flex flex-wrap items-center justify-between gap-3 border-b px-4 py-2.5 md:px-6">
-        <div className="flex items-center gap-2.5">
-          <span className="text-primary text-[11px] font-semibold tracking-[0.2em] uppercase">
+    <div>
+      <div className="flex flex-wrap-reverse items-end justify-between gap-x-3 gap-y-2">
+        {/* Pestaña de carpeta con el folio: la portada se lee como el
+            expediente fisico que es, no como una card mas. Se monta 1px
+            sobre la hoja y con su mismo fondo para tapar el borde superior. */}
+        <div className="hoja relative z-10 -mb-px inline-flex items-center gap-2.5 rounded-t-lg rounded-b-none border-b-0 px-3.5 pt-2 pb-2.5 shadow-[inset_0_2px_0_0_var(--primary)]">
+          <FolderOpen className="text-primary size-4" aria-hidden />
+          <span className="text-foreground text-xs font-semibold">
             Expediente clínico
           </span>
-          <span aria-hidden className="bg-border h-3 w-px" />
-          <span className="text-muted-foreground-subtle text-[11px] tracking-wide tabular-nums">
+          <span className="text-muted-foreground-subtle text-[11px] tabular-nums">
             EXP-{paciente.id.slice(0, 8).toUpperCase()}
           </span>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 pb-2">
           <Button variant="outline" size="sm" onClick={onEditar}>
             Editar
           </Button>
@@ -305,6 +338,7 @@ function EncabezadoFicha({
         </div>
       </div>
 
+      <section className="hoja overflow-hidden rounded-xl rounded-tl-none">
       <div className="grid gap-5 px-4 py-5 md:px-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-8">
         <div className="flex min-w-0 items-start gap-4">
           <AvatarPaciente
@@ -356,7 +390,7 @@ function EncabezadoFicha({
 
           {categoria && imcActual !== null && (
             <div className="border-border/60 mt-4 flex flex-wrap items-center gap-2 border-t pt-3">
-              <span className="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase">
+              <span className="text-muted-foreground text-xs font-medium">
                 Categoría OMS
               </span>
               <BadgeCategoria imc={imcActual} />
@@ -364,7 +398,8 @@ function EncabezadoFicha({
           )}
         </div>
       </div>
-    </section>
+      </section>
+    </div>
   );
 }
 
@@ -385,7 +420,7 @@ function Constante({
 }) {
   return (
     <div className="min-w-0">
-      <dt className="text-muted-foreground flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] uppercase">
+      <dt className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
         <Icono className="size-3.5 shrink-0" aria-hidden />
         {etiqueta}
       </dt>
@@ -445,44 +480,9 @@ function TabResumen({
   );
 }
 
-/** Cabecera comun de cada seccion del expediente: icono, titulo y meta. */
-function Panel({
-  titulo,
-  icono: Icono,
-  meta,
-  acciones,
-  children,
-}: {
-  titulo: string;
-  icono: LucideIcon;
-  meta?: React.ReactNode;
-  acciones?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="border-border bg-card overflow-hidden rounded-xl border shadow-sm">
-      <header className="border-border/70 flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 md:px-5">
-        <div className="flex min-w-0 items-center gap-2">
-          <Icono className="text-primary size-4 shrink-0" aria-hidden />
-          <h2 className="text-foreground text-sm font-semibold tracking-tight">
-            {titulo}
-          </h2>
-          {meta && (
-            <span className="text-muted-foreground-subtle truncate text-xs">
-              {meta}
-            </span>
-          )}
-        </div>
-        {acciones}
-      </header>
-      <div className="px-4 py-4 md:px-5">{children}</div>
-    </section>
-  );
-}
-
 function PanelFicha({ paciente }: { paciente: Paciente }) {
   return (
-    <Panel
+    <Seccion
       titulo="Ficha del paciente"
       icono={Contact}
       meta="Datos de contacto y alta"
@@ -508,7 +508,7 @@ function PanelFicha({ paciente }: { paciente: Paciente }) {
           valor={formatearFecha(paciente.fechaRegistro)}
         />
       </dl>
-    </Panel>
+    </Seccion>
   );
 }
 
@@ -520,20 +520,15 @@ function DatoFicha({
   valor: string | null;
 }) {
   return (
-    <div className="border-border/50 py-2.5">
-      <dt className="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase">
-        {etiqueta}
-      </dt>
-      <dd className="text-foreground mt-1 text-sm break-words">
-        {valor ?? <span className="text-muted-foreground-subtle">Sin registro</span>}
-      </dd>
-    </div>
+    <CampoFicha etiqueta={etiqueta}>
+      {valor ?? <span className="text-muted-foreground-subtle">Sin registro</span>}
+    </CampoFicha>
   );
 }
 
 function PanelHistorial({ historial }: { historial: HistorialClinico | null }) {
   return (
-    <Panel
+    <Seccion
       titulo="Historial clínico"
       icono={Stethoscope}
       meta="Alergias y preferencias de la dieta"
@@ -567,7 +562,7 @@ function PanelHistorial({ historial }: { historial: HistorialClinico | null }) {
           />
         </div>
       )}
-    </Panel>
+    </Seccion>
   );
 }
 
@@ -595,7 +590,7 @@ function GrupoHistorial({
 }) {
   return (
     <div className="min-w-0">
-      <p className="text-muted-foreground flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] uppercase">
+      <p className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
         <Icono className="size-3.5 shrink-0" aria-hidden />
         {etiqueta}
         <span className="text-muted-foreground-subtle font-normal tabular-nums">
@@ -641,12 +636,12 @@ function PanelMediciones({
 }) {
   if (medidas.length === 0) {
     return (
-      <Panel titulo="Mediciones" icono={ClipboardPlus}>
+      <Seccion titulo="Mediciones" icono={ClipboardPlus}>
         <p className="text-muted-foreground py-6 text-center text-sm">
           Aun no se ha registrado ninguna medida antropometrica para este
           paciente.
         </p>
-      </Panel>
+      </Seccion>
     );
   }
 
@@ -664,7 +659,7 @@ function PanelMediciones({
   const imcActual = Number(principal.imc.toFixed(1));
 
   return (
-    <Panel
+    <Seccion
       titulo="Mediciones"
       icono={ClipboardPlus}
       meta={`${medidas.length} ${
@@ -691,7 +686,7 @@ function PanelMediciones({
 
       {previas.length > 0 && (
         <div className="mt-4">
-          <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase">
+          <p className="text-muted-foreground text-xs font-medium">
             Mediciones anteriores
           </p>
           {/* Envolvente con scroll horizontal propio: sin ella, el ancho de la
@@ -748,7 +743,7 @@ function PanelMediciones({
           </div>
         </div>
       )}
-    </Panel>
+    </Seccion>
   );
 }
 
@@ -767,7 +762,7 @@ function ConstanteMedida({
 }) {
   return (
     <div className="min-w-0 py-1.5 sm:border-border/40 sm:border-l sm:px-4 sm:py-3.5 sm:first:border-l-0 sm:first:pl-0">
-      <dt className="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase">
+      <dt className="text-muted-foreground text-xs font-medium">
         {etiqueta}
       </dt>
       <dd className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
@@ -952,7 +947,7 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
     <div className="space-y-4">
       <GraficaMedidas medidas={medidas} />
 
-      <Panel
+      <Seccion
         titulo="Registro completo"
         icono={ClipboardPlus}
         meta={`${medidas.length} ${
@@ -989,22 +984,22 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
 
             <TableHeader>
               <TableRow className="border-border/60 hover:bg-transparent">
-                <TableHead className="text-muted-foreground h-auto px-0 pb-2 text-left text-[11px] font-semibold tracking-[0.14em] uppercase">
+                <TableHead className="text-muted-foreground h-auto px-0 pb-2 text-left text-xs font-medium">
                   Fecha
                 </TableHead>
-                <TableHead className="text-muted-foreground h-auto px-0 pb-2 text-right text-[11px] font-semibold tracking-[0.14em] uppercase">
+                <TableHead className="text-muted-foreground h-auto px-0 pb-2 text-right text-xs font-medium">
                   Peso
                 </TableHead>
-                <TableHead className="text-muted-foreground hidden h-auto px-0 pb-2 text-right text-[11px] font-semibold tracking-[0.14em] uppercase sm:table-cell">
+                <TableHead className="text-muted-foreground hidden h-auto px-0 pb-2 text-right text-xs font-medium sm:table-cell">
                   Estatura
                 </TableHead>
-                <TableHead className="text-muted-foreground h-auto px-0 pb-2 text-right text-[11px] font-semibold tracking-[0.14em] uppercase">
+                <TableHead className="text-muted-foreground h-auto px-0 pb-2 text-right text-xs font-medium">
                   IMC
                 </TableHead>
-                <TableHead className="text-muted-foreground hidden h-auto px-0 pb-2 pl-4 text-left text-[11px] font-semibold tracking-[0.14em] uppercase md:table-cell">
+                <TableHead className="text-muted-foreground hidden h-auto px-0 pb-2 pl-4 text-left text-xs font-medium md:table-cell">
                   Categoría
                 </TableHead>
-                <TableHead className="text-muted-foreground hidden h-auto px-0 pb-2 pl-6 text-left text-[11px] font-semibold tracking-[0.14em] uppercase lg:table-cell">
+                <TableHead className="text-muted-foreground hidden h-auto px-0 pb-2 pl-6 text-left text-xs font-medium lg:table-cell">
                   Observaciones
                 </TableHead>
               </TableRow>
@@ -1062,7 +1057,7 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
             </TableBody>
           </Table>
         </div>
-      </Panel>
+      </Seccion>
     </div>
   );
 }
@@ -1087,7 +1082,7 @@ function ResumenMedida({
 }) {
   return (
     <div className="min-w-0 py-1.5 sm:border-border/40 sm:border-l sm:px-4 sm:py-0 sm:first:border-l-0 sm:first:pl-0">
-      <dt className="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase">
+      <dt className="text-muted-foreground text-xs font-medium">
         {etiqueta}
       </dt>
       <dd
@@ -1155,8 +1150,10 @@ function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {fotos.map((foto) => (
-            <Card key={foto.id} className="overflow-hidden">
-              <div className="bg-muted aspect-4/3 w-full overflow-hidden">
+            /* Copia impresa: marco blanco y pie de foto debajo, como las
+               fotos de seguimiento que se archivan en el expediente. */
+            <figure key={foto.id} className="hoja rounded-lg p-2 pb-3">
+              <div className="bg-muted aspect-4/3 w-full overflow-hidden rounded-md">
                 <img
                   src={foto.urlFoto}
                   alt={foto.notas ?? `Foto de seguimiento (${foto.tipo})`}
@@ -1164,20 +1161,20 @@ function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
                   className="size-full object-cover"
                 />
               </div>
-              <CardContent className="px-4 py-3">
+              <figcaption className="px-1.5 pt-2.5">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">{foto.tipo}</Badge>
-                    <span className="text-muted-foreground text-xs">
-                      {formatearFechaCorta(foto.fechaSubida)}
-                    </span>
-                  </div>
+                  <span className="text-foreground text-sm font-medium">
+                    {foto.tipo}
+                  </span>
+                  <span className="text-muted-foreground text-xs tabular-nums">
+                    {formatearFechaCorta(foto.fechaSubida)}
+                  </span>
                 </div>
                 {foto.notas && (
-                  <p className="text-muted-foreground mt-2 text-sm">{foto.notas}</p>
+                  <p className="text-muted-foreground mt-1 text-sm">{foto.notas}</p>
                 )}
-              </CardContent>
-            </Card>
+              </figcaption>
+            </figure>
           ))}
         </div>
       </div>
@@ -1249,8 +1246,8 @@ function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         {[imgA, imgB].map((img, i) => (
-          <div key={i} className="border rounded-lg overflow-hidden">
-            <div className="bg-muted aspect-4/3 w-full overflow-hidden">
+          <div key={i} className="hoja rounded-lg p-2">
+            <div className="bg-muted aspect-4/3 w-full overflow-hidden rounded-md">
               {img ? (
                 <img
                   src={img.urlFoto}
@@ -1263,13 +1260,13 @@ function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
                 </div>
               )}
             </div>
-            <CardContent className="px-4 py-2 text-sm">
+            <div className="px-1.5 pt-2 pb-0.5 text-sm">
               {img && (
                 <span className="text-muted-foreground">
                   {img.tipo} · {formatearFechaCorta(img.fechaSubida)}
                 </span>
               )}
-            </CardContent>
+            </div>
           </div>
         ))}
       </div>
@@ -1290,7 +1287,7 @@ function TabDocumentos({ documentos }: { documentos: DocumentoPaciente[] }) {
             key={documento.id}
             className="hover:bg-accent flex items-start gap-3 px-4 py-4 transition-colors md:px-6"
           >
-            <div className="bg-primary/10 text-primary grid size-9 shrink-0 place-items-center rounded-lg">
+            <div className="bg-primary-soft text-primary-soft-foreground ring-primary/15 grid size-9 shrink-0 place-items-center rounded-lg ring-1 ring-inset">
               <FileText className="size-4" aria-hidden />
             </div>
             <div className="min-w-0 flex-1">
@@ -1318,6 +1315,92 @@ function TabDocumentos({ documentos }: { documentos: DocumentoPaciente[] }) {
   );
 }
 
+
+function TabConsultas({
+  consultas,
+  cargando,
+  error,
+  onReintentar,
+}: {
+  consultas: Consulta[];
+  cargando: boolean;
+  error: boolean;
+  onReintentar: () => void;
+}) {
+  if (cargando) {
+    return <ContenidoSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-10 text-center">
+        <p className="text-muted-foreground text-sm">
+          No pudimos cargar las consultas del paciente.
+        </p>
+        <Button variant="outline" size="sm" onClick={onReintentar}>
+          Reintentar
+        </Button>
+      </div>
+    );
+  }
+
+  if (consultas.length === 0) {
+    return (
+      <EstadoVacio
+        titulo="Sin consultas registradas"
+        descripcion="La primera consulta se abre al iniciar la atención desde una cita."
+        icono={ClipboardList}
+      />
+    );
+  }
+
+  /* Más reciente primero: el histórico se lee de arriba abajo como una
+     historia clínica. Cada fila abre la ficha completa de la consulta. */
+  const ordenadas = [...consultas].sort((a, b) =>
+    b.fechaInicio.localeCompare(a.fechaInicio),
+  );
+
+  return (
+    <Card>
+      <CardContent className="divide-y divide-border px-0 py-0">
+        {ordenadas.map((consulta) => {
+          const cerrada = consulta.fechaFin !== null;
+
+          return (
+            <Link
+              key={consulta.id}
+              to={`/consultas/${consulta.id}`}
+              className="hover:bg-accent focus-visible:ring-ring flex flex-wrap items-center gap-3 px-4 py-4 transition-colors outline-none focus-visible:ring-2 md:px-6"
+            >
+              <div className="bg-primary-soft text-primary-soft-foreground ring-primary/15 grid size-9 shrink-0 place-items-center rounded-lg ring-1 ring-inset">
+                <Stethoscope className="size-4" aria-hidden />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-foreground text-sm font-medium tabular-nums">
+                  {formatearFechaHora(consulta.fechaInicio)}
+                </p>
+                <p className="text-muted-foreground mt-0.5 truncate text-xs">
+                  {consulta.nutricionistaNombre}
+                  {consulta.notasClinicas ? ` · ${consulta.notasClinicas}` : ""}
+                </p>
+              </div>
+
+              <div className="ml-auto flex shrink-0 items-center gap-2">
+                <BadgeTipoConsulta tipo={consulta.tipoConsulta} />
+                <BadgeEstadoCita estado={cerrada ? "Completada" : "EnCurso"} />
+                <ChevronRight
+                  className="text-muted-foreground size-4"
+                  aria-hidden
+                />
+              </div>
+            </Link>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
 
 function ContenidoSkeleton() {
   return (

@@ -1,68 +1,99 @@
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { LogoNutriClinica } from "@/components/layout/logo";
-import { SidebarFooter, SidebarNav } from "@/components/layout/sidebar-nav";
+import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/layout/sidebar-context";
+import { TooltipSimple } from "@/components/ui/tooltip-simple";
+
+export function MarcaSidebar({ collapsed = false }: { collapsed?: boolean }) {
+  return (
+    <span className="flex items-center gap-2.5">
+      <LogoNutriClinica className="size-9 shrink-0 rounded-[10px] shadow-[inset_0_1px_0_0_oklch(1_0_0/0.3),0_4px_14px_-4px_var(--sidebar-glow)]" />
+      {!collapsed && (
+        <span className="flex flex-col leading-none">
+          <span className="text-sidebar-foreground text-base font-bold tracking-tight">
+            Nutri
+            <span className="text-sidebar-primary">Clinica</span>
+          </span>
+          <span className="text-sidebar-muted-foreground mt-1 text-[11px] font-medium">
+            Consulta nutricional
+          </span>
+        </span>
+      )}
+    </span>
+  );
+}
 
 export function Sidebar() {
   const { collapsed, toggle } = useSidebar();
+  const etiquetaToggle = collapsed ? "Expandir menú" : "Contraer menú";
+
+  const botonToggle = (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={etiquetaToggle}
+      className={cn(
+        "text-sidebar-muted-foreground flex h-9 w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 text-sm font-medium outline-none",
+        "transition-colors duration-200 hover:bg-sidebar-hover hover:text-sidebar-foreground active:bg-sidebar-pressed",
+        "focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+        collapsed && "justify-center px-0",
+      )}
+    >
+      {collapsed ? (
+        <PanelLeftOpen aria-hidden className="size-4" />
+      ) : (
+        <>
+          <PanelLeftClose aria-hidden className="size-4" />
+          <span>Contraer menú</span>
+        </>
+      )}
+    </button>
+  );
 
   return (
     <aside
       data-collapsed={collapsed}
       className={cn(
-        "bg-sidebar border-sidebar-border text-sidebar-foreground hidden shrink-0 border-r md:flex md:flex-col",
-        "transition-[width] duration-200 ease-out",
+        "sidebar-surface text-sidebar-foreground hidden shrink-0 md:flex md:flex-col",
+        "transition-[width] duration-200 ease-(--ease-out-soft)",
         collapsed ? "w-16" : "w-64",
       )}
     >
       <div
         className={cn(
-          "flex h-16 shrink-0 items-center border-b border-sidebar-border",
-          collapsed ? "justify-center px-2" : "gap-2.5 px-4",
+          "flex h-16 shrink-0 items-center",
+          collapsed ? "justify-center px-2" : "px-4",
         )}
       >
-        <LogoNutriClinica className="size-9 shrink-0 rounded-lg" />
-        {!collapsed && (
-          <span className="flex flex-col leading-none">
-            <span className="text-sidebar-foreground text-base font-bold tracking-tight">
-              Nutri
-              <span className="text-sidebar-primary">Clinica</span>
-            </span>
-            <span className="text-sidebar-muted-foreground mt-0.5 text-[11px] font-medium">
-              Consulta nutricional
-            </span>
-          </span>
-        )}
+        <MarcaSidebar collapsed={collapsed} />
       </div>
 
-      <div className={cn("flex-1 overflow-y-auto py-4", collapsed ? "px-2" : "px-3")}>
+      {/* Separador con degradado: marca el corte sin una linea dura de lado
+          a lado. */}
+      <div
+        aria-hidden
+        className="via-sidebar-border mx-3 h-px shrink-0 bg-gradient-to-r from-transparent to-transparent"
+      />
+
+      <div
+        className={cn(
+          "scrollbar-slim flex flex-1 flex-col overflow-y-auto py-5",
+          collapsed ? "px-2" : "px-3",
+        )}
+      >
         <SidebarNav collapsed={collapsed} />
       </div>
 
-      <div className={cn("border-t border-sidebar-border p-3", collapsed && "px-2")}>
-        <SidebarFooter collapsed={collapsed} />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggle}
-          className={cn(
-            "text-sidebar-muted-foreground hover:bg-sidebar-muted hover:text-sidebar-foreground mt-2 w-full",
-            collapsed && "px-0",
-          )}
-          aria-label={collapsed ? "Expandir menú" : "Contraer menú"}
-        >
-          {collapsed ? (
-            <PanelLeftOpen className="size-4" />
-          ) : (
-            <>
-              <PanelLeftClose className="size-4" />
-              <span>Contraer menú</span>
-            </>
-          )}
-        </Button>
+      <div className={cn("border-sidebar-border border-t p-3", collapsed && "px-2")}>
+        {collapsed ? (
+          <TooltipSimple side="right" contenido={etiquetaToggle}>
+            {botonToggle}
+          </TooltipSimple>
+        ) : (
+          botonToggle
+        )}
       </div>
     </aside>
   );

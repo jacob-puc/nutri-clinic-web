@@ -4,9 +4,13 @@ import type {
   CrearMedidaDto,
   CrearPacienteDto,
   ExpedienteCompleto,
+  FotoSeguimiento,
+  DocumentoPaciente,
   Guid,
   MedidaAntropometrica,
   Paciente,
+  SubirDocumentoDto,
+  SubirFotoDto,
 } from "@/types/api";
 
 export const pacientesApi = {
@@ -68,6 +72,47 @@ export const pacientesApi = {
     const { data } = await apiClient.post<MedidaAntropometrica>(
       `/api/pacientes/${pacienteId}/medidas`,
       medida,
+    );
+    return data;
+  },
+
+  /**
+   * `POST /api/pacientes/{id}/fotos/subir` recibe `multipart/form-data`
+   * (`[FromForm] SubirFotoDto`). El cliente global fija `application/json` y
+   * axios 1.20 serializaría el `FormData` a JSON, perdiendo el archivo: hay que
+   * forzar el tipo de contenido por petición para que el navegador ponga el
+   * boundary.
+   */
+  subirFoto: async (pacienteId: Guid, foto: SubirFotoDto): Promise<FotoSeguimiento> => {
+    const formulario = new FormData();
+    formulario.append("archivo", foto.archivo, foto.archivo.name);
+    formulario.append("tipo", foto.tipo);
+    if (foto.consultaId) formulario.append("consultaId", foto.consultaId);
+    if (foto.notas) formulario.append("notas", foto.notas);
+
+    const { data } = await apiClient.post<FotoSeguimiento>(
+      `/api/pacientes/${pacienteId}/fotos/subir`,
+      formulario,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    );
+    return data;
+  },
+
+  /** Igual que `subirFoto`, pero al endpoint de documentos. */
+  subirDocumento: async (
+    pacienteId: Guid,
+    documento: SubirDocumentoDto,
+  ): Promise<DocumentoPaciente> => {
+    const formulario = new FormData();
+    formulario.append("archivo", documento.archivo, documento.archivo.name);
+    formulario.append("tipo", documento.tipo);
+    if (documento.consultaId) formulario.append("consultaId", documento.consultaId);
+    if (documento.observaciones) formulario.append("observaciones", documento.observaciones);
+
+    const { data } = await apiClient.post<DocumentoPaciente>(
+      `/api/pacientes/${pacienteId}/documentos/subir`,
+      formulario,
+      { headers: { "Content-Type": "multipart/form-data" } },
     );
     return data;
   },

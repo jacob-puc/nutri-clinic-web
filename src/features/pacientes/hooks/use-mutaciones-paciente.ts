@@ -8,6 +8,8 @@ import type {
   CrearMedidaDto,
   CrearPacienteDto,
   Guid,
+  SubirDocumentoDto,
+  SubirFotoDto,
 } from "@/types/api";
 
 export function useCrearPaciente() {
@@ -70,6 +72,42 @@ export function useRegistrarMedida(pacienteId: Guid) {
       toast.success("Medicion registrada", {
         description: `${medida.peso} kg · IMC ${medida.imc}`,
       });
+    },
+  });
+}
+
+/**
+ * Refresca el expediente (fotos/documentos viven ahí). Si la subida se hizo
+ * desde una consulta, también se invalida el módulo de consultas para que la
+ * ficha de la consulta muestre el archivo recién añadido.
+ */
+export function useSubirFoto(pacienteId: Guid) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (datos: SubirFotoDto) => pacientesApi.subirFoto(pacienteId, datos),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: pacientesKeys.expediente(pacienteId),
+      });
+      void queryClient.invalidateQueries({ queryKey: ["consultas"] });
+      toast.success("Foto subida");
+    },
+  });
+}
+
+export function useSubirDocumento(pacienteId: Guid) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (datos: SubirDocumentoDto) =>
+      pacientesApi.subirDocumento(pacienteId, datos),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: pacientesKeys.expediente(pacienteId),
+      });
+      void queryClient.invalidateQueries({ queryKey: ["consultas"] });
+      toast.success("Documento subido");
     },
   });
 }

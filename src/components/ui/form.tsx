@@ -14,6 +14,8 @@ import {
   type FieldValues,
 } from "react-hook-form"
 
+import { AlertCircle } from "lucide-react"
+
 import { Label } from "@/components/ui/label"
 
 const Form = FormProvider
@@ -89,8 +91,13 @@ function FormItem({ className, ...props }: React.ComponentProps<"div">) {
 
 function FormLabel({
   className,
+  opcional = false,
+  children,
   ...props
-}: React.ComponentProps<typeof LabelPrimitive.Root>) {
+}: React.ComponentProps<typeof LabelPrimitive.Root> & {
+  /** Marca el campo como opcional junto a la etiqueta, no debajo. */
+  opcional?: boolean
+}) {
   const { error, formItemId } = useFormField()
 
   return (
@@ -100,7 +107,14 @@ function FormLabel({
       className={cn("data-[error=true]:text-destructive", className)}
       htmlFor={formItemId}
       {...props}
-    />
+    >
+      {children}
+      {opcional && (
+        <span className="text-muted-foreground-subtle ml-auto text-xs font-normal">
+          Opcional
+        </span>
+      )}
+    </Label>
   )
 }
 
@@ -129,7 +143,7 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="form-description"
       id={formDescriptionId}
-      className={cn("text-sm text-muted-foreground", className)}
+      className={cn("text-xs text-muted-foreground", className)}
       {...props}
     />
   )
@@ -147,9 +161,10 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="form-message"
       id={formMessageId}
-      className={cn("text-sm text-destructive", className)}
+      className={cn("flex items-start gap-1.5 text-xs font-medium text-destructive", className)}
       {...props}
     >
+      <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden />
       {body}
     </p>
   )

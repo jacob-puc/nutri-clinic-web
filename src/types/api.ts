@@ -230,6 +230,26 @@ export interface CrearDocumentoDto {
   consultaId?: Guid | null;
 }
 
+/**
+ * Cuerpo multipart de `POST /api/pacientes/{id}/fotos/subir`. El archivo va en
+ * `FormData`; el resto son campos de texto. `consultaId` enlaza la foto con la
+ * consulta en curso para que salga en su expediente.
+ */
+export interface SubirFotoDto {
+  archivo: File;
+  consultaId?: Guid | null;
+  tipo: TipoFoto;
+  notas?: string | null;
+}
+
+/** Cuerpo multipart de `POST /api/pacientes/{id}/documentos/subir`. */
+export interface SubirDocumentoDto {
+  archivo: File;
+  consultaId?: Guid | null;
+  tipo: TipoDocumento;
+  observaciones?: string | null;
+}
+
 export interface HistorialClinico {
   id: Guid;
   pacienteId: Guid;

@@ -11,7 +11,6 @@ import { EstadoVacio } from "@/components/states/estado-vacio";
 import { SkeletonTabla } from "@/components/states/skeleton-tabla";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -92,8 +91,9 @@ export function PacientesPage() {
 
       <DialogoPaciente abierto={altaAbierta} onOpenChange={setAltaAbierta} />
 
-      <Card className="mt-6 shadow-subtle">
-        <CardContent className="px-4 py-4 md:px-6">
+      {/* Barra de filtros sobre el fondo, sin caja propia: una tarjeta aqui
+          era una capa mas de "card dentro de pagina" sin informacion. */}
+      <div className="mt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
               <Search
@@ -106,7 +106,7 @@ export function PacientesPage() {
                 onChange={(evento) => cambiarBusqueda(evento.target.value)}
                 placeholder="Buscar por nombre..."
                 aria-label="Buscar paciente por nombre"
-                className="pl-9 pr-9"
+                className="bg-card shadow-subtle h-10 pl-9 pr-9"
               />
               {busqueda && (
                 <Button
@@ -124,7 +124,7 @@ export function PacientesPage() {
             <Button
               variant="outline"
               onClick={cambiarOrden}
-              className="shrink-0"
+              className="h-10 shrink-0"
               aria-label={
                 ascendente ? "Ordenar de Z a A" : "Ordenar de A a Z"
               }
@@ -147,8 +147,7 @@ export function PacientesPage() {
                 : `${pacientes.length} de ${data?.length} pacientes`}
             </p>
           )}
-        </CardContent>
-      </Card>
+      </div>
 
       <div className="mt-4">
         {isPending && (
@@ -244,25 +243,25 @@ function EncabezadoPacientes({
 
 function TablaPacientes({ pacientes }: { pacientes: Paciente[] }) {
   return (
-    <div className="bg-card overflow-hidden rounded-xl border border-border shadow-card">
+    <div className="hoja overflow-hidden rounded-xl">
       <Table>
         <caption className="sr-only">Pacientes activos de la clínica</caption>
 
         <TableHeader>
-          <TableRow className="bg-surface-subtle hover:bg-surface-subtle">
-            <TableHead className="text-muted-foreground px-4 py-3 text-xs font-medium tracking-wide uppercase md:px-6">
+          <TableRow className="bg-surface-subtle/70 hover:bg-surface-subtle/70">
+            <TableHead className="text-muted-foreground px-4 py-3 text-xs font-medium md:px-6">
               Paciente
             </TableHead>
-            <TableHead className="text-muted-foreground hidden px-4 py-3 text-xs font-medium tracking-wide uppercase lg:table-cell">
+            <TableHead className="text-muted-foreground hidden px-4 py-3 text-xs font-medium lg:table-cell">
               Contacto
             </TableHead>
-            <TableHead className="text-muted-foreground hidden px-4 py-3 text-xs font-medium tracking-wide uppercase md:table-cell">
+            <TableHead className="text-muted-foreground hidden px-4 py-3 text-xs font-medium md:table-cell">
               Nacimiento
             </TableHead>
-            <TableHead className="text-muted-foreground hidden px-4 py-3 text-xs font-medium tracking-wide uppercase sm:table-cell">
+            <TableHead className="text-muted-foreground hidden px-4 py-3 text-xs font-medium sm:table-cell">
               Edad
             </TableHead>
-            <TableHead className="text-muted-foreground px-4 py-3 text-xs font-medium tracking-wide uppercase md:px-6">
+            <TableHead className="text-muted-foreground px-4 py-3 text-xs font-medium md:px-6">
               Sexo
             </TableHead>
             {/* Columna de acciones: sin etiqueta visible, pero se conserva
