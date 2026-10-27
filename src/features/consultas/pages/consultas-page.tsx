@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   CheckCircle2,
   ClipboardList,
@@ -19,6 +19,7 @@ import { Seccion } from "@/components/ficha/seccion";
 import { EstadoError } from "@/components/states/estado-error";
 import { EstadoVacio } from "@/components/states/estado-vacio";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { mensajeDeError } from "@/lib/api-error";
 import { toast } from "sonner";
@@ -46,8 +47,19 @@ const FORMATO_DIA = new Intl.DateTimeFormat("es-MX", {
  */
 export function ConsultasPage() {
   const navigate = useNavigate();
+  const [parametros, setParametros] = useSearchParams();
   const hoy = useMemo(() => new Date(), []);
   const rango = useMemo(() => rangoDelDia(hoy), [hoy]);
+
+  /* Las vistas se controlan desde la URL (?vista=historial) para que el
+     historial del día sea compartible y sobreviva al refresh. */
+  const vista = parametros.get("vista") === "historial" ? "historial" : "cola";
+  const cambiarVista = (siguiente: string) => {
+    const siguientes = new URLSearchParams(parametros);
+    if (siguiente === "cola") siguientes.delete("vista");
+    else siguientes.set("vista", siguiente);
+    setParametros(siguientes, { replace: true });
+  };
 
   const citas = useCitas(rango);
   /* Un solo traqueo de consultas para saber el tipo de cada paciente: si va
@@ -71,6 +83,20 @@ export function ConsultasPage() {
     () => lista.filter((c) => c.estado === "Completada").length,
     [lista],
   );
+
+  /* Historial del día: todo lo que ya pasó en la consulta, ya sea con cierre
+     o con la atención abierta. Se lee de más reciente a más antigua para que el
+     nutricionista cierre el día leyendo hacia atrás. */
+  const historial = useMemo(() => {
+    const pasadas = lista
+      .filter(
+        (c) => c.estado === "Completada" || c.estado === "EnCurso",
+      )
+      .sort((a, b) => b.fechaInicio.localeCompare(a.fechaInicio));
+    return pasadas;
+  }, [lista]);
+
+  const pendientes = porAtender.length + sinConfirmar.length;
 
   const alIniciar = (cita: Cita) => {
     iniciar.mutate(
@@ -113,7 +139,27 @@ export function ConsultasPage() {
     <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
       <EncabezadoDia fecha={hoy} completadas={completadas} ocultarContador={cargando} />
 
-      <div className="mt-4 space-y-4">
+      <Tabs value={vista} onValueChange={cambiarVista} className="mt-4">
+        <TabsList className="w-full justify-start sm:w-auto">
+          <TabsTrigger value="cola">
+            Cola del día
+            {pendientes > 0 && (
+              <span className="bg-primary/12 text-primary ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">
+                {pendientes}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="historial">
+            Historial del día
+            {historial.length > 0 && (
+              <span className="bg-primary/12 text-primary ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">
+                {historial.length}
+              </span>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="cola" className="mt-4 space-y-4">
         <Seccion
           titulo="Por atender"
           icono={UserCheck}
@@ -181,7 +227,47 @@ export function ConsultasPage() {
             </Button>
           </EstadoVacio>
         )}
-      </div>
+        </TabsContent>
+
+        <TabsContent value="historial" className="mt-4">
+          <Seccion
+            titulo="Historial del día"
+            icono={CheckCircle2}
+            meta={historial.length > 0 ? `${historial.length} consultas` : undefined}
+          >
+            {cargando ? (
+              <FilasSkeleton n={2} />
+            ) : historial.length === 0 ? (
+              <p className="text-muted-foreground py-2 text-sm">
+                Todavía no se ha iniciado ninguna atención hoy.
+              </p>
+            ) : (
+              <ul className="divide-border/60 divide-y">
+                {historial.map((cita) => (
+                  <FilaCola key={cita.id} cita={cita}>
+                    {cita.consultaId ? (
+                      <Button
+                        size="sm"
+                        onClick={() => navigate(`/consultas/${cita.consultaId}`)}
+                      >
+                        Ver consulta
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate(`/citas/${cita.id}`)}
+                      >
+                        Ver cita
+                      </Button>
+                    )}
+                  </FilaCola>
+                ))}
+              </ul>
+            )}
+          </Seccion>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
