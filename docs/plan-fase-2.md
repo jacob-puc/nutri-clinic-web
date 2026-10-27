@@ -343,3 +343,4 @@ Cada fase es entregable independiente y commiteable por separado.
 | `19ea9b5` | Fase 3: pestañas del expediente y orden en la URL |
 | `476b864` | Fase 4: menú de usuario con cierre de sesión |
 | `d7bbd47` | cierre de la dirección visual A+ y Fase 5: módulo de Consultas + pestaña Consultas en el expediente |
+| `1a243a2` | tab "Historial del día" en /consultas para ver el historial completo del día |
