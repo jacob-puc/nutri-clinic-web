@@ -1,16 +1,25 @@
 import { NavLink } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
-import type { ModuloNav } from "@/components/layout/nav-items";
+import type { GrupoNav, InsigniaNav, InsigniasNav, ModuloNav, ModulosOcultos } from "@/components/layout/nav-items";
 import { MODULOS_NAV } from "@/components/layout/nav-items";
 import { TooltipSimple } from "@/components/ui/tooltip-simple";
 
 interface SidebarNavProps {
   collapsed: boolean;
   onNavigate?: () => void;
+  insignias?: InsigniasNav;
+  ocultos?: ModulosOcultos;
 }
 
-const MODULOS_ACTIVOS = MODULOS_NAV.filter((modulo) => modulo.activo);
+/* Agrupados por como se usan: "Hoy" es el recorrido del dia (agenda, atender,
+   cobrar) y "Clinica" lo que se consulta o se arma con calma. */
+const GRUPOS: { grupo: GrupoNav; etiqueta: string }[] = [
+  { grupo: "hoy", etiqueta: "Hoy" },
+  { grupo: "clinica", etiqueta: "Clínica" },
+  { grupo: "gestion", etiqueta: "Administración" },
+];
+const SIN_OCULTOS: ModulosOcultos = new Set();
 const MODULOS_PROXIMOS = MODULOS_NAV.filter((modulo) => !modulo.activo);
 
 /* Base comun de los items: misma altura y radio para activos y proximos,
@@ -30,19 +39,55 @@ const ITEM_ENLACE = cn(
   "aria-[current=page]:sidebar-item-active aria-[current=page]:text-sidebar-accent-foreground aria-[current=page]:font-semibold",
 );
 
-function TejaIcono({ modulo }: { modulo: ModuloNav }) {
+const TONO_INSIGNIA: Record<InsigniaNav["tono"], string> = {
+  marca: "bg-sidebar-primary text-sidebar-primary-foreground",
+  aviso: "bg-[var(--warning)] text-[oklch(0.25_0.05_70)]",
+};
+
+function TejaIcono({ modulo, insignia, collapsed }: { modulo: ModuloNav; insignia?: InsigniaNav; collapsed: boolean }) {
   const Icon = modulo.icon;
 
   return (
     <span
       aria-hidden
       className={cn(
-        "grid size-7 shrink-0 place-items-center rounded-md transition-[background-color,color,box-shadow] duration-200",
+        "relative grid size-7 shrink-0 place-items-center rounded-md transition-[background-color,color,box-shadow] duration-200",
         "group-hover/item:bg-sidebar-hover group-hover/item:text-sidebar-foreground",
         "group-aria-[current=page]/item:sidebar-icon-active",
       )}
     >
       <Icon className="size-[18px]" />
+      {/* Plegado no cabe el numero: queda un punto sobre el icono. */}
+      {collapsed && insignia && (
+        <span
+          className={cn(
+            "ring-sidebar absolute -top-0.5 -right-0.5 size-2.5 rounded-full ring-2",
+            TONO_INSIGNIA[insignia.tono],
+            insignia.pulso && "motion-safe:animate-pulse",
+          )}
+        />
+      )}
+    </span>
+  );
+}
+
+function Insignia({ insignia }: { insignia: InsigniaNav }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      {insignia.pulso && (
+        <span className="relative flex size-2" aria-hidden>
+          <span className="bg-sidebar-primary absolute inline-flex size-full animate-ping rounded-full opacity-60 motion-reduce:animate-none" />
+          <span className="bg-sidebar-primary relative inline-flex size-2 rounded-full" />
+        </span>
+      )}
+      <span
+        className={cn(
+          "grid h-5 min-w-5 place-items-center rounded-full px-1.5 text-[11px] font-bold tabular-nums",
+          TONO_INSIGNIA[insignia.tono],
+        )}
+      >
+        {insignia.valor > 99 ? "99+" : insignia.valor}
+      </span>
     </span>
   );
 }
@@ -50,17 +95,21 @@ function TejaIcono({ modulo }: { modulo: ModuloNav }) {
 function SidebarLink({
   modulo,
   collapsed,
+  insignia,
   onNavigate,
 }: {
   modulo: ModuloNav;
   collapsed: boolean;
+  insignia?: InsigniaNav;
   onNavigate?: () => void;
 }) {
+  const etiquetaAccesible = insignia ? `${modulo.label}: ${insignia.descripcion}` : modulo.label;
+
   const enlace = (
     <NavLink
       to={modulo.href}
       onClick={onNavigate}
-      aria-label={collapsed ? modulo.label : undefined}
+      aria-label={collapsed || insignia ? etiquetaAccesible : undefined}
       className={cn(ITEM_ENLACE, collapsed && "justify-center")}
     >
       {/* Marca de seccion activa pegada al borde del panel: refuerza el
@@ -74,27 +123,38 @@ function SidebarLink({
           collapsed ? "-left-2" : "-left-3",
         )}
       />
-      <TejaIcono modulo={modulo} />
-      {!collapsed && <span className="flex-1 truncate">{modulo.label}</span>}
+      <TejaIcono modulo={modulo} insignia={insignia} collapsed={collapsed} />
+      {!collapsed && (
+        <>
+          <span className="flex-1 truncate">{modulo.label}</span>
+          {insignia && <Insignia insignia={insignia} />}
+        </>
+      )}
     </NavLink>
   );
 
   if (!collapsed) return enlace;
 
   return (
-    <TooltipSimple side="right" contenido={modulo.label}>
+    <TooltipSimple
+      side="right"
+      contenido={
+        insignia ? (
+          <>
+            <p className="font-medium">{modulo.label}</p>
+            <p className="text-xs opacity-75">{insignia.descripcion}</p>
+          </>
+        ) : (
+          modulo.label
+        )
+      }
+    >
       {enlace}
     </TooltipSimple>
   );
 }
 
-function SidebarProximo({
-  modulo,
-  collapsed,
-}: {
-  modulo: ModuloNav;
-  collapsed: boolean;
-}) {
+function SidebarProximo({ modulo, collapsed }: { modulo: ModuloNav; collapsed: boolean }) {
   return (
     <TooltipSimple
       side="right"
@@ -110,11 +170,11 @@ function SidebarProximo({
         tabIndex={0}
         className={cn(
           BASE_ITEM,
-          "text-sidebar-muted-foreground cursor-not-allowed opacity-55",
+          "text-sidebar-muted-foreground h-9 cursor-not-allowed opacity-50",
           collapsed && "justify-center",
         )}
       >
-        <TejaIcono modulo={modulo} />
+        <TejaIcono modulo={modulo} collapsed={collapsed} />
         {!collapsed && <span className="flex-1 truncate">{modulo.label}</span>}
       </div>
     </TooltipSimple>
@@ -123,40 +183,56 @@ function SidebarProximo({
 
 function EtiquetaGrupo({ children }: { children: string }) {
   return (
-    <p className="text-sidebar-muted-foreground px-2 pb-1.5 text-xs font-medium">
+    <p className="text-sidebar-muted-foreground/80 px-2 pb-1.5 text-[11px] font-semibold tracking-[0.08em] uppercase">
       {children}
     </p>
   );
 }
 
-export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
+export function SidebarNav({ collapsed, onNavigate, insignias = {}, ocultos = SIN_OCULTOS }: SidebarNavProps) {
+  const grupos = GRUPOS.map((g) => ({
+    ...g,
+    modulos: MODULOS_NAV.filter((m) => m.activo && m.grupo === g.grupo && !ocultos.has(m.href)),
+  })).filter((g) => g.modulos.length > 0);
+
   return (
     <nav aria-label="Navegación principal" className="flex flex-1 flex-col">
-      <div className="flex flex-col gap-1">
-        {!collapsed && <EtiquetaGrupo>Módulos</EtiquetaGrupo>}
-        {MODULOS_ACTIVOS.map((modulo) => (
-          <SidebarLink
-            key={modulo.href}
-            modulo={modulo}
-            collapsed={collapsed}
-            onNavigate={onNavigate}
-          />
-        ))}
-      </div>
+      {grupos.map(({ grupo, etiqueta, modulos }, i) => (
+        <div
+          key={grupo}
+          className={cn(
+            "flex flex-col gap-1",
+            i > 0 && (collapsed ? "border-sidebar-border mt-3 border-t pt-3" : "mt-6"),
+          )}
+        >
+          {!collapsed && <EtiquetaGrupo>{etiqueta}</EtiquetaGrupo>}
+          {modulos.map((modulo) => (
+            <SidebarLink
+              key={modulo.href}
+              modulo={modulo}
+              collapsed={collapsed}
+              insignia={insignias[modulo.href]}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </div>
+      ))}
 
-      {/* Los modulos sin construir van en su propio grupo en vez de llevar
-          cada uno una pastilla "Pronto": el agrupamiento ya lo dice. */}
-      <div
-        className={cn(
-          "mt-6 flex flex-col gap-1",
-          collapsed && "border-sidebar-border mt-4 border-t pt-4",
-        )}
-      >
-        {!collapsed && <EtiquetaGrupo>Próximamente</EtiquetaGrupo>}
-        {MODULOS_PROXIMOS.map((modulo) => (
-          <SidebarProximo key={modulo.href} modulo={modulo} collapsed={collapsed} />
-        ))}
-      </div>
+      {/* Los modulos sin construir van al fondo y mas tenues: el agrupamiento
+          ya dice que todavia no se pueden usar. */}
+      {MODULOS_PROXIMOS.length > 0 && (
+        <div
+          className={cn(
+            "mt-auto flex flex-col gap-0.5 pt-6",
+            collapsed && "border-sidebar-border border-t pt-3",
+          )}
+        >
+          {!collapsed && <EtiquetaGrupo>Próximamente</EtiquetaGrupo>}
+          {MODULOS_PROXIMOS.map((modulo) => (
+            <SidebarProximo key={modulo.href} modulo={modulo} collapsed={collapsed} />
+          ))}
+        </div>
+      )}
     </nav>
   );
 }

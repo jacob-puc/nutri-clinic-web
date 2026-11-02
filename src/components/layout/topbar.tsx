@@ -70,7 +70,9 @@ export function Topbar() {
 
       <div className="ml-auto flex items-center gap-1.5">
         <ThemeToggle />
-        <MenuUsuario />
+        <span className="md:hidden">
+          <MenuUsuario />
+        </span>
       </div>
     </header>
   );

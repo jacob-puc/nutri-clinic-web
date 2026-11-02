@@ -1,7 +1,9 @@
-import { LogOut } from "lucide-react";
+import { useState } from "react";
+import { LogOut, UserRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "@/features/auth/hooks/use-auth";
+import { DialogoMiPerfil } from "@/features/nutricionistas/components/dialogo-mi-perfil";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +24,7 @@ import { cn } from "@/lib/utils";
 export function MenuUsuario() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
+  const [perfilAbierto, setPerfilAbierto] = useState(false);
 
   /* Sin usuario no hay menú que mostrar. En la práctica AuthGuard ya evita
      llegar aquí sin sesión, pero el guard devuelve null en vez de pintar un
@@ -36,6 +39,7 @@ export function MenuUsuario() {
   };
 
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
@@ -69,6 +73,10 @@ export function MenuUsuario() {
           </p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => setPerfilAbierto(true)}>
+          <UserRound />
+          Mi perfil
+        </DropdownMenuItem>
         <DropdownMenuItem
           variant="destructive"
           /* onSelect en vez de onClick: cierra el menú al activarse, que es el
@@ -81,5 +89,7 @@ export function MenuUsuario() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    <DialogoMiPerfil abierto={perfilAbierto} onOpenChange={setPerfilAbierto} />
+    </>
   );
 }

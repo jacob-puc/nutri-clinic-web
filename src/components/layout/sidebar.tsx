@@ -5,6 +5,8 @@ import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/layout/sidebar-context";
 import { TooltipSimple } from "@/components/ui/tooltip-simple";
+import { UsuarioSidebar } from "@/components/auth/usuario-sidebar";
+import type { InsigniasNav, ModulosOcultos } from "@/components/layout/nav-items";
 
 export function MarcaSidebar({ collapsed = false }: { collapsed?: boolean }) {
   return (
@@ -25,7 +27,7 @@ export function MarcaSidebar({ collapsed = false }: { collapsed?: boolean }) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ insignias, ocultos }: { insignias?: InsigniasNav; ocultos?: ModulosOcultos }) {
   const { collapsed, toggle } = useSidebar();
   const etiquetaToggle = collapsed ? "Expandir menú" : "Contraer menú";
 
@@ -35,20 +37,12 @@ export function Sidebar() {
       onClick={toggle}
       aria-label={etiquetaToggle}
       className={cn(
-        "text-sidebar-muted-foreground flex h-9 w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 text-sm font-medium outline-none",
+        "text-sidebar-muted-foreground grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg outline-none",
         "transition-colors duration-200 hover:bg-sidebar-hover hover:text-sidebar-foreground active:bg-sidebar-pressed",
         "focus-visible:ring-2 focus-visible:ring-sidebar-ring",
-        collapsed && "justify-center px-0",
       )}
     >
-      {collapsed ? (
-        <PanelLeftOpen aria-hidden className="size-4" />
-      ) : (
-        <>
-          <PanelLeftClose aria-hidden className="size-4" />
-          <span>Contraer menú</span>
-        </>
-      )}
+      {collapsed ? <PanelLeftOpen aria-hidden className="size-4" /> : <PanelLeftClose aria-hidden className="size-4" />}
     </button>
   );
 
@@ -61,13 +55,17 @@ export function Sidebar() {
         collapsed ? "w-16" : "w-64",
       )}
     >
-      <div
-        className={cn(
-          "flex h-16 shrink-0 items-center",
-          collapsed ? "justify-center px-2" : "px-4",
+      {/* Marca y boton de plegar en la misma fila: el boton ya no ocupa una
+          franja propia al pie. Plegado, el boton baja junto al avatar. */}
+      <div className={cn("flex h-16 shrink-0 items-center", collapsed ? "justify-center px-2" : "gap-2 pr-2.5 pl-4")}>
+        <span className="min-w-0 flex-1">
+          <MarcaSidebar collapsed={collapsed} />
+        </span>
+        {!collapsed && (
+          <TooltipSimple side="right" contenido={etiquetaToggle}>
+            {botonToggle}
+          </TooltipSimple>
         )}
-      >
-        <MarcaSidebar collapsed={collapsed} />
       </div>
 
       {/* Separador con degradado: marca el corte sin una linea dura de lado
@@ -77,23 +75,17 @@ export function Sidebar() {
         className="via-sidebar-border mx-3 h-px shrink-0 bg-gradient-to-r from-transparent to-transparent"
       />
 
-      <div
-        className={cn(
-          "scrollbar-slim flex flex-1 flex-col overflow-y-auto py-5",
-          collapsed ? "px-2" : "px-3",
-        )}
-      >
-        <SidebarNav collapsed={collapsed} />
+      <div className={cn("scrollbar-slim flex flex-1 flex-col overflow-y-auto py-5", collapsed ? "px-2" : "px-3")}>
+        <SidebarNav collapsed={collapsed} insignias={insignias} ocultos={ocultos} />
       </div>
 
-      <div className={cn("border-sidebar-border border-t p-3", collapsed && "px-2")}>
-        {collapsed ? (
+      <div className={cn("border-sidebar-border flex flex-col gap-1 border-t p-2.5", collapsed && "items-center px-2")}>
+        {collapsed && (
           <TooltipSimple side="right" contenido={etiquetaToggle}>
             {botonToggle}
           </TooltipSimple>
-        ) : (
-          botonToggle
         )}
+        <UsuarioSidebar collapsed={collapsed} />
       </div>
     </aside>
   );
