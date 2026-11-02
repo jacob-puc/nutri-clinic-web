@@ -293,7 +293,7 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
 
-  const desde = location.state?.from?.pathname || "/pacientes";
+  const desde = location.state?.from?.pathname || "/";
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

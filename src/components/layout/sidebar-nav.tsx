@@ -108,6 +108,8 @@ function SidebarLink({
   const enlace = (
     <NavLink
       to={modulo.href}
+      /* "/" solo se marca en el Resumen, no en cada ruta que empieza con "/". */
+      end={modulo.href === "/"}
       onClick={onNavigate}
       aria-label={collapsed || insignia ? etiquetaAccesible : undefined}
       className={cn(ITEM_ENLACE, collapsed && "justify-center")}

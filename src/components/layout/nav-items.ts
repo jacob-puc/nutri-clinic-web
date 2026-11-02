@@ -44,8 +44,9 @@ export const MODULOS_NAV: ModuloNav[] = [
     label: "Resumen",
     href: "/",
     icon: LayoutDashboard,
-    activo: false,
-    descripcion: "Panel con indicadores del día",
+    activo: true,
+    descripcion: "Cómo va el día: citas, consultas, cobros y seguimiento",
+    grupo: "hoy",
   },
   {
     label: "Pacientes",

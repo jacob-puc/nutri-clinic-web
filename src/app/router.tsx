@@ -11,6 +11,7 @@ import { ConsultasPage } from "@/features/consultas/pages/consultas-page";
 import { ConsultaDetallePage } from "@/features/consultas/pages/consulta-detalle-page";
 import { PlanesPage } from "@/features/menus/pages/planes-page";
 import { CobrosPage } from "@/features/cobros/pages/cobros-page";
+import { ResumenPage } from "@/features/resumen/pages/resumen-page";
 import { NutricionistasPage } from "@/features/nutricionistas/pages/nutricionistas-page";
 import { NutricionistaDetallePage } from "@/features/nutricionistas/pages/nutricionista-detalle-page";
 
@@ -26,7 +27,7 @@ export const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
-          { index: true, element: <Navigate to="/pacientes" replace /> },
+          { index: true, element: <ResumenPage /> },
           { path: "pacientes", element: <PacientesPage /> },
           { path: "pacientes/:id", element: <PacienteDetallePage /> },
           { path: "citas", element: <AgendaPage /> },
@@ -53,7 +54,7 @@ export const router = createBrowserRouter([
              redirigen para no dejar enlaces muertos. */
           { path: "agenda", element: <Navigate to="/citas" replace /> },
           { path: "agenda/:id", element: <Navigate to="/citas" replace /> },
-          { path: "*", element: <Navigate to="/pacientes" replace /> },
+          { path: "*", element: <Navigate to="/" replace /> },
         ],
       },
     ],
