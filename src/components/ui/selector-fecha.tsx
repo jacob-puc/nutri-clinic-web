@@ -48,6 +48,8 @@ interface SelectorFechaProps
   /** Dato derivado dentro del campo, a la derecha (p. ej. la edad). Va
       dentro y no debajo para que elegir fecha no cambie la altura. */
   detalle?: React.ReactNode
+  /** Dias que no se pueden elegir aunque esten en rango. */
+  deshabilitar?: (fecha: Date) => boolean
 }
 
 /**
@@ -71,6 +73,7 @@ export function SelectorFecha({
   limpiable = false,
   formato = "largo",
   detalle,
+  deshabilitar,
   className,
   disabled,
   ...props
@@ -87,7 +90,8 @@ export function SelectorFecha({
     inicioDelDia.setHours(0, 0, 0, 0)
     return (
       (desde !== undefined && inicioDelDia < desde) ||
-      (hasta !== undefined && inicioDelDia > hasta)
+      (hasta !== undefined && inicioDelDia > hasta) ||
+      (deshabilitar?.(fecha) ?? false)
     )
   }
 
@@ -183,6 +187,7 @@ export function SelectorFecha({
             startMonth={startMonth}
             endMonth={endMonth}
             conDesplegables={conDesplegables}
+            deshabilitar={deshabilitar}
           />
         </div>
       </PopoverContent>

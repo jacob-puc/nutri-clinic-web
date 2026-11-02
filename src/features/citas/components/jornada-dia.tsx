@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { Cita } from "@/types/api";
+import { formatearInstante } from "@/lib/zona-horaria";
 
 /** "2026-10-26" -> Date local, sin correr el dia por zona horaria. */
 function fechaDeClave(clave: string): Date {
@@ -261,10 +262,7 @@ function MarcaAhora({ ahora, ultima = false }: { ahora: number; ultima?: boolean
     <li className="flex items-center gap-2" aria-label="Hora actual">
       <div className={cn(MARGEN_HORA, "text-right")}>
         <span className="text-destructive text-xs font-semibold tabular-nums">
-          {new Date(ahora).toLocaleTimeString("es-MX", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+          {formatearInstante(ahora, { hour: "2-digit", minute: "2-digit" })}
         </span>
       </div>
       <div className={cn(CARRIL, "self-stretch")} aria-hidden>

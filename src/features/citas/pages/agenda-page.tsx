@@ -12,6 +12,9 @@ import { DialogoCita } from "@/features/citas/components/dialogo-cita";
 import { JornadaDia } from "@/features/citas/components/jornada-dia";
 import { ResumenEstados } from "@/features/citas/components/resumen-estados";
 import { useCitas } from "@/features/citas/hooks/use-citas";
+import { useAuth } from "@/features/auth/hooks/use-auth";
+import { useHorarios, useNutricionistasQueAtienden } from "@/features/nutricionistas/hooks/use-nutricionistas";
+import { INDICE_DIA } from "@/features/nutricionistas/lib/horario";
 import { formatearHoraLocal } from "@/features/citas/lib/fechas-cita";
 import { ETIQUETA_ESTADO_CITA } from "@/features/citas/lib/estados-cita";
 import { dateOnlyDe, fechaDeDateOnly } from "@/lib/fechas";
@@ -35,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { mensajeDeError } from "@/lib/api-error";
 import type { Cita, CitaFiltro, EstadoCita } from "@/types/api";
+import { claveDia, hoyEnClinica, rangoDelDia } from "@/lib/zona-horaria";
 
 const TODOS = "todos" as const;
 type FiltroEstado = EstadoCita | typeof TODOS;
@@ -72,7 +76,7 @@ const COLOR_ESTADO: Record<EstadoCita, { fondo: string; texto: string }> = {
 export function AgendaPage() {
   const [parametros, setParametros] = useSearchParams();
   const hoy = useMemo(() => new Date(), []);
-  const claveHoy = dateOnlyDe(hoy);
+  const claveHoy = hoyEnClinica();
 
   // La hora actual vive en estado y se refresca cada minuto: sin ella en
   // render, el panel de proximos se actualiza solo a medida que pasa el dia.
@@ -85,6 +89,27 @@ export function AgendaPage() {
 
   const [altaAbierta, setAltaAbierta] = useState(false);
   const [estado, setEstado] = useState<FiltroEstado>(TODOS);
+  /* Quien atiende abre su propia agenda; recepcion y el filtro "Todo el
+     equipo" ven la de todos. Con una sola persona el selector no aparece. */
+  const { usuario } = useAuth();
+  const { data: equipo = [] } = useNutricionistasQueAtienden();
+  const [persona, setPersona] = useState<string>(() =>
+    usuario && usuario.rol !== "Recepcion" ? usuario.id : TODOS,
+  );
+  const hayEquipo = equipo.length > 1;
+  const nutricionistaId = hayEquipo && persona !== TODOS ? persona : undefined;
+
+  /* Horas habiles del calendario: las de la persona filtrada o, con todo el
+     equipo, las de la clinica. Lo de fuera se ve sombreado. */
+  const horarios = useHorarios();
+  const bloquesVisibles =
+    (nutricionistaId ?? (equipo.length === 1 ? equipo[0]?.id : undefined))
+      ? horarios.data?.personas.find((p) => p.nutricionistaId === (nutricionistaId ?? equipo[0]?.id))?.bloques
+      : horarios.data?.clinica;
+  const horasHabiles =
+    bloquesVisibles && bloquesVisibles.length > 0
+      ? bloquesVisibles.map((b) => ({ daysOfWeek: [INDICE_DIA[b.diaSemana]], startTime: b.horaInicio, endTime: b.horaFin }))
+      : undefined;
   // La selección del calendario solo controla el resumen lateral de esa vista.
   // La pestaña Hoy siempre representa la fecha actual, sin depender del calendario.
   const [diaCalendario, setDiaCalendario] = useState(claveHoy);
@@ -103,23 +128,20 @@ export function AgendaPage() {
   const citaSeleccionadaId = parametros.get("cita");
 
   const filtroVisible = useMemo<CitaFiltro>(
-    () => ({ ...rango, ...(estado !== TODOS ? { estado } : {}) }),
-    [rango, estado],
+    () => ({ ...rango, ...(nutricionistaId ? { nutricionistaId } : {}), ...(estado !== TODOS ? { estado } : {}) }),
+    [rango, estado, nutricionistaId],
   );
   const citas = useCitas(filtroVisible);
 
   // Dia de hoy completo: el panel no depende del mes visible en el calendario.
-  const filtroHoy = useMemo<CitaFiltro>(() => {
-    const desde = new Date(hoy);
-    desde.setHours(0, 0, 0, 0);
-    const hasta = new Date(hoy);
-    hasta.setHours(23, 59, 59, 999);
-    return {
-      desde: desde.toISOString(),
-      hasta: hasta.toISOString(),
+  const filtroHoy = useMemo<CitaFiltro>(
+    () => ({
+      ...rangoDelDia(claveHoy),
+      ...(nutricionistaId ? { nutricionistaId } : {}),
       ...(estado !== TODOS ? { estado } : {}),
-    };
-  }, [hoy, estado]);
+    }),
+    [claveHoy, estado, nutricionistaId],
+  );
   const { data: citasHoy = [], isPending: pendienteHoy } = useCitas(filtroHoy);
 
   const visibles = useMemo(() => citas.data ?? [], [citas.data]);
@@ -141,7 +163,7 @@ export function AgendaPage() {
     () =>
       diaCalendario === claveHoy
         ? proximosHoy
-        : visibles.filter((c) => dateOnlyDe(new Date(c.fechaInicio)) === diaCalendario).sort(porOrden),
+        : visibles.filter((c) => claveDia(c.fechaInicio) === diaCalendario).sort(porOrden),
     [diaCalendario, claveHoy, proximosHoy, visibles],
   );
 
@@ -237,6 +259,22 @@ export function AgendaPage() {
               Calendario
             </button>
           </div>
+
+          {hayEquipo && (
+            <Select value={persona} onValueChange={setPersona}>
+              <SelectTrigger className="w-[200px]" aria-label="Agenda de">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={TODOS}>Todo el equipo</SelectItem>
+                {equipo.map((n) => (
+                  <SelectItem key={n.id} value={n.id}>
+                    {n.id === usuario?.id ? "Mis citas" : n.nombreCompleto}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           <Select
             value={estado}
@@ -395,6 +433,7 @@ export function AgendaPage() {
                   firstDay={1}
                   height="auto"
                   slotMinTime="08:00:00"
+                  businessHours={horasHabiles}
                   slotMaxTime="20:00:00"
                   headerToolbar={false}
                   events={eventos}

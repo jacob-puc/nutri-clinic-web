@@ -68,6 +68,8 @@ interface CalendarProps {
   endMonth?: Date;
   /** Titulos con menus desplegables de mes y anio. */
   conDesplegables?: boolean;
+  /** Dias bloqueados ademas del rango (p. ej. una ausencia o un dia sin atencion). */
+  deshabilitar?: (fecha: Date) => boolean;
 }
 
 /** Selector de fecha unica con la paleta del proyecto; nada nativo. */
@@ -80,6 +82,7 @@ export function Calendar({
   startMonth,
   endMonth,
   conDesplegables = false,
+  deshabilitar,
 }: CalendarProps) {
   return (
     <div
@@ -100,10 +103,11 @@ export function Calendar({
         startMonth={startMonth}
         endMonth={endMonth}
         disabled={
-          hasta || desde
+          hasta || desde || deshabilitar
             ? (fecha) =>
                 (hasta !== undefined && fecha.getTime() > hasta.getTime()) ||
-                (desde !== undefined && fecha.getTime() < desde.getTime())
+                (desde !== undefined && fecha.getTime() < desde.getTime()) ||
+                (deshabilitar?.(fecha) ?? false)
             : undefined
         }
       />

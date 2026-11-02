@@ -1,28 +1,33 @@
+import {
+  claveDia,
+  esFechaValida,
+  formatearCalendario,
+  formatearInstante,
+  instanteDesdeValorReloj,
+  partesEnClinica,
+  valorRelojDesdeInstante,
+} from "@/lib/zona-horaria";
+
 /**
  * La API guarda instantes en UTC y valida `FechaInicio` contra `DateTime.UtcNow`,
  * pero quien agenda la cita piensa en hora local. El formulario captura hora local,
  * al enviar se convierte a instante real y al mostrar/editar vuelve a local, para
  * que la hora escrita sea la hora que se ve.
+ *
+ * "Local" aqui significa hora de Mexico (lib/zona-horaria), no la del
+ * navegador: los nombres se conservan para no tocar a quien ya los usa.
  */
 export function aInstanteUtc(valorLocal: string): string {
-  if (!valorLocal) return "";
-  const fecha = new Date(valorLocal);
-  return Number.isNaN(fecha.getTime()) ? "" : fecha.toISOString();
+  return valorLocal ? instanteDesdeValorReloj(valorLocal) : "";
 }
 
 export function aValorLocal(iso: string | null | undefined): string {
-  if (!iso) return "";
-  const fecha = new Date(iso);
-  if (Number.isNaN(fecha.getTime())) return "";
-  return `${fecha.getFullYear()}-${dosDigitos(fecha.getMonth() + 1)}-${dosDigitos(fecha.getDate())}T${dosDigitos(fecha.getHours())}:${dosDigitos(fecha.getMinutes())}`;
+  return valorRelojDesdeInstante(iso);
 }
 
-/** Clave de agrupacion por dia (hora local), para encabezados de la agenda. */
+/** Clave de agrupacion por dia (hora de Mexico), para encabezados de la agenda. */
 export function claveFechaLocal(iso: string | null | undefined): string {
-  if (!iso) return "";
-  const fecha = new Date(iso);
-  if (Number.isNaN(fecha.getTime())) return "";
-  return `${fecha.getFullYear()}-${dosDigitos(fecha.getMonth() + 1)}-${dosDigitos(fecha.getDate())}`;
+  return esFechaValida(iso) ? claveDia(iso!) : "";
 }
 
 function dosDigitos(valor: number): string {
@@ -30,10 +35,7 @@ function dosDigitos(valor: number): string {
 }
 
 export function formatearFechaHoraLocal(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const fecha = new Date(iso);
-  if (Number.isNaN(fecha.getTime())) return "—";
-  return fecha.toLocaleString("es-MX", {
+  return formatearInstante(iso, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -43,39 +45,16 @@ export function formatearFechaHoraLocal(iso: string | null | undefined): string 
 }
 
 export function formatearFechaLargaLocal(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const fecha = new Date(iso);
-  if (Number.isNaN(fecha.getTime())) return "—";
-  return fecha.toLocaleDateString("es-MX", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  return formatearInstante(iso, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 }
 
-/** `clave` viene de `claveFechaLocal` (fecha local): se arma con el ctor local para no correr el dia. */
+/** `clave` es un dia de calendario ("2026-10-28"): no se mueve de dia. */
 export function formatearFechaLargaClave(clave: string): string {
-  const [anio, mes, dia] = clave.split("-").map(Number);
-  if (!anio || !mes || !dia) return "—";
-  const fecha = new Date(anio, mes - 1, dia);
-  if (Number.isNaN(fecha.getTime())) return "—";
-  return fecha.toLocaleDateString("es-MX", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  return formatearCalendario(clave, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 }
 
 export function formatearHoraLocal(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const fecha = new Date(iso);
-  if (Number.isNaN(fecha.getTime())) return "—";
-  return fecha.toLocaleTimeString("es-MX", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatearInstante(iso, { hour: "2-digit", minute: "2-digit" });
 }
 
 /** "2026-10-14T09:30" (hora local del formulario) -> Date local. */
@@ -113,14 +92,28 @@ export function sumaMinutos(hora: string, minutos: number): string {
   return `${dosDigitos(Math.floor(total / 60))}:${dosDigitos(total % 60)}`;
 }
 
-/** Franja sugerida al agendar: manana de 09:00 a 10:00, hora local. */
-export function franjaPorDefecto(): { inicio: string; fin: string } {
-  const inicio = new Date();
-  inicio.setDate(inicio.getDate() + 1);
-  inicio.setHours(9, 0, 0, 0);
+/**
+ * Franja sugerida al agendar: hoy, en el siguiente cuarto de hora, por una
+ * hora. Si ya no cabe una hora antes de las 20:00 (o es antes de las 08:00),
+ * pasa a mañana a las 09:00. Todo en hora local: la fecha se arma con los
+ * componentes locales y nunca con toISOString, que en Mexico (UTC-6) puede
+ * correr el dia.
+ */
+export function franjaPorDefecto(ahora = new Date()): { inicio: string; fin: string } {
+  const reloj = partesEnClinica(ahora);
+  const actual = reloj.hora * 60 + reloj.minuto;
+  const siguiente = Math.ceil((actual + 1) / 15) * 15;
+  const apertura = 8 * 60;
+  const ultimoInicio = 19 * 60;
 
-  const fin = new Date(inicio);
-  fin.setHours(fin.getHours() + 1);
+  /* El dia es el de la clinica, como Date de calendario (componentes locales). */
+  const dia = new Date(reloj.anio, reloj.mes - 1, reloj.dia);
+  let inicio = Math.max(siguiente, apertura);
+  if (inicio > ultimoInicio) {
+    dia.setDate(dia.getDate() + 1);
+    inicio = 9 * 60;
+  }
+  const hora = `${dosDigitos(Math.floor(inicio / 60))}:${dosDigitos(inicio % 60)}`;
 
-  return { inicio: aValorLocal(inicio.toISOString()), fin: aValorLocal(fin.toISOString()) };
+  return { inicio: componerFechaHora(dia, hora), fin: componerFechaHora(dia, sumaMinutos(hora, 60)) };
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Check, ChevronDown, Loader2, XCircle } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowRight, Check, ChevronDown, Loader2, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -10,8 +11,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { usePermisos } from "@/features/auth/hooks/use-permisos";
 import { DialogoCancelarCita } from "@/features/citas/components/dialogo-cancelar-cita";
 import { useCambiarEstadoCita } from "@/features/citas/hooks/use-mutaciones-cita";
+import { useConsultaPorCita } from "@/features/consultas/hooks/use-consultas";
 import { useIniciarAtencion } from "@/features/consultas/hooks/use-iniciar-atencion";
 import {
   ETIQUETA_ACCION_CITA,
@@ -32,8 +35,10 @@ export function AccionesCita({ cita, compacto = false }: { cita: Cita; compacto?
   const cambiar = useCambiarEstadoCita(cita.id);
   const atencion = useIniciarAtencion(cita);
   const [cancelando, setCancelando] = useState(false);
+  /* Recepcion mueve estados, pero iniciar o continuar la consulta es clinico. */
+  const { atiende } = usePermisos();
 
-  const transiciones = TRANSICIONES_CITA[cita.estado] ?? [];
+  const transiciones = (TRANSICIONES_CITA[cita.estado] ?? []).filter((e) => atiende || e !== "EnCurso");
 
   if (transiciones.length === 0) return null;
 
@@ -51,6 +56,7 @@ export function AccionesCita({ cita, compacto = false }: { cita: Cita; compacto?
 
   return (
     <>
+      {atiende && cita.estado === "EnCurso" && <BotonContinuarConsulta citaId={cita.id} />}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -124,8 +130,10 @@ const BOTONES_ESTADO: Record<
     { estado: "EnCurso", etiqueta: "Iniciar", principal: true },
     { estado: "NoAsistio", etiqueta: "No asistio" },
   ],
+  /* La accion principal de una cita en curso es "Continuar consulta"
+     (BotonContinuarConsulta); aqui solo quedan las excepciones. */
   EnCurso: [
-    { estado: "NoAsistio", etiqueta: "No asistio", principal: true },
+    { estado: "NoAsistio", etiqueta: "No asistio" },
     { estado: "Cancelada", etiqueta: "Cancelar" },
   ],
   NoAsistio: [
@@ -145,8 +153,9 @@ export function BotonesEstadoCita({ cita }: { cita: Cita }) {
   const cambiar = useCambiarEstadoCita(cita.id);
   const atencion = useIniciarAtencion(cita);
   const [cancelando, setCancelando] = useState(false);
+  const { atiende } = usePermisos();
 
-  const botones = BOTONES_ESTADO[cita.estado] ?? [];
+  const botones = (BOTONES_ESTADO[cita.estado] ?? []).filter((b) => atiende || b.estado !== "EnCurso");
   if (botones.length === 0) return null;
 
   const aplicar = (estado: EstadoCita) => {
@@ -164,6 +173,7 @@ export function BotonesEstadoCita({ cita }: { cita: Cita }) {
   return (
     <>
       <div className="flex flex-wrap items-center gap-1.5">
+        {atiende && cita.estado === "EnCurso" && <BotonContinuarConsulta citaId={cita.id} />}
         {botones.map(({ estado, etiqueta, principal }) => {
           const destructiva = esAccionDestructiva(estado);
           const esInicio = estado === "EnCurso";
@@ -205,5 +215,33 @@ export function BotonesEstadoCita({ cita }: { cita: Cita }) {
         citaId={cita.id}
       />
     </>
+  );
+}
+
+/**
+ * Vuelve a la consulta abierta de una cita en curso. Sin esto, la unica
+ * salida desde la cita era "Iniciar" de nuevo, que el backend rechaza porque
+ * la consulta ya existe.
+ */
+function BotonContinuarConsulta({ citaId }: { citaId: string }) {
+  const { data: consulta, isPending } = useConsultaPorCita(citaId);
+
+  if (isPending) {
+    return (
+      <Button size="sm" disabled>
+        <Loader2 className="size-4 animate-spin" />
+        Continuar consulta
+      </Button>
+    );
+  }
+  if (!consulta) return null;
+
+  return (
+    <Button size="sm" asChild>
+      <Link to={`/consultas/${consulta.id}`}>
+        Continuar consulta
+        <ArrowRight className="size-4" />
+      </Link>
+    </Button>
   );
 }

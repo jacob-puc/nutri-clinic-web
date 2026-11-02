@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useWatch, useForm } from "react-hook-form";
 import {
+  AlertTriangle,
   CalendarClock,
   CalendarPlus,
   Loader2,
@@ -46,9 +47,34 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/features/auth/hooks/use-auth";
-import { useNutricionistas } from "@/features/nutricionistas/hooks/use-nutricionistas";
+import {
+  primerHueco,
+  useAusencias,
+  useDisponibilidad,
+  useHorarios,
+  useNutricionistasQueAtienden,
+} from "@/features/nutricionistas/hooks/use-nutricionistas";
+import {
+  bloquesDelDia,
+  dentroDeHorario,
+  diaDeClave,
+  diaNoDisponible,
+  reglasDe,
+  textoBloques,
+} from "@/features/nutricionistas/lib/horario";
 import { usePacientes } from "@/features/pacientes/hooks/use-pacientes";
+import { useCitas } from "@/features/citas/hooks/use-citas";
 import { useActualizarCita, useCrearCita } from "@/features/citas/hooks/use-mutaciones-cita";
+import {
+  choca,
+  describirOcupacion,
+  finesNoDisponibles,
+  horasNoDisponibles,
+  huecosLibres,
+  minutos,
+  ocupacionesDelDia,
+  proximoCuarto,
+} from "@/features/citas/lib/disponibilidad";
 import {
   HORAS_AGENDA,
   aInstanteUtc,
@@ -60,11 +86,25 @@ import {
   sumaMinutos,
 } from "@/features/citas/lib/fechas-cita";
 import { erroresPorCampo } from "@/lib/errores-formulario";
+import { cn } from "@/lib/utils";
 import { mensajeDeError } from "@/lib/api-error";
 import type { Cita, Guid } from "@/types/api";
+import {
+  calendarioDeClave,
+  claveDeCalendario,
+  formatearCalendario,
+  hoyCalendario,
+  hoyEnClinica,
+  rangoDelDia,
+  sumarDias,
+} from "@/lib/zona-horaria";
 
-/** Refleja `CrearCitaValidator` / `ActualizarCitaValidator`; el backend manda. */
-function construirEsquema(permiteInicioPasado: boolean) {
+/**
+ * Refleja `CrearCitaValidator` / `ActualizarCitaValidator`; el backend manda.
+ * Desde que el backend tambien rechaza un inicio pasado al editar, la regla
+ * aplica igual en alta y en edicion.
+ */
+function construirEsquema() {
   return z
     .object({
       pacienteId: z.string().min(1, "El paciente es requerido"),
@@ -78,9 +118,7 @@ function construirEsquema(permiteInicioPasado: boolean) {
       message: "La fecha de fin debe ser posterior a la fecha de inicio.",
     })
     .refine(
-      (v) =>
-        permiteInicioPasado ||
-        new Date(v.fechaInicio).getTime() >= Date.now() - 5 * 60_000,
+      (v) => new Date(v.fechaInicio).getTime() >= Date.now() - 5 * 60_000,
       {
         path: ["fechaInicio"],
         message: "La fecha de inicio no puede estar en el pasado.",
@@ -187,7 +225,12 @@ function FormularioCita({
   const actualizar = useActualizarCita(cita?.id ?? "");
   const guardando = cita ? actualizar.isPending : crear.isPending;
 
-  const { data: nutricionistas = [] } = useNutricionistas();
+  const { data: nutricionistas = [] } = useNutricionistasQueAtienden();
+  /* Horario de atencion y ausencias: las horas fuera de horario no se
+     ofrecen y los dias de ausencia no se pueden elegir (el backend tambien
+     los rechaza con 409). */
+  const horarios = useHorarios();
+  const ausencias = useAusencias();
   const { data: pacientes = [] } = usePacientes();
 
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
@@ -197,15 +240,22 @@ function FormularioCita({
   const pacienteIdFijo = cita?.pacienteId ?? pacientePropio ?? "";
   const nombrePaciente = cita?.pacienteNombre ?? pacienteNombre ?? "";
 
-  const esquema = construirEsquema(Boolean(cita));
-  const franja = franjaPorDefecto();
+  const esquema = construirEsquema();
+  const nutricionistaInicial = cita?.nutricionistaId ?? (usuario && usuario.rol !== "Recepcion" ? usuario.id : "");
+  const franja = (() => {
+    const base = franjaPorDefecto();
+    /* Cita nueva: dura lo que acostumbra quien atiende (si ya se conoce). */
+    const duracionPersona = reglasDe(nutricionistaInicial || undefined, horarios.data, undefined).duracion;
+    return { inicio: base.inicio, fin: base.inicio.slice(0, 11) + sumaMinutos(horaDe(base.inicio), duracionPersona) };
+  })();
 
   const form = useForm<FormularioValues>({
     resolver: zodResolver(esquema),
     mode: "onBlur",
     defaultValues: {
       pacienteId: pacienteIdFijo,
-      nutricionistaId: cita?.nutricionistaId ?? usuario?.id ?? "",
+      /* Quien atiende se propone a si mismo; recepcion elige a quien. */
+      nutricionistaId: nutricionistaInicial,
       fechaInicio: cita ? aValorLocal(cita.fechaInicio) : franja.inicio,
       fechaFin: cita ? aValorLocal(cita.fechaFin) : franja.fin,
       motivo: cita?.motivo ?? "",
@@ -215,25 +265,50 @@ function FormularioCita({
   const fechaInicioVigente = useWatch({ control: form.control, name: "fechaInicio" });
   const fechaFinVigente = useWatch({ control: form.control, name: "fechaFin" });
   const motivoVigente = useWatch({ control: form.control, name: "motivo" });
+  const nutricionistaVigente = useWatch({ control: form.control, name: "nutricionistaId" });
+  const pacienteVigente = useWatch({ control: form.control, name: "pacienteId" });
 
   const dia = fechaDe(fechaInicioVigente);
   const horaInicio = horaDe(fechaInicioVigente);
   const horaFin = horaDe(fechaFinVigente);
   const duracion = horaInicio && horaFin ? minutosDe(horaFin) - minutosDe(horaInicio) : 0;
 
-  // Una cita nueva no se agenda en un dia que ya paso.
-  const hoy = useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }, []);
+  // No se agenda en un dia que ya paso (el backend tambien lo rechaza al editar).
+  const hoy = useMemo(() => hoyCalendario(), []);
+
+  /* ---------- Disponibilidad ----------
+     Se piden todas las citas del dia elegido (de cualquier nutricionista,
+     porque el paciente tampoco puede tener dos citas a la vez) y se aplica la
+     misma regla que ValidarDisponibilidadAgendaAsync. Asi el choque se ve al
+     elegir la hora y no como error al guardar. */
+  const claveDia = dia ? claveDeCalendario(dia) : null;
+  /* Sin memo: React Query compara la queryKey por valor, asi que un objeto
+     nuevo con las mismas fechas no dispara otra peticion. */
+  const rangoDia = claveDia ? rangoDelDia(claveDia) : null;
+
+  const citasDelDia = useCitas(rangoDia ?? {}, { enabled: rangoDia !== null });
+  const pacienteParaValidar = pacienteVigente || pacienteIdFijo;
+  const citaExcluidaId = cita?.id;
+  const ocupaciones = useMemo(
+    () =>
+      ocupacionesDelDia(citasDelDia.data ?? [], {
+        nutricionistaId: nutricionistaVigente || undefined,
+        pacienteId: pacienteParaValidar || undefined,
+        citaExcluidaId,
+      }),
+    [citasDelDia.data, nutricionistaVigente, pacienteParaValidar, citaExcluidaId],
+  );
+  const esHoy = claveDia === hoyEnClinica();
+  const minimoHoy = esHoy ? proximoCuarto() : null;
+  /* Hoy solo se ofrecen las horas que aun no pasan: no se muestran apagadas,
+     simplemente no aparecen. */
+  const horasInicio =
+    minimoHoy === null ? HORAS_AGENDA : HORAS_AGENDA.filter((hora) => minutos(hora) >= minimoHoy);
 
   // Solo horas posteriores a la de inicio para poder cerrar la cita.
-  const horasFin = useMemo(() => {
-    const desde = horaInicio || "08:00";
-    const posteriores = HORAS_AGENDA.filter((valor) => valor > desde);
-    return posteriores.length > 0 ? posteriores : [sumaMinutos(desde, 30)];
-  }, [horaInicio]);
+  const desdeFin = horaInicio || "08:00";
+  const posterioresAlInicio = HORAS_AGENDA.filter((valor) => valor > desdeFin);
+  const horasFin = posterioresAlInicio.length > 0 ? posterioresAlInicio : [sumaMinutos(desdeFin, 30)];
 
   /* Una cita no cruza de dia: inicio y fin comparten la fecha, asi que todo
      cambio se escribe en los dos campos a la vez. */
@@ -244,6 +319,53 @@ function FormularioCita({
   };
 
   const duracionVigente = duracion > 0 ? duracion : 60;
+
+  const reglas = reglasDe(nutricionistaVigente || undefined, horarios.data, ausencias.data);
+  const motivoDia = claveDia && nutricionistaVigente ? diaNoDisponible(reglas, claveDia) : null;
+  const fueraDeHorario = (inicio: number, fin: number) =>
+    claveDia !== null && Boolean(nutricionistaVigente) && !dentroDeHorario(reglas, claveDia, inicio, fin);
+
+  const noDisponiblesInicio = horasNoDisponibles(horasInicio, ocupaciones, duracionVigente);
+  const noDisponiblesFin = horaInicio ? finesNoDisponibles(horasFin, horaInicio, ocupaciones) : undefined;
+  for (const hora of horasInicio) {
+    if (motivoDia) noDisponiblesInicio.set(hora, "No atiende");
+    else if (!noDisponiblesInicio.has(hora) && fueraDeHorario(minutos(hora), minutos(hora) + duracionVigente))
+      noDisponiblesInicio.set(hora, "Fuera de horario");
+  }
+  if (noDisponiblesFin && horaInicio) {
+    for (const hora of horasFin) {
+      if (!noDisponiblesFin.has(hora) && fueraDeHorario(minutos(horaInicio), minutos(hora)))
+        noDisponiblesFin.set(hora, "Fuera de horario");
+    }
+  }
+  const conflicto =
+    horaInicio && horaFin && duracion > 0
+      ? choca(minutos(horaInicio), minutos(horaFin), ocupaciones)
+      : undefined;
+  const conflictoHorario = (() => {
+    if (motivoDia) return `${nombreDe(nutricionistaVigente)}: ${motivoDia.charAt(0).toLowerCase()}${motivoDia.slice(1)}.`;
+    if (!claveDia || !horaInicio || !horaFin || duracion <= 0) return null;
+    if (!fueraDeHorario(minutos(horaInicio), minutos(horaFin))) return null;
+    const bloquesDia = textoBloques(bloquesDelDia(reglas.bloques, diaDeClave(claveDia)));
+    return `Fuera de horario: ese día ${nombreDe(nutricionistaVigente)} atiende ${bloquesDia}.`;
+  })();
+  const yaPaso = minimoHoy !== null && horaInicio !== "" && minutos(horaInicio) < minimoHoy - 5;
+  const huecos = dia ? huecosLibres(horasInicio, noDisponiblesInicio, duracionVigente) : [];
+  const bloqueado = Boolean(conflicto) || Boolean(conflictoHorario) || yaPaso;
+
+  /* Dia lleno (o sin atencion): se busca en el backend el siguiente espacio
+     libre de las proximas dos semanas para proponerlo en un clic. */
+  const diaSinHuecos = Boolean(dia) && Boolean(nutricionistaVigente) && !citasDelDia.isPending && huecos.length === 0;
+  const siguienteDisponible = useDisponibilidad(
+    nutricionistaVigente || undefined,
+    {
+      desde: claveDia ? sumarDias(claveDia, 1) : hoyEnClinica(),
+      hasta: claveDia ? sumarDias(claveDia, 14) : hoyEnClinica(),
+      duracion: duracionVigente,
+    },
+    diaSinHuecos && claveDia !== null,
+  );
+  const siguiente = diaSinHuecos ? primerHueco(siguienteDisponible.data?.dias) : null;
 
   const cambiarDia = (fecha: Date | undefined) => {
     if (!fecha) return;
@@ -267,8 +389,13 @@ function FormularioCita({
     escribirFranja(dia, horaInicio, sumaMinutos(horaInicio, Number(minutos)));
   };
 
+  function nombreDe(id: string): string {
+    return nutricionistas.find((n) => n.id === id)?.nombreCompleto.split(" ")[0] ?? "Esta persona";
+  }
+
   const alEnviar = form.handleSubmit((values) => {
     setErrorGeneral(null);
+    if (bloqueado) return;
 
     const motivo = values.motivo.trim();
     const fechas = {
@@ -351,20 +478,28 @@ function FormularioCita({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nutricionista</FormLabel>
-                  <Select value={field.value || undefined} onValueChange={field.onChange}>
+                  <Select
+                    value={field.value || undefined}
+                    onValueChange={(id) => {
+                      field.onChange(id);
+                      /* Cita nueva: la duracion pasa a la de quien atiende. */
+                      if (!cita && dia && horaInicio) {
+                        const nueva = reglasDe(id, horarios.data, ausencias.data).duracion;
+                        escribirFranja(dia, horaInicio, sumaMinutos(horaInicio, nueva));
+                      }
+                    }}
+                  >
                     <FormControl>
                       <SelectTrigger className="bg-card h-10 w-full">
                         <SelectValue placeholder="Selecciona un nutricionista" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent position="popper" className="max-h-72">
-                      {nutricionistas
-                        .filter((n) => n.isActive)
-                        .map((nutricionista) => (
-                          <SelectItem key={nutricionista.id} value={nutricionista.id}>
-                            {nutricionista.nombreCompleto}
-                          </SelectItem>
-                        ))}
+                      {nutricionistas.map((nutricionista) => (
+                        <SelectItem key={nutricionista.id} value={nutricionista.id}>
+                          {nutricionista.nombreCompleto}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -385,8 +520,11 @@ function FormularioCita({
                   <SelectorFecha
                     value={dia}
                     onChange={cambiarDia}
-                    desde={cita ? undefined : hoy}
+                    desde={hoy}
                     atajos={ATAJOS_AGENDA}
+                    deshabilitar={(fecha) =>
+                      Boolean(nutricionistaVigente) && diaNoDisponible(reglas, claveDeCalendario(fecha)) !== null
+                    }
                   />
                 </FormControl>
               </FormItem>
@@ -400,7 +538,8 @@ function FormularioCita({
                 id="hora-inicio-cita"
                 value={horaInicio}
                 onChange={cambiarInicio}
-                horas={HORAS_AGENDA}
+                horas={horasInicio}
+                noDisponibles={noDisponiblesInicio}
                 disabled={!dia}
                 aria-invalid={Boolean(errores.fechaInicio)}
               />
@@ -412,6 +551,7 @@ function FormularioCita({
                 value={horaFin}
                 onChange={cambiarFin}
                 horas={horasFin}
+                noDisponibles={noDisponiblesFin}
                 disabled={!dia}
                 aria-invalid={Boolean(errores.fechaFin)}
               />
@@ -441,7 +581,37 @@ function FormularioCita({
             </p>
           )}
 
-          {dia && horaInicio && horaFin && duracion > 0 && (
+          {dia && (
+            <PanelDisponibilidad
+              cargando={citasDelDia.isPending}
+              conflicto={
+                conflicto
+                  ? describirOcupacion(conflicto)
+                  : (conflictoHorario ?? (yaPaso ? "Esa hora ya pasó." : null))
+              }
+              ocupaciones={ocupaciones.map((o) => ({
+                clave: o.citaId,
+                texto: `${o.horaInicio}–${o.horaFin}`,
+                detalle: o.motivo === "paciente" ? "el paciente tiene otra cita" : o.pacienteNombre,
+              }))}
+              huecos={huecos}
+              horaElegida={horaInicio}
+              onElegirHueco={cambiarInicio}
+              siguiente={
+                siguiente
+                  ? {
+                      texto: `${formatearCalendario(siguiente.fecha, { weekday: "long", day: "numeric", month: "short" })}, ${siguiente.hora}`,
+                      onUsar: () => {
+                        const fecha = calendarioDeClave(siguiente.fecha);
+                        if (fecha) escribirFranja(fecha, siguiente.hora, sumaMinutos(siguiente.hora, duracionVigente));
+                      },
+                    }
+                  : null
+              }
+            />
+          )}
+
+          {dia && horaInicio && horaFin && duracion > 0 && !bloqueado && (
             <div className="border-primary/20 bg-primary-soft/60 flex items-center gap-3 rounded-lg border p-2.5">
               <HojaCalendario fecha={dia} />
               <div className="min-w-0 text-sm">
@@ -500,12 +670,106 @@ function FormularioCita({
           <Button type="button" variant="outline" onClick={onCerrar} disabled={guardando}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={guardando}>
+          <Button type="submit" disabled={guardando || bloqueado}>
             {guardando && <Loader2 className="size-4 animate-spin" />}
             {cita ? "Guardar cambios" : "Agendar cita"}
           </Button>
         </DialogFooter>
       </form>
     </Form>
+  );
+}
+
+/**
+ * Lo que ya esta ocupado el dia elegido y los huecos libres para la duracion
+ * actual. Si la franja elegida choca, el aviso aparece arriba y el boton de
+ * guardar se bloquea.
+ */
+function PanelDisponibilidad({
+  cargando,
+  conflicto,
+  ocupaciones,
+  huecos,
+  horaElegida,
+  onElegirHueco,
+  siguiente,
+}: {
+  cargando: boolean;
+  conflicto: string | null;
+  ocupaciones: { clave: string; texto: string; detalle: string }[];
+  huecos: string[];
+  horaElegida: string;
+  onElegirHueco: (hora: string) => void;
+  /** Proximo espacio libre en otro dia, cuando este ya no tiene. */
+  siguiente?: { texto: string; onUsar: () => void } | null;
+}) {
+  if (cargando) {
+    return (
+      <p className="text-muted-foreground flex items-center gap-2 text-xs">
+        <Loader2 className="size-3.5 animate-spin" aria-hidden />
+        Revisando la agenda del día…
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-2.5">
+      {conflicto && (
+        <div
+          role="alert"
+          className="bg-destructive-soft text-destructive-soft-foreground border-destructive/30 flex items-start gap-2 rounded-lg border px-3 py-2 text-sm"
+        >
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <p>
+            <span className="font-semibold">Horario no disponible.</span> {conflicto}
+          </p>
+        </div>
+      )}
+
+      {ocupaciones.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-muted-foreground text-xs font-medium">Ocupado:</span>
+          {ocupaciones.map((o) => (
+            <span key={o.clave} className="bg-muted text-muted-foreground rounded-md px-2 py-0.5 text-xs tabular-nums">
+              <span className="text-foreground font-medium">{o.texto}</span> · {o.detalle}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {huecos.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-muted-foreground text-xs font-medium">Libres:</span>
+          {huecos.map((hora) => (
+            <button
+              key={hora}
+              type="button"
+              onClick={() => onElegirHueco(hora)}
+              className={cn(
+                "rounded-md border px-2 py-0.5 text-xs font-medium tabular-nums transition-colors",
+                hora === horaElegida
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-primary/30 bg-primary-soft/50 text-primary-soft-foreground hover:bg-primary-soft",
+              )}
+            >
+              {hora}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+          <p className="text-muted-foreground text-xs">No quedan horarios libres este día para esta duración.</p>
+          {siguiente && (
+            <button
+              type="button"
+              onClick={siguiente.onUsar}
+              className="border-primary/30 bg-primary-soft/50 text-primary-soft-foreground hover:bg-primary-soft rounded-md border px-2 py-0.5 text-xs font-medium first-letter:uppercase"
+            >
+              Siguiente libre: {siguiente.texto}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

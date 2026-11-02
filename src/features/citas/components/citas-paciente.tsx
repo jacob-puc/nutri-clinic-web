@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { Cita, Guid } from "@/types/api";
+import { calendarioDeClave, claveDia } from "@/lib/zona-horaria";
 
 /**
  * Citas del paciente dentro de su ficha, presentadas como linea de tiempo:
@@ -117,7 +118,7 @@ export function CitasPaciente({
 
 /** La cita que viene: bloque destacado con el dia del calendario a la izquierda. */
 function CitaProximal({ cita }: { cita: Cita }) {
-  const fecha = new Date(cita.fechaInicio);
+  const fecha = calendarioDeClave(claveDia(cita.fechaInicio))!;
 
   return (
     <article className="border-primary/25 bg-primary-soft/60 rounded-lg border px-3.5 py-3">

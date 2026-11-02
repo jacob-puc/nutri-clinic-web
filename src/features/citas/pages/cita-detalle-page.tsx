@@ -34,6 +34,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { mensajeDeError } from "@/lib/api-error";
 import { toast } from "sonner";
 import type { Cita } from "@/types/api";
+import { calendarioDeClave, claveDia } from "@/lib/zona-horaria";
 
 export function CitaDetallePage() {
   const { id } = useParams<{ id: string }>();
@@ -81,7 +82,7 @@ function EncabezadoCita({ cita }: { cita: Cita }) {
     <>
       <Card className="py-0">
         <CardContent className="flex flex-wrap items-center gap-4 px-4 py-5 md:px-6">
-          <HojaCalendario fecha={new Date(cita.fechaInicio)} tamano="lg" />
+          <HojaCalendario fecha={calendarioDeClave(claveDia(cita.fechaInicio))!} tamano="lg" />
 
           <div className="min-w-0 flex-1">
             <p className="text-foreground text-xl font-semibold tracking-tight capitalize">
