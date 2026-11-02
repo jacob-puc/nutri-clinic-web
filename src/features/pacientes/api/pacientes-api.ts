@@ -1,5 +1,7 @@
 import { apiClient } from "@/lib/api-client";
+import { abrirPdf } from "@/lib/pdf";
 import type {
+  ActualizarMedidaDto,
   ActualizarObjetivoPacienteDto,
   CrearMedidaDto,
   CrearPacienteDto,
@@ -76,6 +78,19 @@ export const pacientesApi = {
     return data;
   },
 
+  /** `PUT`: reemplaza la medicion completa y el backend recalcula el IMC. */
+  actualizarMedida: async (
+    pacienteId: Guid,
+    medidaId: Guid,
+    medida: ActualizarMedidaDto,
+  ): Promise<MedidaAntropometrica> => {
+    const { data } = await apiClient.put<MedidaAntropometrica>(
+      `/api/pacientes/${pacienteId}/medidas/${medidaId}`,
+      medida,
+    );
+    return data;
+  },
+
   /**
    * `POST /api/pacientes/{id}/fotos/subir` recibe `multipart/form-data`
    * (`[FromForm] SubirFotoDto`). El cliente global fija `application/json` y
@@ -115,5 +130,17 @@ export const pacientesApi = {
       { headers: { "Content-Type": "multipart/form-data" } },
     );
     return data;
+  },
+
+  /** PDF del historial clinico (datos, alergias, medidas, consultas). */
+  abrirHistorialPdf: (pacienteId: Guid) => abrirPdf(`/api/pacientes/${pacienteId}/historial-clinico/pdf`),
+
+  /** Borrado definitivo: el backend elimina el registro y el archivo del bucket. */
+  eliminarFoto: async (pacienteId: Guid, fotoId: Guid): Promise<void> => {
+    await apiClient.delete(`/api/pacientes/${pacienteId}/fotos/${fotoId}`);
+  },
+
+  eliminarDocumento: async (pacienteId: Guid, documentoId: Guid): Promise<void> => {
+    await apiClient.delete(`/api/pacientes/${pacienteId}/documentos/${documentoId}`);
   },
 };

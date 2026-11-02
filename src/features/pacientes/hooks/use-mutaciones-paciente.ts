@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { pacientesApi } from "@/features/pacientes/api/pacientes-api";
 import { pacientesKeys } from "@/features/pacientes/hooks/use-pacientes";
 import type {
+  ActualizarMedidaDto,
   ActualizarObjetivoPacienteDto,
   CrearMedidaDto,
   CrearPacienteDto,
@@ -76,6 +77,20 @@ export function useRegistrarMedida(pacienteId: Guid) {
   });
 }
 
+export function useActualizarMedida(pacienteId: Guid) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ medidaId, datos }: { medidaId: Guid; datos: ActualizarMedidaDto }) =>
+      pacientesApi.actualizarMedida(pacienteId, medidaId, datos),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: pacientesKeys.expediente(pacienteId),
+      });
+    },
+  });
+}
+
 /**
  * Refresca el expediente (fotos/documentos viven ahí). Si la subida se hizo
  * desde una consulta, también se invalida el módulo de consultas para que la
@@ -108,6 +123,29 @@ export function useSubirDocumento(pacienteId: Guid) {
       });
       void queryClient.invalidateQueries({ queryKey: ["consultas"] });
       toast.success("Documento subido");
+    },
+  });
+}
+
+/**
+ * Borra una foto o un documento del expediente. Refresca el expediente y las
+ * consultas, porque la consulta tambien muestra los archivos que se subieron
+ * en ella.
+ */
+export function useEliminarArchivo(pacienteId: Guid) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ tipo, id }: { tipo: "foto" | "documento"; id: Guid }) =>
+      tipo === "foto"
+        ? pacientesApi.eliminarFoto(pacienteId, id)
+        : pacientesApi.eliminarDocumento(pacienteId, id),
+    onSuccess: (_, { tipo }) => {
+      void queryClient.invalidateQueries({
+        queryKey: pacientesKeys.expediente(pacienteId),
+      });
+      void queryClient.invalidateQueries({ queryKey: ["consultas"] });
+      toast.success(tipo === "foto" ? "Foto eliminada" : "Documento eliminado");
     },
   });
 }

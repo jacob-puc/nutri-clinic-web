@@ -17,11 +17,16 @@ import {
   Stethoscope,
   Target,
   TrendingDown,
+  Printer,
   TrendingUp,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import { usePermisos } from "@/features/auth/hooks/use-permisos";
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
+import { EliminarArchivo } from "@/features/pacientes/components/eliminar-archivo";
+import { abrirPdfConAviso } from "@/lib/pdf";
+import { pacientesApi } from "@/features/pacientes/api/pacientes-api";
 import { BadgeEstadoCita } from "@/features/citas/components/badge-estado-cita";
 import { CitasPaciente } from "@/features/citas/components/citas-paciente";
 import { DialogoCita } from "@/features/citas/components/dialogo-cita";
@@ -71,6 +76,7 @@ import type {
   Consulta,
   DocumentoPaciente,
   FotoSeguimiento,
+  Guid,
   HistorialClinico,
   MedidaAntropometrica,
   Paciente,
@@ -114,10 +120,14 @@ export function PacienteDetallePage() {
     setParametros(siguientes, { replace: true });
   };
 
+  /* Recepcion ve la ficha administrativa (contacto y citas): el expediente
+     y las consultas son clinicos y el backend se los niega. */
+  const { verClinico } = usePermisos();
+
   const { data: paciente, isPending: cargandoPaciente, isError: errorPaciente } =
     usePaciente(id);
-  const { data: expediente, isPending: cargandoExpediente } = useExpediente(id);
-  const consultas = useConsultasDePaciente(id);
+  const { data: expediente, isPending: cargandoExpediente } = useExpediente(verClinico ? id : undefined);
+  const consultas = useConsultasDePaciente(verClinico ? id : undefined);
 
   if (esApiError(errorPaciente) && errorPaciente.status === 404) {
     return (
@@ -157,6 +167,10 @@ export function PacienteDetallePage() {
 
   if (cargandoPaciente || !paciente) {
     return <FichaSkeleton />;
+  }
+
+  if (!verClinico) {
+    return <FichaAdministrativa paciente={paciente} />;
   }
 
   const medidas = expediente?.medidasAntropometricas ?? [];
@@ -260,7 +274,7 @@ export function PacienteDetallePage() {
           {cargandoExpediente ? (
             <ContenidoSkeleton />
           ) : (
-            <TabMedidas medidas={medidas} />
+            <TabMedidas medidas={medidas} pesoObjetivo={paciente?.pesoObjetivo} />
           )}
         </TabsContent>
 
@@ -268,7 +282,7 @@ export function PacienteDetallePage() {
           {cargandoExpediente ? (
             <ContenidoSkeleton />
           ) : (
-            <TabFotos fotos={fotos} />
+            <TabFotos fotos={fotos} pacienteId={id!} />
           )}
         </TabsContent>
 
@@ -276,7 +290,7 @@ export function PacienteDetallePage() {
           {cargandoExpediente ? (
             <ContenidoSkeleton />
           ) : (
-            <TabDocumentos documentos={documentos} />
+            <TabDocumentos documentos={documentos} pacienteId={id!} />
           )}
         </TabsContent>
       </Tabs>
@@ -323,6 +337,14 @@ function EncabezadoFicha({
         </div>
 
         <div className="flex flex-wrap gap-2 pb-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => abrirPdfConAviso(() => pacientesApi.abrirHistorialPdf(paciente.id))}
+          >
+            <Printer className="size-4" />
+            <span className="hidden sm:inline">Imprimir historial</span>
+          </Button>
           <Button variant="outline" size="sm" onClick={onEditar}>
             Editar
           </Button>
@@ -476,6 +498,53 @@ function TabResumen({
       <PanelHistorial historial={historial} />
 
       <PanelMediciones medidas={medidas} pesoObjetivo={paciente.pesoObjetivo} />
+    </div>
+  );
+}
+
+/**
+ * Lo que ve recepcion: contacto, alta y citas, con las acciones de su dia a
+ * dia (editar datos, agendar). Nada de medidas, notas ni historial.
+ */
+function FichaAdministrativa({ paciente }: { paciente: Paciente }) {
+  const [editando, setEditando] = useState(false);
+
+  return (
+    <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-8">
+      <Breadcrumbs
+        etiquetaNav="Navegación del paciente"
+        className="mb-4"
+        tramos={[
+          { etiqueta: "Pacientes", href: "/pacientes" },
+          { etiqueta: paciente.nombreCompleto },
+        ]}
+      />
+
+      <section className="hoja flex flex-col gap-4 rounded-xl px-4 py-5 sm:flex-row sm:items-center sm:justify-between md:px-6">
+        <div className="flex min-w-0 items-center gap-4">
+          <AvatarPaciente nombre={paciente.nombreCompleto} id={paciente.id} className="size-14 shrink-0 text-base" />
+          <div className="min-w-0">
+            <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">{paciente.nombreCompleto}</h1>
+            <p className="text-muted-foreground mt-1 text-sm tabular-nums">
+              {paciente.edad !== null && <>{paciente.edad} años · </>}
+              Tel: {paciente.telefono}
+            </p>
+          </div>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => setEditando(true)} className="self-start sm:self-center">
+          Editar datos
+        </Button>
+      </section>
+
+      <div className="mt-6 space-y-4">
+        <PanelFicha paciente={paciente} />
+        <CitasPaciente pacienteId={paciente.id} pacienteNombre={paciente.nombreCompleto} />
+        <p className="text-muted-foreground-subtle text-center text-xs">
+          El expediente clínico (medidas, notas e historial) solo lo ven los nutricionistas.
+        </p>
+      </div>
+
+      <DialogoPaciente abierto={editando} onOpenChange={setEditando} paciente={paciente} />
     </div>
   );
 }
@@ -924,7 +993,13 @@ function BadgeCategoria({ imc }: { imc: number }) {
   );
 }
 
-function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
+function TabMedidas({
+  medidas,
+  pesoObjetivo,
+}: {
+  medidas: MedidaAntropometrica[];
+  pesoObjetivo?: number | null;
+}) {
   if (medidas.length === 0) {
     return (
       <EstadoVacio
@@ -945,7 +1020,7 @@ function TabMedidas({ medidas }: { medidas: MedidaAntropometrica[] }) {
 
   return (
     <div className="space-y-4">
-      <GraficaMedidas medidas={medidas} />
+      <GraficaMedidas medidas={medidas} pesoObjetivo={pesoObjetivo} />
 
       <Seccion
         titulo="Registro completo"
@@ -1108,7 +1183,7 @@ function ResumenMedida({
   );
 }
 
-function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
+function TabFotos({ fotos, pacienteId }: { fotos: FotoSeguimiento[]; pacienteId: Guid }) {
   const [modoComparacion, setModoComparacion] = useState(false);
   const [tipoSeleccionado, setTipoSeleccionado] = useState<TipoFoto>(() => {
     const unicos = [...new Set(fotos.map((f) => f.tipo))];
@@ -1152,7 +1227,14 @@ function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
           {fotos.map((foto) => (
             /* Copia impresa: marco blanco y pie de foto debajo, como las
                fotos de seguimiento que se archivan en el expediente. */
-            <figure key={foto.id} className="hoja rounded-lg p-2 pb-3">
+            <figure key={foto.id} className="hoja group relative rounded-lg p-2 pb-3">
+              <EliminarArchivo
+                tipo="foto"
+                pacienteId={pacienteId}
+                id={foto.id}
+                nombre={`${foto.tipo} · ${formatearFechaCorta(foto.fechaSubida)}`}
+                className="absolute top-4 right-4 z-10"
+              />
               <div className="bg-muted aspect-4/3 w-full overflow-hidden rounded-md">
                 <img
                   src={foto.urlFoto}
@@ -1274,7 +1356,7 @@ function TabFotos({ fotos }: { fotos: FotoSeguimiento[] }) {
   );
 }
 
-function TabDocumentos({ documentos }: { documentos: DocumentoPaciente[] }) {
+function TabDocumentos({ documentos, pacienteId }: { documentos: DocumentoPaciente[]; pacienteId: Guid }) {
   if (documentos.length === 0) {
     return <EstadoVacio titulo="Sin documentos" descripcion="No hay análisis, estudios ni recetas asociadas a este paciente." />;
   }
@@ -1285,7 +1367,7 @@ function TabDocumentos({ documentos }: { documentos: DocumentoPaciente[] }) {
         {documentos.map((documento) => (
           <div
             key={documento.id}
-            className="hover:bg-accent flex items-start gap-3 px-4 py-4 transition-colors md:px-6"
+            className="hover:bg-accent group flex items-start gap-3 px-4 py-4 transition-colors md:px-6"
           >
             <div className="bg-primary-soft text-primary-soft-foreground ring-primary/15 grid size-9 shrink-0 place-items-center rounded-lg ring-1 ring-inset">
               <FileText className="size-4" aria-hidden />
@@ -1307,6 +1389,12 @@ function TabDocumentos({ documentos }: { documentos: DocumentoPaciente[] }) {
                   Abrir
                 </a>
               </Button>
+              <EliminarArchivo
+                tipo="documento"
+                pacienteId={pacienteId}
+                id={documento.id}
+                nombre={documento.nombreDocumento}
+              />
             </div>
           </div>
         ))}

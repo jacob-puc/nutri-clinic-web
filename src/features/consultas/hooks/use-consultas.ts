@@ -49,3 +49,15 @@ export function useConsultasDePaciente(pacienteId: Guid | undefined) {
     staleTime: 30_000,
   });
 }
+
+/**
+ * Consultas abiertas (sin cierre) de cualquier día. Alimenta el aviso global
+ * de "consulta en curso" para que salir de la consulta no la deje olvidada.
+ */
+export function useConsultasAbiertas() {
+  return useQuery({
+    queryKey: consultasKeys.lista({ soloSinCierre: true }),
+    queryFn: () => consultasApi.listar({ soloSinCierre: true }),
+    staleTime: 30_000,
+  });
+}

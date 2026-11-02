@@ -1,21 +1,17 @@
 import { useState } from "react";
-import { Camera } from "lucide-react";
+import { Camera, ImagePlus } from "lucide-react";
 
 import { DialogoFoto } from "@/features/consultas/components/dialogo-foto";
-import { Button } from "@/components/ui/button";
-import { Seccion } from "@/components/ficha/seccion";
-import { EstadoVacio } from "@/components/states/estado-vacio";
-import { formatearFechaCorta } from "@/lib/formatters";
-import type { FotoSeguimiento, Guid, TipoFoto } from "@/types/api";
+import { EncabezadoBloque } from "@/features/consultas/components/encabezado-bloque";
+import { ZonaArchivos } from "@/features/consultas/components/zona-archivos";
+import { ETIQUETA_TIPO_FOTO } from "@/features/consultas/lib/etiquetas-consulta";
+import { EliminarArchivo } from "@/features/pacientes/components/eliminar-archivo";
+import type { FotoSeguimiento, Guid } from "@/types/api";
 
-const ETIQUETA_TIPO: Record<TipoFoto, string> = {
-  Frente: "Frente",
-  Perfil: "Perfil",
-  Espalda: "Espalda",
-  Otro: "Otra toma",
-};
-
-/** Fotos subidas durante esta consulta, con la copia impresa del expediente. */
+/**
+ * Fotos de esta consulta. Sin tarjeta propia: la seccion es un titulo y una
+ * zona donde soltar la foto; las tomas ya subidas aparecen al lado.
+ */
 export function SeccionFotosConsulta({
   pacienteId,
   consultaId,
@@ -27,72 +23,66 @@ export function SeccionFotosConsulta({
   fotos: FotoSeguimiento[];
   soloLectura: boolean;
 }) {
-  const [subiendo, setSubiendo] = useState(false);
+  const [archivo, setArchivo] = useState<File | null>(null);
+
+  if (soloLectura && fotos.length === 0) return null;
 
   return (
-    <>
-      <Seccion
-        titulo="Fotos de seguimiento"
-        icono={Camera}
-        meta={fotos.length > 0 ? `${fotos.length} en esta consulta` : undefined}
-        acciones={
-          !soloLectura ? (
-            <Button size="sm" onClick={() => setSubiendo(true)}>
-              <Camera className="size-4" />
-              Subir foto
-            </Button>
-          ) : undefined
-        }
-      >
-        {fotos.length === 0 ? (
-          <EstadoVacio
-            titulo="Sin fotos en esta consulta"
-            descripcion="Sube las tomas de frente, perfil o espalda para comparar el avance."
-          >
+    <section aria-labelledby="titulo-fotos">
+      <EncabezadoBloque id="titulo-fotos" icono={Camera} titulo="Fotos de seguimiento" conteo={fotos.length} />
+
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+        {fotos.map((foto) => (
+          <figure key={foto.id} className="group relative">
             {!soloLectura && (
-              <Button size="sm" onClick={() => setSubiendo(true)}>
-                <Camera className="size-4" />
-                Subir foto
-              </Button>
+              <EliminarArchivo
+                tipo="foto"
+                pacienteId={pacienteId}
+                id={foto.id}
+                nombre={ETIQUETA_TIPO_FOTO[foto.tipo]}
+                className="absolute top-2 right-2 z-10"
+              />
             )}
-          </EstadoVacio>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {fotos.map((foto) => (
-              <figure key={foto.id} className="hoja rounded-lg p-2 pb-3">
-                <div className="bg-muted aspect-4/3 w-full overflow-hidden rounded-md">
-                  <img
-                    src={foto.urlFoto}
-                    alt={foto.notas ?? `Foto de seguimiento (${ETIQUETA_TIPO[foto.tipo]})`}
-                    loading="lazy"
-                    className="size-full object-cover"
-                  />
-                </div>
-                <figcaption className="px-1.5 pt-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-foreground text-sm font-medium">
-                      {ETIQUETA_TIPO[foto.tipo]}
-                    </span>
-                    <span className="text-muted-foreground text-xs tabular-nums">
-                      {formatearFechaCorta(foto.fechaSubida)}
-                    </span>
-                  </div>
-                  {foto.notas && (
-                    <p className="text-muted-foreground mt-1 text-sm">{foto.notas}</p>
-                  )}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
+            <a
+              href={foto.urlFoto}
+              target="_blank"
+              rel="noreferrer"
+              className="bg-muted block aspect-3/4 overflow-hidden rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-primary/25"
+            >
+              <img
+                src={foto.urlFoto}
+                alt={foto.notas ?? `Foto de seguimiento (${ETIQUETA_TIPO_FOTO[foto.tipo]})`}
+                loading="lazy"
+                className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              />
+            </a>
+            <figcaption className="mt-1.5 px-0.5">
+              <span className="text-foreground text-sm font-medium">{ETIQUETA_TIPO_FOTO[foto.tipo]}</span>
+              {foto.notas && <p className="text-muted-foreground line-clamp-2 text-xs">{foto.notas}</p>}
+            </figcaption>
+          </figure>
+        ))}
+
+        {!soloLectura && (
+          <ZonaArchivos
+            accept="image/*"
+            icono={ImagePlus}
+            titulo={fotos.length === 0 ? "Arrastra una foto aquí" : "Agregar toma"}
+            detalle={fotos.length === 0 ? "o haz clic para elegirla · frente, perfil o espalda" : "Arrastra o haz clic"}
+            onArchivo={setArchivo}
+            className={
+              fotos.length === 0 ? "col-span-full" : "flex aspect-3/4 items-center [&>button]:h-full"
+            }
+          />
         )}
-      </Seccion>
+      </div>
 
       <DialogoFoto
-        abierto={subiendo}
-        onOpenChange={setSubiendo}
+        archivo={archivo}
+        onOpenChange={(abierto) => !abierto && setArchivo(null)}
         pacienteId={pacienteId}
         consultaId={consultaId}
       />
-    </>
+    </section>
   );
 }

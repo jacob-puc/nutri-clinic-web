@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
+  ArrowRight,
   CheckCircle2,
   Loader2,
   PlayCircle,
+  Stethoscope,
   UserCheck,
   Filter,
 } from "lucide-react";
@@ -11,7 +13,8 @@ import {
 import { BadgeEstadoCita } from "@/features/citas/components/badge-estado-cita";
 import { formatearHoraLocal } from "@/features/citas/lib/fechas-cita";
 import { useCitas } from "@/features/citas/hooks/use-citas";
-import { useConsultas } from "@/features/consultas/hooks/use-consultas";
+import { useConsultas, useConsultasAbiertas } from "@/features/consultas/hooks/use-consultas";
+import { ETIQUETA_TIPO_CONSULTA } from "@/features/consultas/lib/etiquetas-consulta";
 import { useCrearConsulta } from "@/features/consultas/hooks/use-mutaciones-consulta";
 import { deducirTipoConsulta } from "@/features/consultas/lib/tipo-consulta";
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
@@ -25,15 +28,8 @@ import { SelectorFecha } from "@/components/ui/selector-fecha";
 import { mensajeDeError } from "@/lib/api-error";
 import { toast } from "sonner";
 import type { Cita, ConsultaFiltro } from "@/types/api";
+import { calendarioDeClave, claveDia, hoyCalendario, hoyEnClinica, rangoDelDia } from "@/lib/zona-horaria";
 
-/** Rango de un día completo en hora local, como instantes para la API. */
-function rangoDelDia(base: Date): { desde: string; hasta: string } {
-  const desde = new Date(base);
-  desde.setHours(0, 0, 0, 0);
-  const hasta = new Date(base);
-  hasta.setHours(23, 59, 59, 999);
-  return { desde: desde.toISOString(), hasta: hasta.toISOString() };
-}
 
 const FORMATO_DIA = new Intl.DateTimeFormat("es-MX", {
   weekday: "long",
@@ -49,8 +45,8 @@ const FORMATO_DIA = new Intl.DateTimeFormat("es-MX", {
 export function ConsultasPage() {
   const navigate = useNavigate();
   const [parametros, setParametros] = useSearchParams();
-  const hoy = useMemo(() => new Date(), []);
-  const rango = useMemo(() => rangoDelDia(hoy), [hoy]);
+  const hoy = useMemo(() => hoyCalendario(), []);
+  const rango = useMemo(() => rangoDelDia(hoyEnClinica()), []);
 
   /* Las vistas se controlan desde la URL (?vista=historial) para que el
      historial del día sea compartible y sobreviva al refresh. */
@@ -80,6 +76,7 @@ export function ConsultasPage() {
   const consultasHistorial = useConsultas(filtroInicial);
 
   const iniciar = useCrearConsulta();
+  const abiertas = useConsultasAbiertas();
 
   const porPaciente = useMemo(() => {
     const cuenta = new Map<string, number>();
@@ -171,6 +168,38 @@ export function ConsultasPage() {
         </TabsList>
 
         <TabsContent value="cola" className="mt-4 space-y-4">
+        {/* Lo primero de la cola es quien ya esta adentro: una consulta que se
+            dejo a medias se retoma desde aqui, no se vuelve a iniciar. */}
+        {(abiertas.data?.length ?? 0) > 0 && (
+          <Seccion titulo="En curso" icono={Stethoscope} meta={`${abiertas.data!.length}`}>
+            <ul className="divide-border/60 divide-y">
+              {abiertas.data!.map((consulta) => (
+                <li key={consulta.id} className="flex flex-wrap items-center gap-3 py-2.5">
+                  <span className="text-foreground w-12 shrink-0 text-sm font-semibold tabular-nums">
+                    {formatearHoraLocal(consulta.fechaInicio)}
+                  </span>
+                  <AvatarPaciente nombre={consulta.pacienteNombre} id={consulta.pacienteId} className="size-9 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="text-foreground text-sm font-semibold">{consulta.pacienteNombre}</span>
+                      <BadgeEstadoCita estado="EnCurso" />
+                    </div>
+                    <p className="text-muted-foreground truncate text-xs">
+                      {ETIQUETA_TIPO_CONSULTA[consulta.tipoConsulta]} · con {consulta.nutricionistaNombre}
+                    </p>
+                  </div>
+                  <Button size="sm" asChild className="ml-auto">
+                    <Link to={`/consultas/${consulta.id}`}>
+                      Continuar
+                      <ArrowRight className="size-4" />
+                    </Link>
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </Seccion>
+        )}
+
         <Seccion
           titulo="Por atender"
           icono={UserCheck}
@@ -246,12 +275,15 @@ export function ConsultasPage() {
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">Desde</span>
                 <SelectorFecha
-                  value={filtroInicial.desde ? new Date(filtroInicial.desde) : undefined}
+                  value={filtroInicial.desde ? calendarioDeClave(claveDia(filtroInicial.desde)) : undefined}
                   onChange={(fecha) => {
                     const params = new URLSearchParams(filtroDesde);
                     if (fecha) {
-                      const iso = fecha.toISOString().split("T")[0] + "T00:00:00.000Z";
-                      params.set("desde", iso);
+                      /* Medianoche LOCAL convertida a instante. Antes se
+                         armaba "T00:00:00Z" (medianoche UTC), que en Mexico
+                         es la tarde del dia anterior: el selector mostraba
+                         un dia menos y el filtro cubria otro rango. */
+                      params.set("desde", rangoDelDia(fecha).desde);
                     } else {
                       params.delete("desde");
                     }
@@ -265,12 +297,11 @@ export function ConsultasPage() {
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">Hasta</span>
                 <SelectorFecha
-                  value={filtroInicial.hasta ? new Date(filtroInicial.hasta) : undefined}
+                  value={filtroInicial.hasta ? calendarioDeClave(claveDia(filtroInicial.hasta)) : undefined}
                   onChange={(fecha) => {
                     const params = new URLSearchParams(filtroDesde);
                     if (fecha) {
-                      const iso = fecha.toISOString().split("T")[0] + "T23:59:59.999Z";
-                      params.set("hasta", iso);
+                      params.set("hasta", rangoDelDia(fecha).hasta);
                     } else {
                       params.delete("hasta");
                     }

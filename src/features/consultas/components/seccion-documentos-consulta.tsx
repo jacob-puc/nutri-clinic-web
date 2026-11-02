@@ -1,21 +1,18 @@
 import { useState } from "react";
-import { FileText } from "lucide-react";
+import { FileText, FileUp } from "lucide-react";
 
 import { DialogoDocumento } from "@/features/consultas/components/dialogo-documento";
-import { Button } from "@/components/ui/button";
-import { Seccion } from "@/components/ficha/seccion";
-import { EstadoVacio } from "@/components/states/estado-vacio";
-import { formatearFechaCorta } from "@/lib/formatters";
-import type { DocumentoPaciente, Guid, TipoDocumento } from "@/types/api";
+import { EncabezadoBloque } from "@/features/consultas/components/encabezado-bloque";
+import { ZonaArchivos } from "@/features/consultas/components/zona-archivos";
+import { ACCEPT_DOCUMENTO, ETIQUETA_TIPO_DOCUMENTO } from "@/features/consultas/lib/etiquetas-consulta";
+import { EliminarArchivo } from "@/features/pacientes/components/eliminar-archivo";
+import type { DocumentoPaciente, Guid } from "@/types/api";
 
-const ETIQUETA_TIPO: Record<TipoDocumento, string> = {
-  AnalisisLaboratorio: "Análisis de laboratorio",
-  EstudioClinico: "Estudio clínico",
-  RecetaMedica: "Receta médica",
-  Otro: "Otro",
-};
-
-/** Documentos subidos durante esta consulta (análisis, estudios, recetas). */
+/**
+ * Documentos de la consulta, con la misma forma que las fotos: una
+ * cuadricula de piezas del mismo tamaño y una zona donde soltar el archivo.
+ * Se marca como opcional para que no se lea como un paso obligatorio.
+ */
 export function SeccionDocumentosConsulta({
   pacienteId,
   consultaId,
@@ -27,72 +24,75 @@ export function SeccionDocumentosConsulta({
   documentos: DocumentoPaciente[];
   soloLectura: boolean;
 }) {
-  const [subiendo, setSubiendo] = useState(false);
+  const [archivo, setArchivo] = useState<File | null>(null);
+
+  if (soloLectura && documentos.length === 0) return null;
 
   return (
-    <>
-      <Seccion
-        titulo="Documentos"
+    <section aria-labelledby="titulo-documentos">
+      <EncabezadoBloque
+        id="titulo-documentos"
         icono={FileText}
-        meta={documentos.length > 0 ? `${documentos.length} en esta consulta` : undefined}
-        acciones={
-          !soloLectura ? (
-            <Button size="sm" onClick={() => setSubiendo(true)}>
-              <FileText className="size-4" />
-              Subir documento
-            </Button>
-          ) : undefined
-        }
-      >
-        {documentos.length === 0 ? (
-          <EstadoVacio
-            titulo="Sin documentos en esta consulta"
-            descripcion="Adjunta análisis de laboratorio, estudios clínicos o recetas del paciente."
+        titulo="Documentos"
+        conteo={documentos.length}
+        opcional={!soloLectura}
+      />
+
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+        {documentos.map((documento) => (
+          <div key={documento.id} className="group relative">
+          {!soloLectura && (
+            <EliminarArchivo
+              tipo="documento"
+              pacienteId={pacienteId}
+              id={documento.id}
+              nombre={documento.nombreDocumento}
+              className="absolute top-2 right-2 z-10"
+            />
+          )}
+          <a
+            href={documento.urlDocumento}
+            target="_blank"
+            rel="noreferrer"
+            className="hoja flex aspect-3/4 flex-col rounded-xl p-3 outline-none transition-colors hover:border-primary/40 focus-visible:ring-[3px] focus-visible:ring-primary/25"
           >
-            {!soloLectura && (
-              <Button size="sm" onClick={() => setSubiendo(true)}>
-                <FileText className="size-4" />
-                Subir documento
-              </Button>
-            )}
-          </EstadoVacio>
-        ) : (
-          <ul className="divide-border/60 divide-y">
-            {documentos.map((documento) => (
-              <li key={documento.id} className="flex items-start gap-3 py-3">
-                <div className="bg-primary-soft text-primary-soft-foreground ring-primary/15 grid size-9 shrink-0 place-items-center rounded-lg ring-1 ring-inset">
-                  <FileText className="size-4" aria-hidden />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-foreground truncate font-medium">
-                    {documento.nombreDocumento}
-                  </p>
-                  <p className="text-muted-foreground mt-0.5 text-xs">
-                    {ETIQUETA_TIPO[documento.tipo]} · {formatearFechaCorta(documento.fechaSubida)}
-                  </p>
-                  {documento.observaciones && (
-                    <p className="text-muted-foreground mt-1.5 text-sm">
-                      {documento.observaciones}
-                    </p>
-                  )}
-                </div>
-                <Button variant="ghost" size="sm" asChild className="shrink-0">
-                  <a href={documento.urlDocumento} target="_blank" rel="noreferrer">
-                    Abrir
-                  </a>
-                </Button>
-              </li>
-            ))}
-          </ul>
+            <span className="bg-primary-soft text-primary-soft-foreground grid flex-1 place-items-center rounded-lg">
+              <FileText className="size-8 transition-transform duration-300 group-hover:scale-110" aria-hidden />
+            </span>
+            <span className="mt-2 min-w-0">
+              <span className="text-foreground block truncate text-sm font-medium">{documento.nombreDocumento}</span>
+              <span className="text-muted-foreground block truncate text-xs">
+                {ETIQUETA_TIPO_DOCUMENTO[documento.tipo]}
+              </span>
+            </span>
+          </a>
+          </div>
+        ))}
+
+        {!soloLectura && (
+          <ZonaArchivos
+            accept={ACCEPT_DOCUMENTO}
+            icono={FileUp}
+            titulo={documentos.length === 0 ? "Arrastra un documento aquí" : "Agregar documento"}
+            detalle={
+              documentos.length === 0
+                ? "o haz clic para elegirlo · análisis, estudio o receta (PDF o imagen)"
+                : "Arrastra o haz clic"
+            }
+            onArchivo={setArchivo}
+            className={
+              documentos.length === 0 ? "col-span-full" : "flex aspect-3/4 items-center [&>button]:h-full"
+            }
+          />
         )}
-      </Seccion>
+      </div>
 
       <DialogoDocumento
-        abierto={subiendo}
-        onOpenChange={setSubiendo}
+        archivo={archivo}
+        onOpenChange={(abierto) => !abierto && setArchivo(null)}
         pacienteId={pacienteId}
         consultaId={consultaId}
       />
-    </>
+    </section>
   );
 }
