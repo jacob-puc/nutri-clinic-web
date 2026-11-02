@@ -1,13 +1,19 @@
+import { formatearCalendario, formatearInstante } from "@/lib/zona-horaria";
 import type { Sexo } from "@/types/api";
 
+const FECHA_NUMERICA: Intl.DateTimeFormatOptions = { day: "2-digit", month: "2-digit", year: "numeric" };
+
+/**
+ * dd/mm/aaaa. Acepta las dos clases de fecha: una de calendario
+ * ("2026-10-27", se muestra tal cual) o un instante ("…T03:16Z", se muestra
+ * el dia que era en Mexico; antes se recortaba el texto UTC y una hora de la
+ * noche salia con el dia siguiente).
+ */
 export function formatearFechaCorta(fecha: string | null | undefined): string {
   if (!fecha) return "—";
-
-  // Sin recortar, el dia se lleva la hora: 26/09/26T03:24:17.18278Z.
-  const [anio, mes, dia] = fecha.slice(0, 10).split("-");
-  if (!anio || !mes || !dia) return "—";
-
-  return `${dia}/${mes}/${anio}`;
+  return fecha.length <= 10
+    ? formatearCalendario(fecha, FECHA_NUMERICA)
+    : formatearInstante(fecha, FECHA_NUMERICA);
 }
 
 /** La API guarda la estatura en centimetros y por eso el IMC sale de dividir entre 100. */
@@ -16,30 +22,14 @@ export function formatearEstatura(centimetros: number | null | undefined): strin
   return `${(centimetros / 100).toFixed(2)} m`;
 }
 
+/** Instante -> dd/mm/aaaa en hora de Mexico (antes se mostraba en UTC). */
 export function formatearFecha(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const fecha = new Date(iso);
-  if (Number.isNaN(fecha.getTime())) return "—";
-  return fecha.toLocaleDateString("es-MX", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    timeZone: "UTC",
-  });
+  return formatearInstante(iso, FECHA_NUMERICA);
 }
 
+/** Instante -> dd/mm/aaaa, hh:mm en hora de Mexico (antes, en UTC: 6 h de mas). */
 export function formatearFechaHora(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const fecha = new Date(iso);
-  if (Number.isNaN(fecha.getTime())) return "—";
-  return fecha.toLocaleString("es-MX", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "UTC",
-  });
+  return formatearInstante(iso, { ...FECHA_NUMERICA, hour: "2-digit", minute: "2-digit" });
 }
 
 export function formatearTiempoRelativo(iso: string | null | undefined): string {

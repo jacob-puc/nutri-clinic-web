@@ -369,12 +369,10 @@
   --color-sidebar-pressed: var(--sidebar-pressed);
   --color-sidebar-active: var(--sidebar-active);
 
-  --font-sans: "Public Sans Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Public Sans Variable", ui-sans-serif, system-ui, sans-serif;
-  /* Tipografia de marca (DM Sans): de momento solo la usa el login, como
-     prueba. Si se aprueba, se escala a titulos de toda la app. */
-  --font-brand: "DM Sans Variable", "Public Sans Variable", ui-sans-serif,
-    system-ui, sans-serif;
+  /* Plus Jakarta Sans en toda la app: cuerpo y titulos usan la misma
+     familia; la jerarquia se marca con peso y tracking. */
+  --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

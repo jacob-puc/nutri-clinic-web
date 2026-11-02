@@ -24,6 +24,8 @@ interface SelectorHoraProps
   onChange: (hora: string) => void
   /** Horas "HH:mm" disponibles, ya ordenadas. */
   horas: string[]
+  /** Horas que se muestran apagadas, con el motivo junto a la hora. */
+  noDisponibles?: Map<string, string>
   placeholder?: string
 }
 
@@ -36,6 +38,7 @@ export function SelectorHora({
   value,
   onChange,
   horas,
+  noDisponibles,
   placeholder = "Hora",
   className,
   ...props
@@ -60,11 +63,15 @@ export function SelectorHora({
         {grupos.map((grupo) => (
           <SelectGroup key={grupo.etiqueta}>
             <SelectLabel>{grupo.etiqueta}</SelectLabel>
-            {grupo.items.map((hora) => (
-              <SelectItem key={hora} value={hora} className="tabular-nums">
-                {hora}
-              </SelectItem>
-            ))}
+            {grupo.items.map((hora) => {
+              const motivo = noDisponibles?.get(hora)
+              return (
+                <SelectItem key={hora} value={hora} disabled={Boolean(motivo)} className="tabular-nums">
+                  {hora}
+                  {motivo && <span className="text-muted-foreground ml-2 text-xs">{motivo}</span>}
+                </SelectItem>
+              )
+            })}
           </SelectGroup>
         ))}
       </SelectContent>

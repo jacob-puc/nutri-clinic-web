@@ -1,3 +1,5 @@
+import { hoyCalendario } from "@/lib/zona-horaria"
+
 export interface AtajoFecha {
   etiqueta: string
   /** Se evalua al abrir, para que "Mañana" sea siempre relativo a hoy. */
@@ -6,11 +8,11 @@ export interface AtajoFecha {
 
 /** Atajos de agenda: lo que mas se agenda en consulta. */
 export const ATAJOS_AGENDA: AtajoFecha[] = [
-  { etiqueta: "Hoy", fecha: () => new Date() },
+  { etiqueta: "Hoy", fecha: () => hoyCalendario() },
   {
     etiqueta: "Mañana",
     fecha: () => {
-      const d = new Date()
+      const d = hoyCalendario()
       d.setDate(d.getDate() + 1)
       return d
     },
@@ -18,7 +20,7 @@ export const ATAJOS_AGENDA: AtajoFecha[] = [
   {
     etiqueta: "En una semana",
     fecha: () => {
-      const d = new Date()
+      const d = hoyCalendario()
       d.setDate(d.getDate() + 7)
       return d
     },
@@ -26,7 +28,7 @@ export const ATAJOS_AGENDA: AtajoFecha[] = [
   {
     etiqueta: "En un mes",
     fecha: () => {
-      const d = new Date()
+      const d = hoyCalendario()
       d.setMonth(d.getMonth() + 1)
       return d
     },

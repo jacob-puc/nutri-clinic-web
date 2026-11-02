@@ -36,7 +36,7 @@ function Proveedores() {
       <TooltipProvider delayDuration={300} skipDelayDuration={200}>
         <SidebarProvider>
           <RouterProvider router={router} />
-          <Toaster position="top-right" richColors closeButton />
+          <Toaster position="top-right" closeButton />
         </SidebarProvider>
       </TooltipProvider>
     </QueryClientProvider>

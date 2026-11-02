@@ -150,6 +150,8 @@ body .fc {
   --fc-page-bg-color: transparent;
   --fc-border-color: color-mix(in oklab, var(--border) 78%, transparent);
   --fc-neutral-bg-color: var(--surface-subtle);
+  /* Fuera del horario de atencion: tinte tenue, se lee como "cerrado". */
+  --fc-non-business-color: color-mix(in oklab, var(--muted-foreground) 9%, transparent);
   --fc-neutral-text-color: var(--muted-foreground);
   --fc-today-bg-color: color-mix(in oklab, var(--primary) 5%, transparent);
   --fc-highlight-color: color-mix(in oklab, var(--primary) 13%, transparent);
@@ -420,5 +422,40 @@ body .fc .fc-popover-header {
 
   body .fc .cita-evento__hora {
     display: none;
+  }
+}
+
+/* Login: entrada suave del contenido y flotacion lenta de las piezas
+   decorativas. Se desactiva si el usuario pide menos movimiento. */
+@keyframes login-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes login-flotar {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .login-flotar {
+    animation: login-flotar 7s ease-in-out infinite;
+  }
+  .login-flotar-lento {
+    animation: login-flotar 9s ease-in-out 1.2s infinite;
+  }
+  .login-entrada {
+    animation: login-entrada 0.6s var(--ease-out-soft) both;
   }
 }
