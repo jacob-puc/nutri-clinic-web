@@ -10,7 +10,7 @@ import {
 
 import { authApi } from "@/features/auth/api/auth-api";
 import { tokenStorage } from "@/features/auth/lib/tokens";
-import type { UsuarioAutenticado } from "@/features/auth/types/auth";
+import type { CambiarContrasenaDto, UsuarioAutenticado } from "@/features/auth/types/auth";
 import { ApiError } from "@/lib/api-error";
 
 interface AuthContextValue {
@@ -20,6 +20,10 @@ interface AuthContextValue {
   login: (correoElectronico: string, contrasena: string) => Promise<void>;
   logout: () => Promise<void>;
   refrescar: () => Promise<boolean>;
+  /** Reemplaza los datos de la sesion (tras editar "Mi perfil"). */
+  actualizarUsuario: (usuario: UsuarioAutenticado) => void;
+  /** Cambia la contraseña propia y guarda los tokens nuevos que emite el backend. */
+  cambiarContrasena: (dto: CambiarContrasenaDto) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -108,6 +112,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const cambiarContrasena = useCallback(async (dto: CambiarContrasenaDto) => {
+    const tokens = await authApi.cambiarContrasena(dto);
+    tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
+    setUsuario(await authApi.obtenerYo());
+  }, []);
+
   const value = useMemo(
     () => ({
       usuario,
@@ -116,8 +126,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       logout,
       refrescar,
+      actualizarUsuario: setUsuario,
+      cambiarContrasena,
     }),
-    [usuario, cargando, login, logout, refrescar],
+    [usuario, cargando, login, logout, refrescar, cambiarContrasena],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

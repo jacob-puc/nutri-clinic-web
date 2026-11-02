@@ -1,3 +1,5 @@
+import type { Nutricionista, RolUsuario } from "@/types/api";
+
 export interface LoginDto {
   correoElectronico: string;
   contrasena: string;
@@ -11,15 +13,14 @@ export interface TokenRespuestaDto {
   nutricionistaId: string;
   nombreCompleto: string;
   correoElectronico: string;
+  rol: RolUsuario;
+  debeCambiarContrasena: boolean;
 }
 
-export interface UsuarioAutenticado {
-  id: string;
-  nombreCompleto: string;
-  correoElectronico: string;
-  telefono: string | null;
-  numeroColegiatura: string | null;
-  especialidad: string | null;
-  isActive: boolean;
-  fechaRegistro: string;
+/** La sesion es la propia ficha del equipo (GET /api/auth/yo). */
+export type UsuarioAutenticado = Nutricionista;
+
+export interface CambiarContrasenaDto {
+  contrasenaActual: string;
+  contrasenaNueva: string;
 }

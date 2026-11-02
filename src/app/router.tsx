@@ -1,6 +1,6 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
 
-import { AuthGuard } from "@/components/auth/auth-guard";
+import { AuthGuard, RequierePermiso } from "@/components/auth/auth-guard";
 import { AppLayout } from "@/components/layout/app-layout";
 import { LoginPage } from "@/features/auth/pages/login-page";
 import { PacienteDetallePage } from "@/features/pacientes/pages/paciente-detalle-page";
@@ -9,6 +9,10 @@ import { AgendaPage } from "@/features/citas/pages/agenda-page";
 import { CitaDetallePage } from "@/features/citas/pages/cita-detalle-page";
 import { ConsultasPage } from "@/features/consultas/pages/consultas-page";
 import { ConsultaDetallePage } from "@/features/consultas/pages/consulta-detalle-page";
+import { PlanesPage } from "@/features/menus/pages/planes-page";
+import { CobrosPage } from "@/features/cobros/pages/cobros-page";
+import { NutricionistasPage } from "@/features/nutricionistas/pages/nutricionistas-page";
+import { NutricionistaDetallePage } from "@/features/nutricionistas/pages/nutricionista-detalle-page";
 
 export const router = createBrowserRouter([
   {
@@ -27,14 +31,28 @@ export const router = createBrowserRouter([
           { path: "pacientes/:id", element: <PacienteDetallePage /> },
           { path: "citas", element: <AgendaPage /> },
           { path: "citas/:id", element: <CitaDetallePage /> },
-          { path: "consultas", element: <ConsultasPage /> },
-          { path: "consultas/:id", element: <ConsultaDetallePage /> },
+          { path: "cobros", element: <CobrosPage /> },
+          /* Lo clinico (consultas, planes) no es para recepcion; el equipo,
+             solo para el administrador. El backend aplica las mismas reglas. */
+          {
+            element: <RequierePermiso permiso="verClinico" />,
+            children: [
+              { path: "consultas", element: <ConsultasPage /> },
+              { path: "consultas/:id", element: <ConsultaDetallePage /> },
+              { path: "planes", element: <PlanesPage /> },
+            ],
+          },
+          {
+            element: <RequierePermiso permiso="gestionarEquipo" />,
+            children: [
+              { path: "nutricionistas", element: <NutricionistasPage /> },
+              { path: "nutricionistas/:id", element: <NutricionistaDetallePage /> },
+            ],
+          },
           /* La sección pasó de llamarse Agenda a Citas: las rutas viejas
              redirigen para no dejar enlaces muertos. */
           { path: "agenda", element: <Navigate to="/citas" replace /> },
           { path: "agenda/:id", element: <Navigate to="/citas" replace /> },
-          { path: "nutricionistas", element: <Navigate to="/pacientes" replace /> },
-          { path: "planes", element: <Navigate to="/pacientes" replace /> },
           { path: "*", element: <Navigate to="/pacientes" replace /> },
         ],
       },
