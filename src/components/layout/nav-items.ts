@@ -42,7 +42,7 @@ export type InsigniasNav = Partial<Record<string, InsigniaNav>>;
 export const MODULOS_NAV: ModuloNav[] = [
   {
     label: "Resumen",
-    href: "/",
+    href: "/panel",
     icon: LayoutDashboard,
     activo: true,
     descripcion: "Cómo va el día: citas, consultas, cobros y seguimiento",

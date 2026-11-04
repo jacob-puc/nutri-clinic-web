@@ -4,6 +4,7 @@ import { AuthGuard, RequierePermiso } from "@/components/auth/auth-guard";
 import { AppLayout } from "@/components/layout/app-layout";
 import { LoginPage } from "@/features/auth/pages/login-page";
 import { ReservarPage } from "@/features/reservas/pages/reservar-page";
+import { InicioPage } from "@/features/sitio/pages/inicio-page";
 import { PacienteDetallePage } from "@/features/pacientes/pages/paciente-detalle-page";
 import { PacientesPage } from "@/features/pacientes/pages/pacientes-page";
 import { AgendaPage } from "@/features/citas/pages/agenda-page";
@@ -21,19 +22,23 @@ export const router = createBrowserRouter([
     path: "/login",
     element: <LoginPage />,
   },
-  /* Publica: los pacientes reservan sin cuenta. */
+  /* Publicas: la pagina de la clinica y la reservacion, sin cuenta. */
+  {
+    path: "/",
+    element: <InicioPage />,
+  },
   {
     path: "/reservar",
     element: <ReservarPage />,
   },
+  /* El sistema del equipo: el inicio es /panel y el resto conserva sus rutas. */
   {
-    path: "/",
     element: <AuthGuard />,
     children: [
       {
         element: <AppLayout />,
         children: [
-          { index: true, element: <ResumenPage /> },
+          { path: "panel", element: <ResumenPage /> },
           { path: "pacientes", element: <PacientesPage /> },
           { path: "pacientes/:id", element: <PacienteDetallePage /> },
           { path: "citas", element: <AgendaPage /> },
@@ -60,13 +65,13 @@ export const router = createBrowserRouter([
              redirigen para no dejar enlaces muertos. */
           { path: "agenda", element: <Navigate to="/citas" replace /> },
           { path: "agenda/:id", element: <Navigate to="/citas" replace /> },
-          { path: "*", element: <Navigate to="/" replace /> },
+          { path: "*", element: <Navigate to="/panel" replace /> },
         ],
       },
     ],
   },
   {
     path: "*",
-    element: <Navigate to="/login" replace />,
+    element: <Navigate to="/" replace />,
   },
 ]);

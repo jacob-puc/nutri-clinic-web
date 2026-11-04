@@ -799,6 +799,8 @@ export interface ProfesionalPublico {
 export interface OpcionesReserva {
   clinica: ClinicaPublica;
   profesionales: ProfesionalPublico[];
+  /** Horario general de la clinica (pagina de inicio). */
+  horarioClinica: BloqueHorario[];
   anticipacionHoras: number;
   diasMaximos: number;
 }

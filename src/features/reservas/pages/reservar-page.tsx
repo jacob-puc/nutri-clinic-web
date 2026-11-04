@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -29,9 +30,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Segmentado } from "@/components/ui/segmentado";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertaFormulario } from "@/components/ui/grupo-campos";
-import { LogoConTexto } from "@/components/layout/logo";
 import { AvatarPersona } from "@/features/nutricionistas/components/comunes";
 import { reservasApi } from "@/features/reservas/api/reservas-api";
+import { SitioPublico } from "@/features/sitio/components/sitio-publico";
+import { useOpcionesPublicas } from "@/features/sitio/hooks/use-opciones-publicas";
 import { esConflicto, erroresPorCampo } from "@/lib/errores-formulario";
 import { mensajeDeError } from "@/lib/api-error";
 import { formatearCalendario, formatearInstante, hoyEnClinica, sumarDias } from "@/lib/zona-horaria";
@@ -62,26 +64,11 @@ interface HoraElegida extends HoraPublica {
 }
 
 export function ReservarPage() {
-  const opciones = useQuery({ queryKey: ["reserva", "opciones"], queryFn: reservasApi.opciones, staleTime: 5 * 60_000 });
+  const opciones = useOpcionesPublicas();
 
   return (
-    <div className="bg-background text-foreground min-h-dvh">
-      <header className="border-border bg-surface/80 sticky top-0 z-10 border-b backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-4xl items-center justify-between gap-3 px-4">
-          <LogoConTexto />
-          {opciones.data?.clinica.telefono && (
-            <a
-              href={`tel:${opciones.data.clinica.telefono}`}
-              className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-sm font-medium"
-            >
-              <Phone className="size-4" aria-hidden />
-              <span className="hidden sm:inline">{opciones.data.clinica.telefono}</span>
-            </a>
-          )}
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-4xl px-4 pt-8 pb-16">
+    <SitioPublico>
+      <main className="mx-auto w-full max-w-4xl px-4 pt-10 pb-16">
         {opciones.isPending ? (
           <div className="space-y-4">
             <Skeleton className="h-9 w-64" />
@@ -108,14 +95,17 @@ export function ReservarPage() {
           <Asistente opciones={opciones.data} />
         )}
       </main>
-    </div>
+    </SitioPublico>
   );
 }
 
 function Asistente({ opciones }: { opciones: OpcionesReserva }) {
   const unico = opciones.profesionales.length === 1 ? opciones.profesionales[0]! : null;
-  const [paso, setPaso] = useState<Paso>(unico ? "horario" : "profesional");
-  const [eleccion, setEleccion] = useState<Eleccion>({ profesional: unico });
+  /* "Reservar con ..." desde la pagina de inicio llega con ?profesional=id. */
+  const [params] = useSearchParams();
+  const preelegido = unico ?? opciones.profesionales.find((p) => p.id === params.get("profesional")) ?? null;
+  const [paso, setPaso] = useState<Paso>(preelegido ? "horario" : "profesional");
+  const [eleccion, setEleccion] = useState<Eleccion>({ profesional: preelegido });
   const [hora, setHora] = useState<HoraElegida | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [confirmada, setConfirmada] = useState<ReservaConfirmada | null>(null);
@@ -271,7 +261,7 @@ function Tarjeta({ onClick, children }: { onClick: () => void; children: React.R
     <button
       type="button"
       onClick={onClick}
-      className="border-border bg-surface hover:border-primary/50 hover:bg-primary-soft/30 focus-visible:ring-ring flex items-center gap-3 rounded-xl border p-4 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none"
+      className="border-border bg-card hover:border-primary/50 hover:bg-primary-soft/30 focus-visible:ring-ring flex items-center gap-3 rounded-xl border p-4 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none"
     >
       {children}
       <ChevronRight className="text-muted-foreground ml-auto size-4 shrink-0" aria-hidden />
@@ -341,7 +331,7 @@ function PasoHorario({
 
       {aviso && <AlertaFormulario>{aviso}</AlertaFormulario>}
 
-      <div className="border-border bg-surface rounded-xl border p-3 sm:p-4">
+      <div className="border-border bg-card rounded-xl border p-3 sm:p-4">
         <div className="mb-3 flex items-center justify-between gap-2">
           <Button
             variant="outline"
@@ -445,7 +435,7 @@ function PasoHorario({
                         type="button"
                         onClick={() => onElegir({ ...h, fecha: activo.fecha })}
                         className={cn(
-                          "border-border bg-surface hover:border-primary hover:bg-primary-soft/40 min-w-20 rounded-lg border px-3 py-2 text-sm font-semibold tabular-nums transition-colors",
+                          "border-border bg-card hover:border-primary hover:bg-primary-soft/40 min-w-20 rounded-lg border px-3 py-2 text-sm font-semibold tabular-nums transition-colors",
                           horaElegida?.inicio === h.inicio && "border-primary bg-primary-soft text-primary-soft-foreground",
                         )}
                       >
@@ -604,7 +594,7 @@ function PasoDatos({
         </div>
       </form>
 
-      <aside className="border-border bg-surface h-fit space-y-3 rounded-xl border p-4 md:sticky md:top-24">
+      <aside className="border-border bg-card h-fit space-y-3 rounded-xl border p-4 md:sticky md:top-24">
         <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">Tu cita</p>
         <p className="font-semibold first-letter:uppercase">
           {formatearCalendario(hora.fecha, { weekday: "long", day: "numeric", month: "long" })}
@@ -647,7 +637,7 @@ function Confirmacion({ reserva, onOtra }: { reserva: ReservaConfirmada; onOtra:
         </p>
       </div>
 
-      <div className="border-border bg-surface space-y-3 rounded-xl border p-5 text-left">
+      <div className="border-border bg-card space-y-3 rounded-xl border p-5 text-left">
         <p className="text-lg font-semibold first-letter:uppercase">
           {formatearInstante(reserva.fechaInicio, { weekday: "long", day: "numeric", month: "long" })}
         </p>
