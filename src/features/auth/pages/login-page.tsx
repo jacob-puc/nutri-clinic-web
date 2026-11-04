@@ -1,25 +1,19 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  Activity,
   AlertCircle,
-  Apple,
   ArrowRight,
-  Carrot,
-  Droplet,
   Eye,
   EyeOff,
-  HeartPulse,
   Leaf,
   Loader2,
   Lock,
   Mail,
-  Salad,
   ShieldCheck,
-  type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
+import imagenLogin from "@/assets/sitio/login-verduras.jpg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -208,70 +202,54 @@ function TarjetaCita() {
   );
 }
 
-function TarjetaMetrica() {
+/* Columna izquierda (lg+): foto grande a sangre, con las tarjetas de ejemplo
+   flotando encima. En movil se oculta y queda solo el formulario. */
+function PanelImagen() {
   return (
-    <div className={`${TARJETA_FLOTANTE} flex w-[200px] items-center gap-3`}>
-      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--accent-100)] text-[var(--accent-700)] dark:bg-[var(--accent-900)] dark:text-[var(--accent-200)]">
-        <Activity className="size-5" aria-hidden />
-      </span>
-      <div className="leading-tight">
-        <p className="text-foreground text-lg font-bold tracking-tight">92%</p>
-        <p className="text-muted-foreground text-[11px]">Adherencia al plan</p>
-      </div>
-    </div>
-  );
-}
+    <aside className="relative hidden lg:sticky lg:top-0 lg:block lg:h-dvh">
+      <div className="relative isolate h-full">
+        {/* La foto se desvanece hacia la derecha y deja ver el mismo fondo
+            del formulario: no hay corte entre las dos columnas. */}
+        <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden [mask-image:linear-gradient(to_right,black_55%,transparent_100%)]">
+          <img src={imagenLogin} alt="" className="absolute inset-0 size-full object-cover" />
+          {/* Copia con desenfoque suave solo en el ultimo tramo, antes de desvanecerse. */}
+          <img
+            src={imagenLogin}
+            alt=""
+            className="absolute inset-0 size-full scale-105 object-cover blur-md [mask-image:linear-gradient(to_right,transparent_55%,black_90%)]"
+          />
+          {/* Velos: oscurece arriba y abajo para el texto y tiñe con la marca. */}
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(0_0_0/0.35),rgb(0_0_0/0.05)_35%,rgb(0_0_0/0.72))]" />
+          <div className="absolute inset-0 bg-[linear-gradient(135deg,color-mix(in_oklch,var(--brand-900)_55%,transparent),transparent_55%)]" />
+        </div>
 
-function IconoFlotante({
-  icono: Icono,
-  className,
-}: {
-  icono: LucideIcon;
-  className: string;
-}) {
-  return (
-    <span
-      className={cn(
-        "bg-card/80 border-border text-primary absolute grid size-12 place-items-center rounded-2xl border shadow-[0_14px_30px_-14px_color-mix(in_oklch,var(--brand-900)_45%,transparent)] backdrop-blur-sm",
-        className,
-      )}
-    >
-      <Icono className="size-5" strokeWidth={2} aria-hidden />
-    </span>
-  );
-}
+        {/* El contenido se queda en la parte nitida de la foto. */}
+        <div className="flex h-full w-[72%] flex-col justify-between p-10 text-white xl:p-12">
+          <span className="flex items-center gap-2.5">
+            <MarcaIcono className="size-9" />
+            <span className="text-lg font-bold tracking-tight">NutriClinica</span>
+          </span>
 
-/* Todo lo decorativo vive fuera de la columna del formulario y solo se
-   muestra cuando hay espacio a los lados (xl). Cada pieza tiene una
-   inclinacion fija (rotate) y una flotacion animada (transform): son
-   propiedades distintas, asi que no se pisan. */
-function Decoracion() {
-  const acento = "text-[var(--accent-600)] dark:text-[var(--accent-300)]";
-  return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 hidden xl:block">
-      <div className="absolute top-8 right-full mr-20 -rotate-[4deg]">
-        <div className="login-flotar">
-          <TarjetaSeguimiento />
+          <div aria-hidden className="pointer-events-none relative hidden h-72 min-[1200px]:block">
+            <div className="login-flotar absolute top-0 left-2 -rotate-[3deg]">
+              <TarjetaSeguimiento />
+            </div>
+            <div className="login-flotar-lento absolute right-6 bottom-0 rotate-[3deg]">
+              <TarjetaCita />
+            </div>
+          </div>
+
+          <div className="max-w-md space-y-3">
+            <p className="text-3xl leading-tight font-bold tracking-tight text-balance xl:text-4xl">
+              Cada consulta, un paso más cerca de su objetivo.
+            </p>
+            <p className="text-[15px] text-white/80">
+              Expedientes, medidas, planes de alimentación y agenda de tu clínica en un solo lugar.
+            </p>
+          </div>
         </div>
       </div>
-      <div className="absolute right-full bottom-6 mr-36 rotate-[3deg]">
-        <div className="login-flotar-lento">
-          <TarjetaMetrica />
-        </div>
-      </div>
-      <div className="absolute top-44 left-full ml-20 rotate-[4deg]">
-        <div className="login-flotar-lento">
-          <TarjetaCita />
-        </div>
-      </div>
-
-      {/* Los iconos mas alejados solo caben a partir de 1400px. */}
-      <IconoFlotante icono={Apple} className="login-flotar hidden min-[1400px]:grid -top-4 right-full mr-[23rem] -rotate-12" />
-      <IconoFlotante icono={Carrot} className={`login-flotar-lento hidden min-[1400px]:grid top-[60%] right-full mr-[25rem] rotate-12 ${acento}`} />
-      <IconoFlotante icono={Salad} className="login-flotar top-6 left-full ml-60 rotate-6" />
-      <IconoFlotante icono={HeartPulse} className={`login-flotar-lento bottom-12 left-full ml-28 -rotate-6 ${acento}`} />
-      <IconoFlotante icono={Droplet} className="login-flotar hidden min-[1400px]:grid bottom-40 left-full ml-[22rem] rotate-12" />
-    </div>
+    </aside>
   );
 }
 
@@ -293,7 +271,7 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
 
-  const desde = location.state?.from?.pathname || "/";
+  const desde = location.state?.from?.pathname || "/panel";
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -319,7 +297,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="bg-background relative isolate flex min-h-dvh flex-col overflow-hidden">
+    <div className="bg-background relative isolate min-h-dvh overflow-clip lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
       {/* ---------- Fondo ---------- */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         {/* Malla de color: manchas grandes de teal, salvia y terracota que
@@ -343,9 +321,13 @@ export function LoginPage() {
         />
       </div>
 
+      <PanelImagen />
+
+    <div className="relative flex min-h-dvh flex-col">
       {/* ---------- Barra superior ---------- */}
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5 sm:px-8">
-        <span className="flex items-center gap-2.5">
+        {/* En lg la marca ya esta en la foto; se deja el hueco para no mover el boton. */}
+        <span className="flex items-center gap-2.5 lg:invisible">
           <MarcaIcono className="size-8" />
           <span className="text-foreground text-[17px] font-bold tracking-tight">
             NutriClinica
@@ -363,7 +345,6 @@ export function LoginPage() {
       {/* ---------- Acceso ---------- */}
       <main className="flex flex-1 items-center justify-center px-5 py-10 sm:py-14">
         <div className="login-entrada relative w-full max-w-[440px]">
-          <Decoracion />
 
           <div className="text-center">
             <MarcaIcono className="mx-auto size-14 rounded-2xl" />
@@ -523,6 +504,7 @@ export function LoginPage() {
         <span>© {new Date().getFullYear()} NutriClinica</span>
         <span>Sistema de consulta clínica y nutricional</span>
       </footer>
+    </div>
     </div>
   );
 }
