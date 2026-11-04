@@ -5,6 +5,7 @@ import {
   BadgeCheck,
   CalendarDays,
   Check,
+  Clock,
   IdCard,
   KeyRound,
   Mail,
@@ -22,9 +23,11 @@ import { EstadoError } from "@/components/states/estado-error";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/hooks/use-auth";
-import { DESCRIPCION_ROL, ETIQUETA_ROL, permisosDe } from "@/features/auth/lib/permisos";
+import { DESCRIPCION_ROL, permisosDe } from "@/features/auth/lib/permisos";
 import { useCitas } from "@/features/citas/hooks/use-citas";
-import { SeccionAusencias, SeccionHorario } from "@/features/nutricionistas/components/agenda-persona";
+import { SeccionAusencias } from "@/features/nutricionistas/components/agenda-persona";
+import { DialogoHorario } from "@/features/nutricionistas/components/dialogos-horario";
+import { resumenSemana } from "@/features/nutricionistas/lib/horario";
 import { AvatarPersona, InsigniaRol } from "@/features/nutricionistas/components/comunes";
 import { DialogoDesactivar } from "@/features/nutricionistas/components/dialogo-desactivar";
 import { DialogoMiPerfil } from "@/features/nutricionistas/components/dialogo-mi-perfil";
@@ -34,6 +37,7 @@ import {
   primerHueco,
   useCitasPendientesNutricionista,
   useDisponibilidad,
+  useHorarios,
   useNutricionista,
   useReactivarNutricionista,
 } from "@/features/nutricionistas/hooks/use-nutricionistas";
@@ -112,7 +116,9 @@ function Ficha({ persona, esPropia }: { persona: Nutricionista; esPropia: boolea
               </div>
               <p className="text-muted-foreground mt-0.5">{subtituloDe(persona)}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <InsigniaRol rol={persona.rol} />
+                <span title={DESCRIPCION_ROL[persona.rol]}>
+                  <InsigniaRol rol={persona.rol} />
+                </span>
                 <EstadoCuenta persona={persona} />
               </div>
             </div>
@@ -126,34 +132,32 @@ function Ficha({ persona, esPropia }: { persona: Nutricionista; esPropia: boolea
           )}
         </div>
 
-        <dl className="bg-surface-subtle/60 grid gap-x-6 gap-y-3 border-t px-5 py-4 text-sm sm:grid-cols-2 md:px-6 lg:grid-cols-4">
+        <dl
+          className={cn(
+            "bg-surface-subtle/60 grid gap-x-6 gap-y-3 border-t px-5 py-4 text-sm sm:grid-cols-2 md:px-6",
+            atiende ? "lg:grid-cols-5" : "lg:grid-cols-3",
+          )}
+        >
           <Dato icono={Mail} etiqueta="Correo" valor={persona.correoElectronico} />
           <Dato icono={Phone} etiqueta="Teléfono" valor={persona.telefono} />
           {atiende && <Dato icono={IdCard} etiqueta="Cédula profesional" valor={persona.numeroColegiatura} />}
+          {atiende && <DatoHorario persona={persona} editable={persona.isActive} />}
           <Dato icono={CalendarDays} etiqueta="En el equipo desde" valor={formatearFecha(persona.fechaRegistro)} />
         </dl>
       </section>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="min-w-0">
+        {/* Columna principal: lo operativo (agenda, horario, ausencias). */}
+        <div className="min-w-0 space-y-6">
           {atiende ? <AgendaProxima persona={persona} /> : <QuePuedeHacer persona={persona} />}
+          {atiende && persona.isActive && <SeccionAusencias persona={persona} editable />}
         </div>
 
-        <div className="space-y-6">
-          {atiende && persona.isActive && (
-            <>
-              <SeccionHorario persona={persona} editable />
-              <SeccionAusencias persona={persona} editable />
-            </>
-          )}
+        {/* Lateral corto y fijo: la cuenta. Sigue a la vista al bajar. */}
+        <div className="space-y-6 lg:sticky lg:top-6 lg:self-start">
           <Seccion titulo="Acceso" icono={KeyRound}>
-            <div className="space-y-4">
+            <div>
               <div>
-                <p className="text-muted-foreground text-xs">Rol</p>
-                <p className="text-foreground mt-0.5 text-sm font-semibold">{ETIQUETA_ROL[persona.rol]}</p>
-                <p className="text-muted-foreground mt-0.5 text-xs">{DESCRIPCION_ROL[persona.rol]}</p>
-              </div>
-              <div className="border-border-strong border-t border-dashed pt-4">
                 <p className="text-muted-foreground text-xs">Contraseña</p>
                 <p className="text-foreground mt-0.5 text-sm font-semibold">
                   {persona.debeCambiarContrasena ? "Temporal" : "Propia"}
@@ -236,6 +240,52 @@ function EstadoCuenta({ persona }: { persona: Nutricionista }) {
       <BadgeCheck className="size-3" aria-hidden />
       Activa
     </span>
+  );
+}
+
+/** Horario en la franja de datos; al hacer clic se edita en su dialogo. */
+function DatoHorario({ persona, editable }: { persona: Nutricionista; editable: boolean }) {
+  const horarios = useHorarios();
+  const [editando, setEditando] = useState(false);
+  const datos = horarios.data?.personas.find((p) => p.nutricionistaId === persona.id);
+  const filas = datos ? resumenSemana(datos.bloques) : [];
+  const texto = horarios.isPending
+    ? "…"
+    : filas.length > 0
+      ? filas.join(" · ")
+      : datos?.horarioPropio
+        ? "Sin días de atención"
+        : "Sin horario";
+  const detalle = datos ? `${datos.horarioPropio ? "Propio" : "De la clínica"} · ${datos.duracionConsultaMinutos} min` : null;
+
+  const contenido = (
+    <>
+      <Clock className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden />
+      <div className="min-w-0 text-left">
+        <dt className="text-muted-foreground flex items-center gap-1 text-xs">
+          Horario
+          {editable && <Pencil className="size-3 opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />}
+        </dt>
+        <dd className="text-foreground truncate font-medium tabular-nums">{texto}</dd>
+        {detalle && <dd className="text-muted-foreground truncate text-xs">{detalle}</dd>}
+      </div>
+    </>
+  );
+
+  if (!editable || !horarios.data) return <div className="flex min-w-0 items-start gap-2.5">{contenido}</div>;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setEditando(true)}
+        title="Editar horario"
+        className="group hover:bg-surface-muted focus-visible:ring-ring -m-1.5 flex min-w-0 items-start gap-2.5 rounded-lg p-1.5 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+      >
+        {contenido}
+      </button>
+      <DialogoHorario abierto={editando} onOpenChange={setEditando} persona={persona} horarios={horarios.data} />
+    </>
   );
 }
 
