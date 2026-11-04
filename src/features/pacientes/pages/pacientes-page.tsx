@@ -297,8 +297,9 @@ function FilaPaciente({ paciente }: { paciente: Paciente }) {
         >
           <AvatarPaciente nombre={paciente.nombreCompleto} id={paciente.id} />
           <div className="min-w-0">
-            <p className="text-foreground truncate font-medium">
-              {paciente.nombreCompleto}
+            <p className="text-foreground flex min-w-0 items-center gap-1.5 font-medium">
+              <span className="truncate">{paciente.nombreCompleto}</span>
+              {paciente.datosPorCompletar && <InsigniaPorCompletar />}
             </p>
             {/* En movil las columnas ocultas se sustituyen por estas lineas. */}
             <p className="text-muted-foreground truncate text-xs lg:hidden">
@@ -332,5 +333,16 @@ function FilaPaciente({ paciente }: { paciente: Paciente }) {
         <AccionesPaciente paciente={paciente} />
       </TableCell>
     </TableRow>
+  );
+}
+
+function InsigniaPorCompletar() {
+  return (
+    <span
+      title="Se registró al reservar en línea: revisa y completa sus datos"
+      className="bg-warning-soft text-warning-soft-foreground shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
+    >
+      Por completar
+    </span>
   );
 }

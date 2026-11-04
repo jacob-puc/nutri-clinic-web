@@ -1,3 +1,5 @@
+import { Globe } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import {
   COLOR_ESTADO_CITA,
@@ -5,7 +7,7 @@ import {
   ETIQUETA_ESTADO_CITA,
 } from "@/features/citas/lib/estados-cita";
 import { cn } from "@/lib/utils";
-import type { EstadoCita } from "@/types/api";
+import type { CanalCita, EstadoCita } from "@/types/api";
 
 export function BadgeEstadoCita({
   estado,
@@ -21,6 +23,21 @@ export function BadgeEstadoCita({
     >
       <span aria-hidden className={cn("size-1.5 rounded-full", COLOR_ESTADO_CITA[estado])} />
       {ETIQUETA_ESTADO_CITA[estado]}
+    </Badge>
+  );
+}
+
+/** La reservo el paciente desde la pagina publica: hay que confirmarla con el. */
+export function InsigniaEnLinea({ canal, className }: { canal: CanalCita | null | undefined; className?: string }) {
+  if (canal !== "EnLinea") return null;
+  return (
+    <Badge
+      variant="outline"
+      title="Reservada por el paciente en línea"
+      className={cn("bg-info-soft text-info-soft-foreground gap-1 border-transparent pl-1.5", className)}
+    >
+      <Globe className="size-3" aria-hidden />
+      En línea
     </Badge>
   );
 }

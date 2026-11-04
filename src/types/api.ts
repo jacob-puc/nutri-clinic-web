@@ -13,6 +13,9 @@ export type EstadoCita =
   | 'Cancelada'
   | 'NoAsistio';
 
+/** Por donde llego la cita (null en las anteriores a este campo). */
+export type CanalCita = 'Presencial' | 'Telefono' | 'WhatsApp' | 'EnLinea';
+
 export type TipoConsulta = 'Inicial' | 'Seguimiento' | 'Ajuste' | 'Cierre';
 
 export type TipoFoto = 'Frente' | 'Perfil' | 'Espalda' | 'Otro';
@@ -35,6 +38,8 @@ export interface Paciente {
   tituloObjetivo: string | null;
   pesoObjetivo: number | null;
   fechaRegistro: DateTimeString;
+  /** Se registro solo al reservar en linea; se limpia al guardar su ficha. */
+  datosPorCompletar: boolean;
 }
 
 export interface CrearPacienteDto {
@@ -187,6 +192,7 @@ export interface Cita {
   fechaFin: DateTimeString;
   estado: EstadoCita;
   motivo: string | null;
+  canal: CanalCita | null;
   consultaId: Guid | null;
   fechaCreacion: DateTimeString;
   fechaCancelacion: DateTimeString | null;
@@ -199,6 +205,7 @@ export interface CrearCitaDto {
   fechaInicio: DateTimeString;
   fechaFin: DateTimeString;
   motivo?: string | null;
+  canal?: CanalCita | null;
 }
 
 export interface CitaFiltro {
@@ -772,3 +779,56 @@ export interface DatosFiscalesClinica {
 }
 
 export type ActualizarDatosFiscalesClinicaDto = Omit<DatosFiscalesClinica, 'id' | 'fechaActualizacion'>;
+
+/* ---------- Reservacion en linea (publica) ---------- */
+
+export interface ClinicaPublica {
+  nombre: string;
+  direccion: string | null;
+  telefono: string | null;
+  correo: string | null;
+}
+
+export interface ProfesionalPublico {
+  id: Guid;
+  nombre: string;
+  especialidad: string | null;
+  duracionMinutos: number;
+}
+
+export interface OpcionesReserva {
+  clinica: ClinicaPublica;
+  profesionales: ProfesionalPublico[];
+  anticipacionHoras: number;
+  diasMaximos: number;
+}
+
+export interface HoraPublica {
+  inicio: DateTimeString;
+  /** "HH:mm" en hora de la clinica. */
+  hora: string;
+}
+
+export interface DiaPublico {
+  fecha: DateOnlyString;
+  horas: HoraPublica[];
+}
+
+export interface CrearReservaDto {
+  nutricionistaId: Guid | null;
+  inicio: DateTimeString;
+  nombreCompleto: string;
+  telefono: string;
+  correoElectronico: string;
+  sexo: Sexo;
+  motivo?: string | null;
+  /** Campo trampa para bots: siempre vacio. */
+  sitio?: string;
+}
+
+export interface ReservaConfirmada {
+  fechaInicio: DateTimeString;
+  fechaFin: DateTimeString;
+  nutricionistaNombre: string;
+  clinica: ClinicaPublica;
+}

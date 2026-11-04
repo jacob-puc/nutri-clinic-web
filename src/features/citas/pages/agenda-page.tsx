@@ -5,7 +5,8 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import esLocale from "@fullcalendar/core/locales/es";
-import { CalendarDays, CalendarPlus, CalendarX, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { CalendarDays, CalendarPlus, CalendarX, ChevronLeft, ChevronRight, Clock, Link2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { DetalleCitaSheet } from "@/features/citas/components/detalle-cita-sheet";
 import { DialogoCita } from "@/features/citas/components/dialogo-cita";
@@ -293,6 +294,11 @@ export function AgendaPage() {
             </SelectContent>
           </Select>
 
+          <Button variant="outline" onClick={copiarEnlaceReserva} title="Página donde los pacientes reservan solos">
+            <Link2 className="size-4" />
+            Enlace de reservación
+          </Button>
+
           <Button onClick={() => setAltaAbierta(true)}>
             <CalendarPlus className="size-4" />
             Agendar cita
@@ -577,4 +583,15 @@ export function AgendaPage() {
       />
     </div>
   );
+}
+
+/** Copia la liga publica para mandarla por WhatsApp o ponerla en redes. */
+async function copiarEnlaceReserva() {
+  const enlace = `${window.location.origin}/reservar`;
+  try {
+    await navigator.clipboard.writeText(enlace);
+    toast.success("Enlace copiado", { description: enlace });
+  } catch {
+    toast.info("Enlace de reservación", { description: enlace });
+  }
 }

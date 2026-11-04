@@ -3,6 +3,7 @@ import { Navigate, createBrowserRouter } from "react-router-dom";
 import { AuthGuard, RequierePermiso } from "@/components/auth/auth-guard";
 import { AppLayout } from "@/components/layout/app-layout";
 import { LoginPage } from "@/features/auth/pages/login-page";
+import { ReservarPage } from "@/features/reservas/pages/reservar-page";
 import { PacienteDetallePage } from "@/features/pacientes/pages/paciente-detalle-page";
 import { PacientesPage } from "@/features/pacientes/pages/pacientes-page";
 import { AgendaPage } from "@/features/citas/pages/agenda-page";
@@ -19,6 +20,11 @@ export const router = createBrowserRouter([
   {
     path: "/login",
     element: <LoginPage />,
+  },
+  /* Publica: los pacientes reservan sin cuenta. */
+  {
+    path: "/reservar",
+    element: <ReservarPage />,
   },
   {
     path: "/",

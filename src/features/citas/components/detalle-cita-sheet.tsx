@@ -3,7 +3,7 @@ import { CalendarDays, ExternalLink, Pencil } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { AccionesCita } from "@/features/citas/components/acciones-cita";
-import { BadgeEstadoCita } from "@/features/citas/components/badge-estado-cita";
+import { BadgeEstadoCita, InsigniaEnLinea } from "@/features/citas/components/badge-estado-cita";
 import { DialogoCita } from "@/features/citas/components/dialogo-cita";
 import {
   formatearFechaHoraLocal,
@@ -57,7 +57,10 @@ export function DetalleCitaSheet({
 
         <div className="space-y-5 px-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <BadgeEstadoCita estado={cita.estado} />
+            <div className="flex items-center gap-1.5">
+              <BadgeEstadoCita estado={cita.estado} />
+              <InsigniaEnLinea canal={cita.canal} />
+            </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setEditando(true)}>
                 <Pencil className="size-4" />

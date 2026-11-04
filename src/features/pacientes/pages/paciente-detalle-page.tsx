@@ -378,6 +378,11 @@ function EncabezadoFicha({
               {paciente.edad !== null && <>{paciente.edad} años · </>}
               Tel: {paciente.telefono}
             </p>
+            {paciente.datosPorCompletar && (
+              <p className="bg-warning-soft text-warning-soft-foreground mt-2 inline-flex rounded-md px-2 py-1 text-xs font-medium">
+                Se registró al reservar en línea: revisa y completa sus datos.
+              </p>
+            )}
 
             <LineaObjetivo
               paciente={paciente}
@@ -529,6 +534,11 @@ function FichaAdministrativa({ paciente }: { paciente: Paciente }) {
               {paciente.edad !== null && <>{paciente.edad} años · </>}
               Tel: {paciente.telefono}
             </p>
+            {paciente.datosPorCompletar && (
+              <p className="bg-warning-soft text-warning-soft-foreground mt-2 inline-flex rounded-md px-2 py-1 text-xs font-medium">
+                Se registró al reservar en línea: revisa y completa sus datos.
+              </p>
+            )}
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={() => setEditando(true)} className="self-start sm:self-center">

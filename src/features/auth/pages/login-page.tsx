@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Activity,
   AlertCircle,
@@ -508,6 +508,12 @@ export function LoginPage() {
           <p className="text-muted-foreground mt-7 flex items-center justify-center gap-1.5 text-xs">
             <ShieldCheck className="text-primary size-3.5" aria-hidden />
             Acceso exclusivo para personal autorizado de la clínica
+          </p>
+          <p className="text-muted-foreground mt-2 text-center text-sm">
+            ¿Eres paciente?{" "}
+            <Link to="/reservar" className="text-primary font-semibold underline-offset-4 hover:underline">
+              Reserva tu cita en línea
+            </Link>
           </p>
         </div>
       </main>

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { CalendarDays, CalendarPlus, Coffee } from "lucide-react";
 
 import { BotonesEstadoCita } from "@/features/citas/components/acciones-cita";
-import { BadgeEstadoCita } from "@/features/citas/components/badge-estado-cita";
+import { BadgeEstadoCita, InsigniaEnLinea } from "@/features/citas/components/badge-estado-cita";
 import { COLOR_ESTADO_CITA } from "@/features/citas/lib/estados-cita";
 import { formatearHoraLocal } from "@/features/citas/lib/fechas-cita";
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
@@ -229,6 +229,7 @@ function FilaCita({
                   {cita.pacienteNombre}
                 </Link>
                 <BadgeEstadoCita estado={cita.estado} />
+                <InsigniaEnLinea canal={cita.canal} />
               </div>
               <p className="text-muted-foreground mt-0.5 truncate text-xs">
                 {cita.motivo ?? "Sin motivo registrado"}

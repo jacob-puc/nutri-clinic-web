@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { CalendarX, ClipboardList, Pencil, Trash2 } from "lucide-react";
 
 import { AccionesCita } from "@/features/citas/components/acciones-cita";
-import { BadgeEstadoCita } from "@/features/citas/components/badge-estado-cita";
+import { BadgeEstadoCita, InsigniaEnLinea } from "@/features/citas/components/badge-estado-cita";
 import { DialogoCita } from "@/features/citas/components/dialogo-cita";
 import { useCita } from "@/features/citas/hooks/use-citas";
 import { useEliminarCita } from "@/features/citas/hooks/use-mutaciones-cita";
@@ -96,6 +96,7 @@ function EncabezadoCita({ cita }: { cita: Cita }) {
 
           <div className="flex flex-wrap items-center gap-2">
             <BadgeEstadoCita estado={cita.estado} />
+            <InsigniaEnLinea canal={cita.canal} />
             <Button variant="outline" size="sm" onClick={() => setEditando(true)}>
               <Pencil className="size-4" />
               Editar
