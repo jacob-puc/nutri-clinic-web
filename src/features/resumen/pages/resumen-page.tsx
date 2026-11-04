@@ -12,10 +12,10 @@ import {
   UserPlus,
   Users,
   Wallet,
-  type LucideIcon,
 } from "lucide-react";
 
 import { Seccion } from "@/components/ficha/seccion";
+import { TarjetaEstadistica } from "@/components/ui/tarjeta-estadistica";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/hooks/use-auth";
@@ -127,9 +127,10 @@ export function ResumenPage() {
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Indicador
+        <TarjetaEstadistica
           icono={CalendarCheck2}
           etiqueta={soloMias ? "Mis citas hoy" : "Citas hoy"}
+          destacada
           valor={citasHoy.isSuccess ? citas.length : null}
           detalle={`${atendidas} atendidas · ${proximas.length} por atender`}
           href="/citas"
@@ -137,13 +138,13 @@ export function ResumenPage() {
         {permisos.verClinico ? (
           <IndicadorEnConsulta />
         ) : (
-          <Indicador
+          <TarjetaEstadistica
             icono={CalendarClock}
             etiqueta="Por confirmar hoy"
             valor={citasHoy.isSuccess ? porConfirmar : null}
             detalle="Citas que aún no confirman"
             href="/citas"
-            aviso={porConfirmar > 0}
+            tono="aviso"
           />
         )}
         <IndicadorCobrado rango={rangoHoy} />
@@ -180,60 +181,17 @@ export function ResumenPage() {
 
 /* ---------------- Indicadores ---------------- */
 
-function Indicador({
-  icono: Icono,
-  etiqueta,
-  valor,
-  detalle,
-  href,
-  aviso = false,
-}: {
-  icono: LucideIcon;
-  etiqueta: string;
-  valor: number | string | null;
-  detalle?: string;
-  href: string;
-  aviso?: boolean;
-}) {
-  return (
-    <Link
-      to={href}
-      className="hoja group flex flex-col gap-2 rounded-xl p-4 transition-shadow outline-none hover:shadow-[0_12px_28px_-18px_rgb(0_0_0/0.25)] focus-visible:ring-primary/30 focus-visible:ring-[3px]"
-    >
-      <span className="flex items-center justify-between">
-        <span className="text-muted-foreground text-xs font-medium">{etiqueta}</span>
-        <span
-          className={cn(
-            "grid size-7 place-items-center rounded-md ring-1 ring-inset",
-            aviso
-              ? "bg-warning-soft text-warning-soft-foreground ring-warning-soft-foreground/15"
-              : "bg-primary-soft text-primary-soft-foreground ring-primary/15",
-          )}
-          aria-hidden
-        >
-          <Icono className="size-4" />
-        </span>
-      </span>
-      {valor === null ? (
-        <Skeleton className="h-8 w-16" />
-      ) : (
-        <span className="text-foreground text-2xl font-bold tracking-tight tabular-nums md:text-3xl">{valor}</span>
-      )}
-      {detalle && <span className="text-muted-foreground truncate text-xs">{detalle}</span>}
-    </Link>
-  );
-}
-
 function IndicadorEnConsulta() {
   const abiertas = useConsultasAbiertas();
   const total = abiertas.data?.length ?? 0;
   return (
-    <Indicador
+    <TarjetaEstadistica
       icono={Stethoscope}
       etiqueta="En consulta ahora"
       valor={abiertas.isSuccess ? total : null}
       detalle={total === 0 ? "Nadie en consulta" : total === 1 ? "1 consulta abierta" : `${total} consultas abiertas`}
       href="/consultas"
+      tono="info"
     />
   );
 }
@@ -243,12 +201,13 @@ function IndicadorCobrado({ rango }: { rango: { desde: string; hasta: string } }
   const lista = pagos.data ?? [];
   const total = lista.reduce((s, p) => s + p.monto, 0);
   return (
-    <Indicador
+    <TarjetaEstadistica
       icono={Wallet}
       etiqueta="Cobrado hoy"
       valor={pagos.isSuccess ? formatearMoneda(total) : null}
       detalle={`${lista.length} ${lista.length === 1 ? "cobro" : "cobros"}`}
       href="/cobros?vista=cobros"
+      tono="exito"
     />
   );
 }
@@ -256,13 +215,13 @@ function IndicadorCobrado({ rango }: { rango: { desde: string; hasta: string } }
 function IndicadorPorCobrar() {
   const { pendientes, cargando } = usePorCobrar();
   return (
-    <Indicador
+    <TarjetaEstadistica
       icono={ClipboardList}
       etiqueta="Por cobrar"
       valor={cargando ? null : pendientes.length}
       detalle={pendientes.length === 0 ? "Todo cobrado" : "Consultas cerradas sin cobro"}
       href="/cobros"
-      aviso={pendientes.length > 0}
+      tono={pendientes.length > 0 ? "aviso" : "exito"}
     />
   );
 }

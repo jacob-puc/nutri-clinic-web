@@ -5,10 +5,11 @@ import { cn } from "@/lib/utils";
 
 type TonoSeccion = "primario" | "destructivo";
 
-const TEJA_TONO: Record<TonoSeccion, string> = {
-  primario: "bg-primary-soft text-primary-soft-foreground ring-primary/15",
-  destructivo:
-    "bg-destructive-soft text-destructive-soft-foreground ring-destructive/20",
+/* Sin teja de color: el icono va suelto y en gris. El color se reserva
+   para lo que pide atencion (tono destructivo). */
+const ICONO_TONO: Record<TonoSeccion, string> = {
+  primario: "text-muted-foreground",
+  destructivo: "text-destructive",
 };
 
 interface SeccionProps {
@@ -26,7 +27,7 @@ interface SeccionProps {
 
 /**
  * Hoja de una seccion del expediente. Sustituye la caja generica con titulo:
- * la cabecera lleva una teja de icono y se separa del cuerpo con una linea
+ * la cabecera lleva un icono discreto y se separa del cuerpo con una linea
  * discontinua, como el corte de una hoja de formulario clinico.
  */
 export function Seccion({
@@ -48,21 +49,19 @@ export function Seccion({
       )}
     >
       <header className="flex flex-wrap items-center justify-between gap-2 px-4 pt-4 pb-3 md:px-5">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <span
-            aria-hidden
+        <div className="flex min-w-0 items-center gap-2">
+          <Icono aria-hidden className={cn("size-[18px] shrink-0", ICONO_TONO[tono])} strokeWidth={1.75} />
+          <h2
             className={cn(
-              "grid size-7 shrink-0 place-items-center rounded-md ring-1 ring-inset",
-              TEJA_TONO[tono],
+              "text-[15px] font-semibold tracking-tight",
+              tono === "destructivo" ? "text-destructive" : "text-foreground",
             )}
           >
-            <Icono className="size-4" />
-          </span>
-          <h2 className="text-foreground text-[15px] font-semibold tracking-tight">
             {titulo}
           </h2>
           {meta && (
             <span className="text-muted-foreground-subtle truncate text-xs tabular-nums">
+              <span aria-hidden className="mr-1.5">·</span>
               {meta}
             </span>
           )}
