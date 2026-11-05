@@ -160,6 +160,7 @@ export function ResumenPage() {
             cargando={citasHoy.isPending}
             citas={proximas}
             ahora={ahora}
+            avance={{ atendidas, total: citas.length }}
             onAbrirCita={(id) => navigate(`/citas?cita=${id}`)}
             onAgendar={() => setAgendando(true)}
             onVerCalendario={() => navigate("/citas?vista=calendario")}

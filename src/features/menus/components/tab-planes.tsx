@@ -328,7 +328,7 @@ function TarjetaPlan({
   return (
     <article
       className={cn(
-        "hoja flex h-full flex-col rounded-xl",
+        "hoja flex h-full flex-col rounded-[1.25rem]",
         !plan.isActive && "opacity-60",
       )}
     >

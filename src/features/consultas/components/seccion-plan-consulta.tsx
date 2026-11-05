@@ -268,7 +268,7 @@ function TarjetaPlan({
     : [];
 
   return (
-    <div className="hoja rounded-xl">
+    <div className="hoja rounded-[1.25rem]">
       <div className="flex flex-wrap items-center gap-3 px-4 py-3 md:px-5">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">

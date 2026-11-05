@@ -195,7 +195,7 @@ function TarjetaPlantilla({
   return (
     <article
       className={cn(
-        "hoja flex h-full flex-col rounded-xl",
+        "hoja flex h-full flex-col rounded-[1.25rem]",
         !plantilla.isActive && "opacity-60",
       )}
     >

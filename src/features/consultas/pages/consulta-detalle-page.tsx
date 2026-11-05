@@ -134,7 +134,7 @@ function EspacioDeTrabajo({ consulta, cerrada }: { consulta: Consulta; cerrada: 
 
   return (
     <>
-      <div className="hoja rounded-xl">
+      <div className="hoja rounded-[1.25rem]">
         <div className="flex flex-wrap items-center gap-3 px-4 py-3 md:px-6">
           <AvatarPaciente nombre={consulta.pacienteNombre} id={consulta.pacienteId} className="size-10 shrink-0" />
           <div className="min-w-0 flex-1">
@@ -258,7 +258,7 @@ function ConsultaSkeleton() {
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
       <Skeleton className="mb-4 h-5 w-28" />
-      <div className="hoja rounded-xl px-4 py-5 md:px-6">
+      <div className="hoja rounded-[1.25rem] px-4 py-5 md:px-6">
         <div className="flex items-center gap-4">
           <Skeleton className="size-12 rounded-full" />
           <div className="flex-1 space-y-2">

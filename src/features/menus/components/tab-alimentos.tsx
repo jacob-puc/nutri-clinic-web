@@ -109,7 +109,7 @@ export function TabAlimentos() {
       )}
 
       {alimentos.length > 0 && (
-        <div className="hoja overflow-hidden rounded-xl">
+        <div className="hoja overflow-hidden rounded-[1.25rem]">
           <Table>
             <caption className="sr-only">Catálogo de alimentos</caption>
             <TableHeader>

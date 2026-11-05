@@ -149,7 +149,7 @@ function TarjetaMetrica({
     </>
   );
 
-  const clases = "hoja rounded-xl px-4 py-3 text-left";
+  const clases = "hoja rounded-[1.25rem] px-4 py-3 text-left";
 
   if (!onEditar) return <div className={clases}>{contenido}</div>;
 

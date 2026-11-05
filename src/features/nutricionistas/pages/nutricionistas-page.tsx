@@ -197,7 +197,7 @@ function TarjetaPersona({
     <Link
       to={`/nutricionistas/${persona.id}`}
       className={cn(
-        "hoja group flex h-full flex-col overflow-hidden rounded-xl outline-none",
+        "hoja group flex h-full flex-col overflow-hidden rounded-[1.25rem] outline-none",
         "focus-visible:ring-primary/30 focus-visible:ring-[3px]",
         !persona.isActive && "opacity-70",
       )}

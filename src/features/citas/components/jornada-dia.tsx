@@ -7,12 +7,11 @@ import { BadgeEstadoCita, InsigniaEnLinea } from "@/features/citas/components/ba
 import { COLOR_ESTADO_CITA, estaPorAtender } from "@/features/citas/lib/estados-cita";
 import { formatearHoraLocal } from "@/features/citas/lib/fechas-cita";
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
-import { HojaCalendario } from "@/components/ficha/hoja-calendario";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { Cita } from "@/types/api";
-import { formatearInstante } from "@/lib/zona-horaria";
+import { formatearCalendario, formatearInstante } from "@/lib/zona-horaria";
 
 /** "2026-10-26" -> Date local, sin correr el dia por zona horaria. */
 function fechaDeClave(clave: string): Date {
@@ -33,6 +32,8 @@ interface JornadaDiaProps {
   citas: Cita[];
   /** Instante actual en ms, para colocar la marca de "ahora". */
   ahora: number;
+  /** Como va el dia: alimenta el anillo de progreso. */
+  avance?: { atendidas: number; total: number };
   /** En la columna estrecha del calendario se compactan las filas. */
   compacta?: boolean;
   /** Usa solo la lista dentro de un panel lateral con encabezado propio. */
@@ -55,6 +56,7 @@ export function JornadaDia({
   cargando,
   citas,
   ahora,
+  avance,
   compacta = false,
   enSheet = false,
   onVerHoy,
@@ -78,9 +80,9 @@ export function JornadaDia({
     : -1;
 
   return (
-    <section className={cn("overflow-hidden", enSheet ? "" : "hoja rounded-xl")}>
-      {!enSheet && <header className="flex items-center gap-4 px-4 pt-4 pb-4 md:px-5">
-        <HojaCalendario fecha={fecha} tamano={compacta ? "md" : "lg"} />
+    <section className={cn("overflow-hidden", enSheet ? "" : "hoja rounded-[1.5rem]")}>
+      {!enSheet && <header className="flex items-center gap-5 px-4 pt-5 pb-2 md:px-6">
+        <AnilloDia clave={clave} avance={avance} />
 
         <div className="min-w-0 flex-1">
           <p className="text-primary text-xs font-semibold">
@@ -88,8 +90,8 @@ export function JornadaDia({
           </p>
           <h2
             className={cn(
-              "text-foreground font-semibold tracking-tight first-letter:uppercase",
-              compacta ? "text-base" : "text-xl",
+              "font-editorial text-foreground font-normal tracking-tight first-letter:uppercase",
+              compacta ? "text-xl" : "text-2xl sm:text-3xl",
             )}
           >
             {FORMATO_DIA.format(fecha)}
@@ -120,9 +122,7 @@ export function JornadaDia({
         )}
       </header>}
 
-      {!enSheet && <div aria-hidden className="border-border-strong mx-4 border-t border-dashed md:mx-5" />}
-
-      <div className={cn("px-4 py-4 md:px-5", enSheet && "md:px-4")}>
+      <div className={cn("px-4 pt-3 pb-5 md:px-6", enSheet && "md:px-4")}>
         {cargando ? (
           <div className="space-y-3" aria-busy="true" aria-live="polite">
             <span className="sr-only">Cargando citas del día...</span>
@@ -148,6 +148,7 @@ export function JornadaDia({
                   cita={cita}
                   ultima={indice === citas.length - 1 && indiceAhora !== citas.length}
                   compacta={compacta}
+                  siguienteEn={cita.id === siguiente?.id ? new Date(cita.fechaInicio).getTime() - ahora : null}
                   onAbrir={() => onAbrirCita(cita.id)}
                 />
               </Fragment>
@@ -161,26 +162,30 @@ export function JornadaDia({
 }
 
 /* Columnas fijas de la linea: margen de hora y carril del nodo. */
-const MARGEN_HORA = "w-12 shrink-0";
+const MARGEN_HORA = "w-[4.75rem] shrink-0 whitespace-nowrap";
 const CARRIL = "relative flex w-5 shrink-0 justify-center";
 
 function FilaCita({
   cita,
   ultima,
   compacta,
+  siguienteEn,
   onAbrir,
 }: {
   cita: Cita;
   ultima: boolean;
   compacta: boolean;
+  /** Milisegundos para empezar si es la proxima del dia; null si no lo es. */
+  siguienteEn: number | null;
   onAbrir: () => void;
 }) {
+  const esSiguiente = siguienteEn !== null;
   const cerrada = cita.estado === "Cancelada" || cita.estado === "NoAsistio";
 
   return (
     <li className="anim-entrada flex gap-2">
       <div className={cn(MARGEN_HORA, "pt-3 text-right")}>
-        <p className="text-foreground text-sm font-semibold tabular-nums">
+        <p className={cn("text-sm font-semibold tabular-nums", esSiguiente ? "text-primary" : "text-foreground")}>
           {formatearHoraLocal(cita.fechaInicio)}
         </p>
         <p className="text-muted-foreground-subtle text-xs tabular-nums">
@@ -193,14 +198,15 @@ function FilaCita({
       <div className={CARRIL} aria-hidden>
         <span
           className={cn(
-            "bg-border-strong absolute top-0 w-px",
+            "carril-gpu bg-border-strong absolute top-0 w-px",
             ultima ? "h-5" : "bottom-0",
           )}
         />
         <span
           className={cn(
-            "ring-card relative mt-4 size-2.5 rounded-full ring-4",
+            "nodo-gpu ring-card relative mt-4 size-2.5 rounded-full ring-4",
             COLOR_ESTADO_CITA[cita.estado],
+            esSiguiente && "nodo-pulso",
           )}
         />
       </div>
@@ -208,7 +214,8 @@ function FilaCita({
       <div className={cn("min-w-0 flex-1", ultima ? "pb-0" : "pb-3")}>
         <article
           className={cn(
-            "group/cita border-border hover:border-border-strong hover:bg-accent/50 rounded-lg border p-3 transition-colors duration-150",
+            "group/cita tarjeta-viva rounded-2xl p-3.5",
+            esSiguiente ? "bg-primary-soft" : "bg-surface-subtle hover:bg-accent/60 transition-colors duration-150",
             cerrada && "opacity-70",
           )}
         >
@@ -222,6 +229,11 @@ function FilaCita({
             )}
 
             <div className="min-w-0 flex-1">
+              {esSiguiente && (
+                <p className="text-primary-soft-foreground mb-1 text-xs font-semibold">
+                  Siguiente{siguienteEn > 0 && ` · ${textoCuentaRegresiva(siguienteEn)}`}
+                </p>
+              )}
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <Link
                   to={`/pacientes/${cita.pacienteId}`}
@@ -271,14 +283,66 @@ function MarcaAhora({ ahora, ultima = false }: { ahora: number; ultima?: boolean
         </span>
       </div>
       <div className={cn(CARRIL, "self-stretch")} aria-hidden>
-        {!ultima && <span className="bg-border-strong absolute inset-y-0 w-px" />}
-        <span className="bg-destructive ring-card relative my-2 size-2 rounded-full ring-4" />
+        {!ultima && <span className="carril-gpu bg-border-strong absolute inset-y-0 w-px" />}
+        <span className="bg-destructive ring-card nodo-pulso relative my-2 size-2 rounded-full ring-4" />
       </div>
       <div className="flex flex-1 items-center gap-2 py-2" aria-hidden>
         <span className="bg-destructive/60 h-px flex-1" />
         <span className="text-destructive text-xs font-medium">Ahora</span>
       </div>
     </li>
+  );
+}
+
+function textoCuentaRegresiva(ms: number) {
+  const minutos = Math.round(ms / 60_000);
+  if (minutos < 1) return "ya casi";
+  if (minutos < 60) return `en ${minutos} min`;
+  const horas = Math.floor(minutos / 60);
+  const resto = minutos % 60;
+  return resto === 0 ? `en ${horas} h` : `en ${horas} h ${resto} min`;
+}
+
+/**
+ * La fecha dentro de un anillo que se dibuja hasta el avance del dia. Si aun no
+ * hay citas que medir, queda solo el aro.
+ */
+function AnilloDia({ clave, avance }: { clave: string; avance?: { atendidas: number; total: number } }) {
+  const parte = avance && avance.total > 0 ? Math.round((avance.atendidas / avance.total) * 100) : 0;
+
+  return (
+    <div
+      role={avance ? "img" : undefined}
+      aria-label={avance ? `${avance.atendidas} de ${avance.total} citas atendidas` : undefined}
+      className="relative size-20 shrink-0 sm:size-24"
+    >
+      <svg viewBox="0 0 100 100" aria-hidden className="size-full -rotate-90">
+        <circle cx="50" cy="50" r="44" fill="none" stroke="var(--muted)" strokeWidth="7" />
+        {parte > 0 && (
+          <circle
+            cx="50"
+            cy="50"
+            r="44"
+            fill="none"
+            stroke="var(--primary)"
+            strokeWidth="7"
+            strokeLinecap="round"
+            pathLength={100}
+            strokeDasharray={`${parte} 100`}
+            className="anillo-dia"
+            style={{ "--parte": parte } as React.CSSProperties}
+          />
+        )}
+      </svg>
+      <div className="absolute inset-0 grid place-content-center text-center">
+        <p className="font-editorial text-foreground text-3xl leading-none sm:text-4xl">
+          {formatearCalendario(clave, { day: "numeric" })}
+        </p>
+        <p className="text-muted-foreground mt-0.5 text-xs">
+          {formatearCalendario(clave, { month: "short" }).replace(".", "")}
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -292,15 +356,24 @@ function JornadaLibre({
   onVerCalendario?: () => void;
 }) {
   return (
-    <div className="hoja-vacia flex flex-col items-center gap-3 rounded-lg px-4 py-8 text-center">
-      <span className="text-primary bg-primary-soft grid size-11 place-items-center rounded-full">
-        <Coffee className="size-5" aria-hidden />
-      </span>
+    <div className="flex flex-col items-center gap-4 px-4 py-8 text-center">
+      <div aria-hidden className="relative grid size-24 place-items-center">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="onda-calma border-primary/40 absolute inset-0 rounded-full border"
+            style={{ animationDelay: `${i * 1.2}s` }}
+          />
+        ))}
+        <span className="text-primary bg-primary-soft relative grid size-14 place-items-center rounded-full">
+          <Coffee className="size-6" aria-hidden />
+        </span>
+      </div>
       <div>
-        <p className="text-foreground text-sm font-semibold">
+        <p className="font-editorial text-foreground text-2xl">
           {esHoy ? "Agenda libre por hoy" : "Día sin citas"}
         </p>
-        <p className="text-muted-foreground mx-auto mt-1 max-w-xs text-sm">
+        <p className="text-muted-foreground mx-auto mt-1 max-w-sm text-base">
           {esHoy
             ? "No quedan citas pendientes. Aprovecha para agendar el seguimiento de algún paciente."
             : "No hay citas registradas para este día con el filtro actual."}

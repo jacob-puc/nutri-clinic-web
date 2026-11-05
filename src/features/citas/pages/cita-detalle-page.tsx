@@ -242,7 +242,7 @@ function DetalleSkeleton() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-6 md:px-8 md:py-8">
       <Skeleton className="mb-4 h-5 w-24" />
-      <div className="hoja overflow-hidden rounded-xl">
+      <div className="hoja overflow-hidden rounded-[1.25rem]">
         <div className="flex items-center gap-4 px-4 py-5 md:px-6">
           <Skeleton className="size-11 rounded-lg" />
           <div className="flex-1 space-y-2">
@@ -251,7 +251,7 @@ function DetalleSkeleton() {
           </div>
         </div>
       </div>
-      <div className="hoja mt-4 overflow-hidden rounded-xl">
+      <div className="hoja mt-4 overflow-hidden rounded-[1.25rem]">
         <div className="space-y-3 px-4 py-5 md:px-6">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-3 w-full" />

@@ -27,7 +27,7 @@ export function SeccionDatosFiscales() {
 
   if (datos.isPending) {
     return (
-      <div className="hoja mx-auto max-w-3xl space-y-4 rounded-xl p-6">
+      <div className="hoja mx-auto max-w-3xl space-y-4 rounded-[1.25rem] p-6">
         <Skeleton className="h-5 w-48" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
@@ -112,7 +112,7 @@ function Formulario({ inicial }: { inicial: DatosFiscalesClinica | null }) {
   );
 
   return (
-    <form onSubmit={enviar} noValidate className="hoja mx-auto max-w-3xl space-y-6 rounded-xl p-5 md:p-6">
+    <form onSubmit={enviar} noValidate className="hoja mx-auto max-w-3xl space-y-6 rounded-[1.25rem] p-5 md:p-6">
       {!inicial && (
         <AlertaFormulario>
           La clínica todavía no tiene datos fiscales: sin ellos no se pueden emitir facturas.

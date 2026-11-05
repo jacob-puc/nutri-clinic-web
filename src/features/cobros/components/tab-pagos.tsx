@@ -124,7 +124,7 @@ export function TabPagos() {
       </div>
 
       {/* ---------- Corte del periodo ---------- */}
-      <div className="hoja grid gap-4 rounded-xl px-4 py-4 sm:grid-cols-[auto_minmax(0,1fr)] md:px-6">
+      <div className="hoja grid gap-4 rounded-[1.25rem] px-4 py-4 sm:grid-cols-[auto_minmax(0,1fr)] md:px-6">
         <div>
           <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             {rango.esUnDia ? "Corte del día" : "Corte del periodo"}
@@ -158,7 +158,7 @@ export function TabPagos() {
       )}
 
       {lista.length > 0 && (
-        <div className="hoja overflow-hidden rounded-xl">
+        <div className="hoja overflow-hidden rounded-[1.25rem]">
           <Table>
             <caption className="sr-only">Cobros: {rango.etiqueta}</caption>
             <TableHeader>

@@ -41,14 +41,14 @@ export function EstadoVacio({
        primer registro que falta por archivar. */
     <div
       className={cn(
-        "hoja-vacia flex flex-col items-center gap-4 rounded-xl px-6 py-14 text-center",
+        "hoja-vacia flex flex-col items-center gap-4 rounded-[1.25rem] px-6 py-14 text-center",
         className,
       )}
     >
         {visual ?? (
           <div aria-hidden className="relative">
-            <span className="hoja absolute inset-0 translate-x-1.5 -translate-y-1 rotate-6 rounded-xl opacity-70" />
-            <span className="hoja text-primary relative grid size-14 place-items-center rounded-xl">
+            <span className="hoja absolute inset-0 translate-x-1.5 -translate-y-1 rotate-6 rounded-[1.25rem] opacity-70" />
+            <span className="hoja text-primary relative grid size-14 place-items-center rounded-[1.25rem]">
               <Icono className="size-6" />
             </span>
           </div>

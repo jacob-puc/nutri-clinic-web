@@ -27,8 +27,7 @@ interface SeccionProps {
 
 /**
  * Hoja de una seccion del expediente. Sustituye la caja generica con titulo:
- * la cabecera lleva un icono discreto y se separa del cuerpo con una linea
- * discontinua, como el corte de una hoja de formulario clinico.
+ * la cabecera lleva un icono discreto y el titulo en la serif del sitio.
  */
 export function Seccion({
   titulo,
@@ -43,17 +42,17 @@ export function Seccion({
   return (
     <section
       className={cn(
-        "hoja relative overflow-hidden rounded-xl",
+        "hoja relative overflow-hidden rounded-[1.25rem]",
         tono === "destructivo" && "hoja-destructiva",
         className,
       )}
     >
-      <header className="flex flex-wrap items-center justify-between gap-2 px-4 pt-4 pb-3 md:px-5">
+      <header className="flex flex-wrap items-center justify-between gap-2 px-4 pt-5 pb-1 md:px-6">
         <div className="flex min-w-0 items-center gap-2">
           <Icono aria-hidden className={cn("size-[18px] shrink-0", ICONO_TONO[tono])} strokeWidth={1.75} />
           <h2
             className={cn(
-              "text-[15px] font-semibold tracking-tight",
+              "font-editorial text-xl font-normal tracking-tight",
               tono === "destructivo" ? "text-destructive" : "text-foreground",
             )}
           >
@@ -69,10 +68,6 @@ export function Seccion({
         {acciones}
       </header>
 
-      <div
-        aria-hidden
-        className="border-border-strong mx-4 border-t border-dashed md:mx-5"
-      />
 
       <div className={cn("px-4 py-4 md:px-5", cuerpoClassName)}>{children}</div>
     </section>

@@ -18,7 +18,7 @@ export function SeccionHorarioClinica() {
 
   if (horarios.isPending) {
     return (
-      <div className="hoja mx-auto max-w-3xl space-y-4 rounded-xl p-6">
+      <div className="hoja mx-auto max-w-3xl space-y-4 rounded-[1.25rem] p-6">
         <Skeleton className="h-5 w-48" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
@@ -56,7 +56,7 @@ function Formulario({ horarios }: { horarios: Horarios }) {
   };
 
   return (
-    <div className="hoja mx-auto max-w-3xl space-y-5 rounded-xl p-5 md:p-6">
+    <div className="hoja mx-auto max-w-3xl space-y-5 rounded-[1.25rem] p-5 md:p-6">
       <p className="text-muted-foreground text-sm">
         {usanClinica === 0
           ? "Nadie lo usa ahora: todo el equipo tiene horario propio."

@@ -360,7 +360,7 @@ function EncabezadoFicha({
         </div>
       </div>
 
-      <section className="hoja overflow-hidden rounded-xl rounded-tl-none">
+      <section className="hoja overflow-hidden rounded-[1.25rem] rounded-tl-none">
       <div className="grid gap-5 px-4 py-5 md:px-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-8">
         <div className="flex min-w-0 items-start gap-4">
           <AvatarPaciente
@@ -525,7 +525,7 @@ function FichaAdministrativa({ paciente }: { paciente: Paciente }) {
         ]}
       />
 
-      <section className="hoja flex flex-col gap-4 rounded-xl px-4 py-5 sm:flex-row sm:items-center sm:justify-between md:px-6">
+      <section className="hoja flex flex-col gap-4 rounded-[1.25rem] px-4 py-5 sm:flex-row sm:items-center sm:justify-between md:px-6">
         <div className="flex min-w-0 items-center gap-4">
           <AvatarPaciente nombre={paciente.nombreCompleto} id={paciente.id} className="size-14 shrink-0 text-base" />
           <div className="min-w-0">

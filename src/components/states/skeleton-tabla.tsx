@@ -42,7 +42,7 @@ export function SkeletonTabla({
   return (
     <div
       className={cn(
-        "hoja overflow-hidden rounded-xl",
+        "hoja overflow-hidden rounded-[1.25rem]",
         className,
       )}
       aria-busy="true"

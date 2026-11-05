@@ -100,7 +100,7 @@ function Ficha({ persona, esPropia }: { persona: Nutricionista; esPropia: boolea
         tramos={[{ etiqueta: "Equipo", href: "/nutricionistas" }, { etiqueta: persona.nombreCompleto }]}
       />
 
-      <section className="hoja overflow-hidden rounded-xl">
+      <section className="hoja overflow-hidden rounded-[1.25rem]">
         <div className="flex flex-col gap-5 p-5 md:flex-row md:items-start md:justify-between md:p-6">
           <div className="flex min-w-0 items-start gap-4">
             <AvatarPersona nombre={persona.nombreCompleto} id={persona.id} className="size-16 text-lg" />

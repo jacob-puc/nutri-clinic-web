@@ -54,7 +54,7 @@ export function SeccionDocumentosConsulta({
             href={documento.urlDocumento}
             target="_blank"
             rel="noreferrer"
-            className="hoja flex aspect-3/4 flex-col rounded-xl p-3 outline-none transition-colors hover:border-primary/40 focus-visible:ring-[3px] focus-visible:ring-primary/25"
+            className="hoja flex aspect-3/4 flex-col rounded-[1.25rem] p-3 outline-none transition-colors hover:border-primary/40 focus-visible:ring-[3px] focus-visible:ring-primary/25"
           >
             <span className="bg-primary-soft text-primary-soft-foreground grid flex-1 place-items-center rounded-lg">
               <FileText className="size-8 transition-transform duration-300 group-hover:scale-110" aria-hidden />

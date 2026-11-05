@@ -47,7 +47,7 @@ export function TarjetaEstadistica({
   const color = destacada ? "white" : `var(${VARIABLE_TONO[tono]})`;
 
   const clases = cn(
-    "anim-entrada group relative isolate flex min-h-[7.5rem] flex-col overflow-hidden rounded-xl p-4 outline-none",
+    "anim-entrada group relative isolate flex min-h-[7.5rem] flex-col overflow-hidden rounded-[1.25rem] p-5 outline-none",
     destacada
       ? "bg-[linear-gradient(140deg,var(--brand-700),var(--brand-900))] text-white shadow-[0_16px_32px_-18px_var(--brand-900)]"
       : "hoja",

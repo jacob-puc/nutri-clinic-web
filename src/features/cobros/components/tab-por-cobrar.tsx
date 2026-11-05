@@ -59,7 +59,7 @@ export function TabPorCobrar() {
         {pendientes.length === 1 ? "1 consulta cerrada" : `${pendientes.length} consultas cerradas`} sin cobrar en los
         últimos {DIAS_POR_COBRAR} días.
       </p>
-      <div className="hoja overflow-hidden rounded-xl">
+      <div className="hoja overflow-hidden rounded-[1.25rem]">
         <Table>
           <caption className="sr-only">Consultas por cobrar</caption>
           <TableHeader>

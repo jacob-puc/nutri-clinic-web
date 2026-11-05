@@ -200,7 +200,7 @@ function TarjetaPlato({
   return (
     <article
       className={cn(
-        "hoja group relative flex h-full flex-col overflow-hidden rounded-xl",
+        "hoja group relative flex h-full flex-col overflow-hidden rounded-[1.25rem]",
         !plato.isActive && "opacity-60",
       )}
     >

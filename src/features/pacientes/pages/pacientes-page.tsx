@@ -244,7 +244,7 @@ function EncabezadoPacientes({
 
 function TablaPacientes({ pacientes }: { pacientes: Paciente[] }) {
   return (
-    <div className="hoja overflow-hidden rounded-xl">
+    <div className="hoja overflow-hidden rounded-[1.25rem]">
       <Table>
         <caption className="sr-only">Pacientes activos de la clínica</caption>
 

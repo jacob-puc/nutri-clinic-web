@@ -118,7 +118,7 @@ function NotasEnCurso({ consulta, onCerrada }: { consulta: Consulta; onCerrada: 
   };
 
   return (
-    <div className="hoja flex flex-col rounded-xl p-4">
+    <div className="hoja flex flex-col rounded-[1.25rem] p-4">
       <div className="flex items-center gap-2">
         <NotebookPen className="text-primary size-4" aria-hidden />
         <h2 className="text-foreground text-sm font-semibold">
@@ -179,7 +179,7 @@ function NotasEnCurso({ consulta, onCerrada }: { consulta: Consulta; onCerrada: 
 
 function NotasCerradas({ consulta, onCobrar }: { consulta: Consulta; onCobrar: () => void }) {
   return (
-    <div className="hoja rounded-xl p-4">
+    <div className="hoja rounded-[1.25rem] p-4">
       <div className="flex items-center gap-2">
         <NotebookPen className="text-primary size-4" aria-hidden />
         <h2 className="text-foreground text-sm font-semibold">Notas de la consulta</h2>

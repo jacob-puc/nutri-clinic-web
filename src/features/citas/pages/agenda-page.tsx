@@ -318,6 +318,10 @@ export function AgendaPage() {
             cargando={pendienteHoy}
             citas={proximosHoy}
             ahora={ahora}
+            avance={{
+              atendidas: citasHoy.filter((c) => c.estado === "Completada").length,
+              total: citasHoy.filter((c) => c.estado !== "Cancelada").length,
+            }}
             onAbrirCita={abrirCita}
             onAgendar={() => setAltaAbierta(true)}
             onVerCalendario={() => cambiarVista("calendario")}
@@ -325,11 +329,10 @@ export function AgendaPage() {
         </div>
       ) : (
         <div className="anim-vista mt-4 flex flex-col gap-4">
-          <Card className="gap-0 overflow-hidden rounded-2xl border border-border/80 py-0 shadow-[0_8px_28px_-20px_oklch(0.27_0.06_185/0.42)]">
-            <div className="flex flex-col gap-4 bg-primary-soft/45 px-4 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+          <Card className="gap-0 overflow-hidden rounded-[1.5rem] py-0">
+            <div className="flex flex-col gap-4 px-4 pt-6 pb-2 sm:px-7 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0">
-                <p className="text-primary-soft-foreground text-sm font-medium">Agenda de consultas</p>
-                <h2 className="text-foreground mt-1 text-2xl font-semibold tracking-tight capitalize sm:text-[1.7rem]">
+                <h2 className="font-editorial text-foreground text-3xl font-normal tracking-tight first-letter:uppercase sm:text-4xl">
                   {tituloCalendario || hoy.toLocaleDateString("es-MX", { month: "long", year: "numeric" })}
                 </h2>
                 <p className="text-muted-foreground mt-1 text-sm">
@@ -408,7 +411,7 @@ export function AgendaPage() {
               <ResumenEstados resumen={resumen} />
             </div>
 
-            <CardContent className="p-3 sm:p-4 md:p-5">
+            <CardContent className="p-3 sm:p-5 md:px-7 md:pb-7">
               {citas.isError ? (
                 <div className="flex min-h-[420px] flex-col items-center justify-center gap-3 text-center">
                   <CalendarX className="text-muted-foreground size-7" aria-hidden />
@@ -447,6 +450,10 @@ export function AgendaPage() {
                   events={eventos}
                   eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
                   dayMaxEvents={3}
+                  /* Las citas son siempre con hora: la fila de todo el dia sobra. */
+                  allDaySlot={false}
+                  /* Sin esto el mes las pinta como punto, sin el color del estado. */
+                  eventDisplay="block"
                   nowIndicator
                   /* Dispara al montar y en cada cambio de vista, asi que
                      refleja en estado lo que el usuario eligio. Si el valor no

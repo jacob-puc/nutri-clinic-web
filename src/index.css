@@ -157,12 +157,12 @@ body .rdp-root .rdp-weekday {
 
 body .fc {
   --fc-page-bg-color: transparent;
-  --fc-border-color: color-mix(in oklab, var(--border) 78%, transparent);
+  --fc-border-color: color-mix(in oklab, var(--border) 50%, transparent);
   --fc-neutral-bg-color: var(--surface-subtle);
   /* Fuera del horario de atencion: tinte tenue, se lee como "cerrado". */
-  --fc-non-business-color: color-mix(in oklab, var(--muted-foreground) 9%, transparent);
+  --fc-non-business-color: color-mix(in oklab, var(--muted-foreground) 4%, transparent);
   --fc-neutral-text-color: var(--muted-foreground);
-  --fc-today-bg-color: color-mix(in oklab, var(--primary) 5%, transparent);
+  --fc-today-bg-color: color-mix(in oklab, var(--primary) 8%, transparent);
   --fc-highlight-color: color-mix(in oklab, var(--primary) 13%, transparent);
   --fc-now-indicator-color: var(--destructive);
   --fc-event-border-color: transparent;
@@ -184,7 +184,19 @@ body .fc .fc-toolbar-title {
 
 body .fc .fc-scrollgrid-section-header > *,
 body .fc .fc-col-header-cell {
-  background: var(--surface-subtle);
+  background: transparent;
+}
+
+body .fc.fc-theme-standard .fc-scrollgrid {
+  border: 0;
+}
+
+body .fc.fc-theme-standard th {
+  border-width: 0 0 1px;
+}
+
+body .fc .fc-daygrid-day-top {
+  flex-direction: row;
 }
 
 body .fc .fc-button {
@@ -223,12 +235,11 @@ body .fc .fc-button-primary:not(:disabled):active {
 
 body .fc .fc-col-header-cell-cushion {
   color: var(--muted-foreground);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.025em;
+  font-size: 0.875rem;
+  font-weight: 500;
   padding: 0.7rem 0.25rem;
   text-decoration: none;
-  text-transform: uppercase;
+  text-transform: capitalize;
 }
 
 body .fc .fc-daygrid-day-number {
@@ -240,8 +251,9 @@ body .fc .fc-daygrid-day-number {
   margin: 0.3rem 0.35rem 0;
   border-radius: 999px;
   color: var(--foreground);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-family: var(--font-editorial);
+  font-size: 1.05rem;
+  font-weight: 400;
   text-decoration: none;
 }
 
@@ -267,21 +279,19 @@ body .fc .fc-day-selected-nutri:not(.fc-day-today) .fc-daygrid-day-number {
 }
 
 body .fc .fc-event {
-  border: 1px solid color-mix(in oklab, currentColor 13%, transparent);
-  border-left-width: 3px;
-  border-radius: 0.55rem;
+  border: 0;
+  border-left: 3px solid transparent;
+  border-radius: 0.65rem;
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   margin: 0.22rem 0.35rem;
-  padding: 0.18rem 0.35rem;
-  box-shadow: 0 1px 2px oklch(0.22 0.03 185 / 0.09);
+  padding: 0.28rem 0.5rem;
   transition: filter 120ms ease, transform 120ms ease;
 }
 
 body .fc .fc-event:hover {
   filter: saturate(1.12) brightness(0.99);
-  transform: translateY(-1px) scale(1.01);
-  box-shadow: 0 3px 8px oklch(0.22 0.03 185 / 0.15);
+  transform: translate3d(0, -1px, 0);
   z-index: 5;
 }
 
@@ -322,6 +332,12 @@ body .fc .cita-evento__detalle {
 body .fc .fc-timegrid-event .cita-evento__contenido {
   display: block;
   padding: 0.08rem 0.1rem;
+}
+
+/* En semana y dia hay altura: cada dato va en su renglon. */
+body .fc .fc-timegrid-event .cita-evento__hora,
+body .fc .fc-timegrid-event .cita-evento__nombre {
+  display: block;
 }
 
 body .fc .fc-event:focus-visible {
@@ -743,4 +759,52 @@ body .fc .fc-popover-header {
 
 .entrada-sistema main {
   animation: vista-gpu 0.7s var(--ease-out-soft) 0.8s backwards;
+}
+
+/* ---------- Citas del dia (ver JornadaDia) ---------- */
+@keyframes carril-gpu {
+  from { transform: scaleY(0); }
+}
+
+@keyframes nodo-gpu {
+  from { transform: scale(0); }
+}
+
+@keyframes pulso-gpu {
+  from { opacity: 0.55; transform: scale(1); }
+  to { opacity: 0; transform: scale(3.2); }
+}
+
+@keyframes onda-gpu {
+  0% { opacity: 0; transform: scale(0.65); }
+  30% { opacity: 0.8; }
+  100% { opacity: 0; transform: scale(1.45); }
+}
+
+@keyframes anillo-dia {
+  from { stroke-dashoffset: var(--parte); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .carril-gpu {
+    transform-origin: top;
+    animation: carril-gpu 0.8s var(--ease-out-soft) backwards;
+  }
+  .nodo-gpu {
+    animation: nodo-gpu 0.45s var(--ease-out-soft) 0.25s backwards;
+  }
+  .nodo-pulso::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: inherit;
+    animation: pulso-gpu 2.2s var(--ease-out-soft) infinite;
+  }
+  .onda-calma {
+    animation: onda-gpu 3.6s ease-out infinite backwards;
+  }
+  .anillo-dia {
+    animation: anillo-dia 1.4s var(--ease-out-soft) 0.2s backwards;
+  }
 }
