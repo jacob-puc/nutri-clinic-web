@@ -1,10 +1,12 @@
 import { AlertTriangle, Check, Clock, Stethoscope, TrendingDown } from "lucide-react";
 
+import { AnilloImc } from "@/components/ui/anillo-imc";
 import { cn } from "@/lib/utils";
 
 /*
  * Escenas del sistema para los bloques de servicios. Van dibujadas con el diseño
- * de la app y datos de ejemplo: nunca salen de pacientes reales. Son decorativas,
+ * de la app y datos de ejemplo: nunca salen de pacientes reales. La app movil y
+ * el registro de enfermedades aun no existen, pero estan planeados. Son decorativas,
  * el titulo y el texto del bloque dicen lo mismo. Ocupan el pie del bloque y se
  * salen por abajo, recortadas por el borde redondeado.
  */
@@ -27,29 +29,8 @@ function Dato({ etiqueta, valor, className }: { etiqueta: string; valor: string;
 function EscenaMedidas() {
   return (
     <div className="relative h-72 sm:h-80">
-      <div className={cn(PANEL, "absolute -bottom-20 left-1/2 aspect-square w-[21rem] -translate-x-1/2 rounded-full p-7")}>
-        <svg viewBox="0 0 120 120" className="size-full -rotate-90">
-          <circle cx="60" cy="60" r="52" fill="none" stroke="var(--muted)" strokeWidth="9" />
-          <circle
-            cx="60"
-            cy="60"
-            r="52"
-            fill="none"
-            stroke="var(--primary)"
-            strokeWidth="9"
-            strokeLinecap="round"
-            pathLength={100}
-            strokeDasharray="52 100"
-            className="linea-dibujo"
-          />
-        </svg>
-        <div className="absolute inset-x-0 top-[23%] text-center">
-          <p className="text-muted-foreground text-sm">IMC</p>
-          <p className="font-editorial text-foreground text-6xl leading-none">24.1</p>
-          <p className="bg-success-soft text-success-soft-foreground mt-2 inline-block rounded-full px-3 py-0.5 text-xs font-medium">
-            Normal
-          </p>
-        </div>
+      <div className={cn(PANEL, "absolute -bottom-20 left-1/2 w-[21rem] -translate-x-1/2 rounded-full p-7")}>
+        <AnilloImc imc={24.1} trazo="linea-dibujo" />
       </div>
       <Dato etiqueta="Peso" valor="72.4 kg" className="top-4 left-[4%] -rotate-3" />
       <Dato etiqueta="Grasa" valor="24 %" className="top-10 right-[4%] rotate-3" />
@@ -63,13 +44,13 @@ function EscenaMedidas() {
 const DIAS = ["L", "M", "M", "J", "V", "S", "D"];
 const SEMANA = [
   { tiempo: "Desayuno", dias: [1, 1, 2, 1, 1, 1, 0] },
-  { tiempo: "Colación", dias: [1, 0, 1, 1, 0, 1, 0] },
-  { tiempo: "Comida", dias: [2, 1, 1, 2, 1, 2, 1] },
+  { tiempo: "Media mañana", dias: [1, 0, 1, 1, 0, 1, 0] },
+  { tiempo: "Almuerzo", dias: [2, 1, 1, 2, 1, 2, 1] },
   { tiempo: "Cena", dias: [1, 1, 1, 1, 2, 0, 1] },
 ];
 const MENU = [
   { tiempo: "Desayuno", plato: "Avena con fruta" },
-  { tiempo: "Comida", plato: "Pollo con arroz" },
+  { tiempo: "Almuerzo", plato: "Pollo con arroz" },
   { tiempo: "Cena", plato: "Ensalada de atún" },
 ];
 
@@ -81,7 +62,7 @@ function EscenaPlan() {
           <p className="text-foreground font-semibold">Plan semanal</p>
           <p className="bg-success-soft text-success-soft-foreground rounded-full px-2.5 py-0.5 text-xs font-medium">Activo</p>
         </div>
-        <div className="grid grid-cols-[4.5rem_repeat(7,minmax(0,1fr))] items-center gap-1.5">
+        <div className="grid grid-cols-[5.5rem_repeat(7,minmax(0,1fr))] items-center gap-1.5">
           <span />
           {DIAS.map((dia, i) => (
             <span key={i} className={cn("text-center text-xs font-semibold", i === 3 ? "text-primary" : "text-muted-foreground")}>
@@ -99,7 +80,7 @@ function EscenaPlan() {
         </div>
       </div>
 
-      {/* Telefono: el mismo plan como lo recibe el paciente. */}
+      {/* Telefono: el plan como lo vera el paciente en la app movil (planeada). */}
       <div className="escena-pieza border-foreground/85 bg-card absolute top-10 right-5 -bottom-8 hidden w-48 rounded-t-[2rem] border-[6px] border-b-0 p-4 shadow-[0_24px_46px_-20px_rgb(10_40_38/0.6)] sm:block lg:right-8">
         <p className="text-primary text-xs font-semibold">Hoy · Jueves</p>
         <div className="mt-3 space-y-2.5">
@@ -117,6 +98,11 @@ function EscenaPlan() {
 
 /* ---------- Nutricion clinica: expediente con alerta ---------- */
 
+const PREFERENCIAS = [
+  { etiqueta: "Le gustan", alimentos: ["Pollo", "Aguacate"], estilo: "bg-success-soft text-success-soft-foreground" },
+  { etiqueta: "Prefiere evitar", alimentos: ["Hígado"], estilo: "bg-muted text-muted-foreground" },
+];
+
 function EscenaClinica() {
   return (
     <div className="relative h-72 sm:h-80">
@@ -130,15 +116,31 @@ function EscenaClinica() {
             <p className="text-muted-foreground text-sm">Diabetes tipo 2</p>
           </div>
         </div>
-        <div className="mt-5 space-y-2.5">
-          {["Bajo en sodio", "Control de glucosa", "Sin azúcares añadidos"].map((texto) => (
-            <p key={texto} className="text-foreground flex items-center gap-2.5 text-[15px]">
-              <span className="bg-success-soft text-success-soft-foreground grid size-6 shrink-0 place-items-center rounded-full">
-                <Check className="size-3.5" strokeWidth={3} />
-              </span>
-              {texto}
-            </p>
-          ))}
+        <div className="mt-5 grid gap-x-5 gap-y-4 sm:grid-cols-2">
+          <div className="space-y-2.5">
+            {["Bajo en sodio", "Control de glucosa", "Sin azúcares añadidos"].map((texto) => (
+              <p key={texto} className="text-foreground flex items-center gap-2 text-sm">
+                <span className="bg-success-soft text-success-soft-foreground grid size-5 shrink-0 place-items-center rounded-full">
+                  <Check className="size-3" strokeWidth={3} />
+                </span>
+                {texto}
+              </p>
+            ))}
+          </div>
+          <dl className="space-y-3">
+            {PREFERENCIAS.map((fila) => (
+              <div key={fila.etiqueta}>
+                <dt className="text-muted-foreground text-xs">{fila.etiqueta}</dt>
+                <dd className="mt-1 flex flex-wrap gap-1.5">
+                  {fila.alimentos.map((alimento) => (
+                    <span key={alimento} className={cn("rounded-full px-2.5 py-0.5 text-sm", fila.estilo)}>
+                      {alimento}
+                    </span>
+                  ))}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </div>
       <p className="escena-pieza bg-destructive-soft text-destructive-soft-foreground border-destructive/20 absolute top-2 right-4 flex rotate-3 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold shadow-lg">

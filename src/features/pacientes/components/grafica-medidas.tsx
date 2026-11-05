@@ -14,10 +14,10 @@ import {
   YAxis,
 } from "recharts";
 
+import { AnilloImc } from "@/components/ui/anillo-imc";
 import { Card, CardContent } from "@/components/ui/card";
 import { Segmentado } from "@/components/ui/segmentado";
 import { categoriaImc } from "@/lib/formatters";
-import { cn } from "@/lib/utils";
 import { formatearInstante } from "@/lib/zona-horaria";
 import type { MedidaAntropometrica } from "@/types/api";
 
@@ -98,7 +98,6 @@ export function GraficaMedidas({
   const cambioPeso = ultima.peso - primera.peso;
   const semanas = Math.max(1, Math.round((Date.parse(ultima.fechaMedicion) - Date.parse(primera.fechaMedicion)) / 604_800_000));
   const faltaObjetivo = pesoObjetivo ? ultima.peso - pesoObjetivo : null;
-  const categoria = categoriaImc(ultima.imc);
 
   const config = SERIES[serie];
   const valores = puntos.map((p) => p.valor);
@@ -126,7 +125,9 @@ export function GraficaMedidas({
     <Card>
       <CardContent className="px-4 py-5 md:px-6">
         {/* ---------- La conclusion, en cifras ---------- */}
-        <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid items-center gap-x-10 gap-y-5 sm:grid-cols-[auto_minmax(0,1fr)]">
+          <AnilloImc imc={ultima.imc} className="mx-auto w-44 sm:mx-0 lg:w-48" />
+          <div className="grid gap-x-8 gap-y-5 lg:grid-cols-3">
           <Cifra etiqueta="Peso actual" valor={`${fmt(ultima.peso, 1)} kg`} detalle={formatearInstante(ultima.fechaMedicion, { day: "numeric", month: "short" })} />
           <Cifra
             etiqueta="Cambio total"
@@ -148,20 +149,6 @@ export function GraficaMedidas({
           ) : (
             <Cifra etiqueta="Para su objetivo" valor="—" detalle="Sin peso objetivo definido" />
           )}
-          <div>
-            <p className="text-muted-foreground text-xs">IMC actual</p>
-            <p className="text-foreground mt-0.5 text-2xl font-semibold tracking-tight tabular-nums">{fmt(ultima.imc, 1)}</p>
-            <span
-              className={cn(
-                "mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
-                categoria.tono === "success" && "bg-success-soft text-success-soft-foreground",
-                categoria.tono === "warning" && "bg-warning-soft text-warning-soft-foreground",
-                categoria.tono === "destructive" && "bg-destructive-soft text-destructive-soft-foreground",
-                categoria.tono === "info" && "bg-info-soft text-info-soft-foreground",
-              )}
-            >
-              {categoria.etiqueta}
-            </span>
           </div>
         </div>
 

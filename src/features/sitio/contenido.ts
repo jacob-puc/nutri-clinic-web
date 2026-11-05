@@ -57,7 +57,7 @@ export const SERVICIOS: Servicio[] = [
     icono: HeartPulse,
     titulo: "Nutrición clínica",
     vista: "clinica",
-    descripcion: "Acompañamiento para diabetes, hipertensión, colesterol alto y otras condiciones de salud.",
+    descripcion: "Tomamos en cuenta tus condiciones de salud, alergias y los alimentos que te gustan o prefieres evitar al armar tu plan.",
   },
   {
     icono: LineChart,
