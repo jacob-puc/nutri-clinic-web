@@ -294,10 +294,12 @@ export function AgendaPage() {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" onClick={copiarEnlaceReserva} title="Página donde los pacientes reservan solos">
-            <Link2 className="size-4" />
-            Enlace de reservación
-          </Button>
+          <TooltipSimple contenido="Copia la página donde los pacientes reservan solos">
+            <Button variant="outline" onClick={copiarEnlaceReserva}>
+              <Link2 className="size-4" />
+              Enlace de reservación
+            </Button>
+          </TooltipSimple>
 
           <Button onClick={() => setAltaAbierta(true)}>
             <CalendarPlus className="size-4" />

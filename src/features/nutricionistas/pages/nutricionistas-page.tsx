@@ -5,6 +5,7 @@ import { Building2, CalendarCheck2, CalendarOff, KeyRound, Mail, Phone, Search, 
 import { EstadoError } from "@/components/states/estado-error";
 import { EstadoVacio } from "@/components/states/estado-vacio";
 import { Button } from "@/components/ui/button";
+import { TooltipSimple } from "@/components/ui/tooltip-simple";
 import { Input } from "@/components/ui/input";
 import { Segmentado } from "@/components/ui/segmentado";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -216,10 +217,9 @@ function TarjetaPersona({
         <div className="relative">
           <AvatarPersona nombre={persona.nombreCompleto} id={persona.id} className="size-12 text-sm" />
           {enConsulta && (
-            <span
-              className="bg-success ring-card absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full ring-2"
-              title="En consulta ahora"
-            />
+            <TooltipSimple contenido="En consulta ahora">
+              <span className="bg-success ring-card absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full ring-2" />
+            </TooltipSimple>
           )}
         </div>
         <div className="min-w-0 flex-1">

@@ -11,6 +11,7 @@ import { EstadoVacio } from "@/components/states/estado-vacio";
 import { SkeletonTabla } from "@/components/states/skeleton-tabla";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { TooltipSimple } from "@/components/ui/tooltip-simple";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -338,11 +339,10 @@ function FilaPaciente({ paciente }: { paciente: Paciente }) {
 
 function InsigniaPorCompletar() {
   return (
-    <span
-      title="Se registró al reservar en línea: revisa y completa sus datos"
-      className="bg-warning-soft text-warning-soft-foreground shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
-    >
-      Por completar
-    </span>
+    <TooltipSimple contenido="Se registró al reservar en línea: revisa y completa sus datos">
+      <span className="bg-warning-soft text-warning-soft-foreground shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
+        Por completar
+      </span>
+    </TooltipSimple>
   );
 }

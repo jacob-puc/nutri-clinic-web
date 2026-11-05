@@ -21,6 +21,7 @@ import { Seccion } from "@/components/ficha/seccion";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { EstadoError } from "@/components/states/estado-error";
 import { Button } from "@/components/ui/button";
+import { TooltipSimple } from "@/components/ui/tooltip-simple";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { DESCRIPCION_ROL, permisosDe } from "@/features/auth/lib/permisos";
@@ -116,9 +117,11 @@ function Ficha({ persona, esPropia }: { persona: Nutricionista; esPropia: boolea
               </div>
               <p className="text-muted-foreground mt-0.5">{subtituloDe(persona)}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span title={DESCRIPCION_ROL[persona.rol]}>
-                  <InsigniaRol rol={persona.rol} />
-                </span>
+                <TooltipSimple contenido={DESCRIPCION_ROL[persona.rol]}>
+                  <span className="inline-flex">
+                    <InsigniaRol rol={persona.rol} />
+                  </span>
+                </TooltipSimple>
                 <EstadoCuenta persona={persona} />
               </div>
             </div>
@@ -276,14 +279,15 @@ function DatoHorario({ persona, editable }: { persona: Nutricionista; editable: 
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setEditando(true)}
-        title="Editar horario"
-        className="group hover:bg-surface-muted focus-visible:ring-ring -m-1.5 flex min-w-0 items-start gap-2.5 rounded-lg p-1.5 transition-colors focus-visible:ring-2 focus-visible:outline-none"
-      >
-        {contenido}
-      </button>
+      <TooltipSimple contenido="Editar horario">
+        <button
+          type="button"
+          onClick={() => setEditando(true)}
+          className="group hover:bg-surface-muted focus-visible:ring-ring -m-1.5 flex min-w-0 items-start gap-2.5 rounded-lg p-1.5 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+        >
+          {contenido}
+        </button>
+      </TooltipSimple>
       <DialogoHorario abierto={editando} onOpenChange={setEditando} persona={persona} horarios={horarios.data} />
     </>
   );
