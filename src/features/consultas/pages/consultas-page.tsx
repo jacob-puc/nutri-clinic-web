@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
-  CheckCircle2,
+  History,
+  ListChecks,
   Loader2,
   PlayCircle,
   Stethoscope,
@@ -22,7 +23,8 @@ import { Seccion } from "@/components/ficha/seccion";
 import { EstadoError } from "@/components/states/estado-error";
 import { EstadoVacio } from "@/components/states/estado-vacio";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Subnav } from "@/components/ui/subnav";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { mensajeDeError } from "@/lib/api-error";
 import { toast } from "sonner";
@@ -101,7 +103,7 @@ export function ConsultasPage() {
   if (citas.isError) {
     return (
       <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
-        <EncabezadoDia fecha={hoy} completadas={0} ocultarContador />
+        <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">Consultas</h1>
         <div className="mt-4">
           <EstadoError
             titulo="No pudimos cargar la agenda del día"
@@ -120,30 +122,18 @@ export function ConsultasPage() {
   const cargando = citas.isPending;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
-      <EncabezadoDia fecha={hoy} completadas={completadas} ocultarContador={cargando} />
+    <Tabs value={vista} onValueChange={cambiarVista} className="gap-0">
+      <Subnav
+        titulo="Consultas"
+        subtitulo={FORMATO_DIA.format(hoy)}
+        opciones={[
+          { valor: "cola", etiqueta: "Cola del día", icono: ListChecks, insignia: pendientes },
+          { valor: "historial", etiqueta: "Historial", icono: History, insignia: completadas },
+        ]}
+      />
 
-      <Tabs value={vista} onValueChange={cambiarVista} className="mt-4">
-        <TabsList className="w-full justify-start sm:w-auto">
-          <TabsTrigger value="cola">
-            Cola del día
-            {pendientes > 0 && (
-              <span className="bg-primary/12 text-primary ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">
-                {pendientes}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="historial">
-            Historial
-            {completadas > 0 && (
-              <span className="bg-primary/12 text-primary ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">
-                {completadas}
-              </span>
-            )}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="cola" className="mt-4 space-y-4">
+      <div className="mx-auto w-full max-w-7xl px-4 pt-3 pb-8 md:px-8 md:pb-10">
+        <TabsContent value="cola" className="space-y-4">
         {/* Lo primero de la cola es quien ya esta adentro: una consulta que se
             dejo a medias se retoma desde aqui, no se vuelve a iniciar. */}
         {(abiertas.data?.length ?? 0) > 0 && (
@@ -221,42 +211,11 @@ export function ConsultasPage() {
         )}
         </TabsContent>
 
-        <TabsContent value="historial" className="mt-4">
+        <TabsContent value="historial">
           <HistorialConsultas />
         </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
-
-function EncabezadoDia({
-  fecha,
-  completadas,
-  ocultarContador,
-}: {
-  fecha: Date;
-  completadas: number;
-  ocultarContador: boolean;
-}) {
-  return (
-    <div className="flex flex-wrap items-end justify-between gap-3 pb-2">
-      <div>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">
-          Consultas
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm first-letter:uppercase">
-          {FORMATO_DIA.format(fecha)}
-        </p>
       </div>
-
-      {!ocultarContador && completadas > 0 && (
-        <p className="text-muted-foreground flex items-center gap-1.5 text-sm">
-          <CheckCircle2 className="text-success size-4" aria-hidden />
-          <span className="tabular-nums">{completadas}</span>{" "}
-          {completadas === 1 ? "consulta cerrada" : "consultas cerradas"} hoy
-        </p>
-      )}
-    </div>
+    </Tabs>
   );
 }
 

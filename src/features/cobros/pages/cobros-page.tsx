@@ -1,7 +1,8 @@
 import { useSearchParams } from "react-router-dom";
-import { Building2, FileText, Receipt, Wallet, type LucideIcon } from "lucide-react";
+import { Building2, FileText, Receipt, Wallet } from "lucide-react";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Subnav, type OpcionSubnav } from "@/components/ui/subnav";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { TabDatosClinica } from "@/features/cobros/components/tab-datos-clinica";
 import { TabFacturas } from "@/features/cobros/components/tab-facturas";
 import { TabPagos } from "@/features/cobros/components/tab-pagos";
@@ -10,7 +11,7 @@ import { TabPorCobrar } from "@/features/cobros/components/tab-por-cobrar";
 type Vista = "pendientes" | "cobros" | "facturas" | "clinica";
 
 /* Ordenadas por frecuencia: lo pendiente primero, la configuracion al final. */
-const VISTAS: { valor: Vista; etiqueta: string; icono: LucideIcon }[] = [
+const VISTAS: (OpcionSubnav & { valor: Vista })[] = [
   { valor: "pendientes", etiqueta: "Por cobrar", icono: Wallet },
   { valor: "cobros", etiqueta: "Cobros y corte", icono: Receipt },
   { valor: "facturas", etiqueta: "Facturas", icono: FileText },
@@ -42,39 +43,27 @@ export function CobrosPage() {
     );
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
-      <div className="pb-2">
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">Cobros</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Las consultas se cobran al cerrarlas; aquí queda lo pendiente, los cortes y las facturas.
-        </p>
-      </div>
+    <Tabs value={vista} onValueChange={cambiarVista} className="gap-0">
+      <Subnav
+        titulo="Cobros"
+        ayuda="Las consultas se cobran al cerrarlas; aquí queda lo pendiente, los cortes y las facturas."
+        opciones={VISTAS}
+      />
 
-      <Tabs value={vista} onValueChange={cambiarVista} className="mt-4">
-        <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
-          <TabsList className="w-max justify-start">
-            {VISTAS.map(({ valor, etiqueta, icono: Icono }) => (
-              <TabsTrigger key={valor} value={valor}>
-                <Icono className="size-4" />
-                {etiqueta}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
-
-        <TabsContent value="pendientes" className="mt-5">
+      <div className="mx-auto w-full max-w-7xl px-4 pt-3 pb-8 md:px-8 md:pb-10">
+        <TabsContent value="pendientes">
           <TabPorCobrar />
         </TabsContent>
-        <TabsContent value="cobros" className="mt-5">
+        <TabsContent value="cobros">
           <TabPagos />
         </TabsContent>
-        <TabsContent value="facturas" className="mt-5">
+        <TabsContent value="facturas">
           <TabFacturas />
         </TabsContent>
-        <TabsContent value="clinica" className="mt-5">
+        <TabsContent value="clinica">
           <TabDatosClinica />
         </TabsContent>
-      </Tabs>
-    </div>
+      </div>
+    </Tabs>
   );
 }

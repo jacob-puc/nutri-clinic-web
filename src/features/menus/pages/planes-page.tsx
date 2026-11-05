@@ -1,7 +1,8 @@
 import { useSearchParams } from "react-router-dom";
-import { Apple, CalendarRange, ClipboardCheck, UtensilsCrossed, type LucideIcon } from "lucide-react";
+import { Apple, CalendarRange, ClipboardCheck, UtensilsCrossed } from "lucide-react";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Subnav, type OpcionSubnav } from "@/components/ui/subnav";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { TabAlimentos } from "@/features/menus/components/tab-alimentos";
 import { TabPlanes } from "@/features/menus/components/tab-planes";
 import { TabPlantillas } from "@/features/menus/components/tab-plantillas";
@@ -12,7 +13,7 @@ type Vista = "planes" | "plantillas" | "platos" | "alimentos";
 /* Ordenadas de lo que se usa a diario a lo que se configura una vez: el
    plan del paciente sale de una plantilla, la plantilla de platos y los
    platos de alimentos. */
-const VISTAS: { valor: Vista; etiqueta: string; icono: LucideIcon }[] = [
+const VISTAS: (OpcionSubnav & { valor: Vista })[] = [
   { valor: "planes", etiqueta: "Planes de pacientes", icono: ClipboardCheck },
   { valor: "plantillas", etiqueta: "Plantillas", icono: CalendarRange },
   { valor: "platos", etiqueta: "Platos", icono: UtensilsCrossed },
@@ -41,42 +42,29 @@ export function PlanesPage() {
     );
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
-      <div className="pb-2">
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">Planes nutricionales</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Los alimentos forman platos, los platos arman plantillas semanales y cada plantilla se ajusta como el plan de
-          un paciente.
-        </p>
-      </div>
+    <Tabs value={vista} onValueChange={cambiarVista} className="gap-0">
+      <Subnav
+        titulo="Planes nutricionales"
+        ayuda="Los alimentos forman platos, los platos arman plantillas semanales y cada plantilla se ajusta como el plan de un paciente."
+        opciones={VISTAS}
+      />
 
-      <Tabs value={vista} onValueChange={cambiarVista} className="mt-4">
-        <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
-          <TabsList className="w-max justify-start">
-            {VISTAS.map(({ valor, etiqueta, icono: Icono }) => (
-              <TabsTrigger key={valor} value={valor}>
-                <Icono className="size-4" />
-                {etiqueta}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
-
+      <div className="mx-auto w-full max-w-7xl px-4 pt-3 pb-8 md:px-8 md:pb-10">
         {/* Cada pestaña pide sus datos al montarse; Radix desmonta las
             inactivas, asi que solo se consulta lo que se esta viendo. */}
-        <TabsContent value="planes" className="mt-5">
+        <TabsContent value="planes">
           <TabPlanes />
         </TabsContent>
-        <TabsContent value="plantillas" className="mt-5">
+        <TabsContent value="plantillas">
           <TabPlantillas />
         </TabsContent>
-        <TabsContent value="platos" className="mt-5">
+        <TabsContent value="platos">
           <TabPlatos />
         </TabsContent>
-        <TabsContent value="alimentos" className="mt-5">
+        <TabsContent value="alimentos">
           <TabAlimentos />
         </TabsContent>
-      </Tabs>
-    </div>
+      </div>
+    </Tabs>
   );
 }
