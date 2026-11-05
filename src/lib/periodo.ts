@@ -32,7 +32,7 @@ export interface PeriodoResuelto {
 const partes = (clave: ClaveDia) => clave.split("-").map(Number) as [number, number, number];
 const dos = (n: number) => String(n).padStart(2, "0");
 
-function lunesDe(clave: ClaveDia): ClaveDia {
+export function lunesDe(clave: ClaveDia): ClaveDia {
   const [anio, mes, dia] = partes(clave);
   const diaSemana = new Date(Date.UTC(anio, mes - 1, dia)).getUTCDay();
   return sumarDias(clave, -((diaSemana + 6) % 7));
