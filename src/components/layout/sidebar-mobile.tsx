@@ -1,5 +1,5 @@
 import { useSidebar } from "@/components/layout/sidebar-context";
-import { SidebarNav } from "@/components/layout/sidebar-nav";
+import { SidebarNav, SidebarPie } from "@/components/layout/sidebar-nav";
 import { MarcaSidebar } from "@/components/layout/sidebar";
 import type { InsigniasNav, ModulosOcultos } from "@/components/layout/nav-items";
 import {
@@ -29,6 +29,7 @@ export function SidebarMobile({ insignias, ocultos }: { insignias?: InsigniasNav
         <div className="flex flex-1 flex-col px-3 py-5">
           {/* El drawer nunca se pliega: siempre muestra los labels. */}
           <SidebarNav collapsed={false} insignias={insignias} ocultos={ocultos} onNavigate={() => setMobileOpen(false)} />
+          <SidebarPie collapsed={false} ocultos={ocultos} onNavigate={() => setMobileOpen(false)} className="pt-4" />
         </div>
       </SheetContent>
     </Sheet>

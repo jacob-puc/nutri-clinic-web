@@ -1,7 +1,7 @@
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { LogoNutriClinica } from "@/components/layout/logo";
-import { SidebarNav } from "@/components/layout/sidebar-nav";
+import { SidebarNav, SidebarPie } from "@/components/layout/sidebar-nav";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/layout/sidebar-context";
 import { TooltipSimple } from "@/components/ui/tooltip-simple";
@@ -78,6 +78,8 @@ export function Sidebar({ insignias, ocultos }: { insignias?: InsigniasNav; ocul
       <div className={cn("scrollbar-slim flex flex-1 flex-col overflow-y-auto py-5", collapsed ? "px-2" : "px-3")}>
         <SidebarNav collapsed={collapsed} insignias={insignias} ocultos={ocultos} />
       </div>
+
+      <SidebarPie collapsed={collapsed} ocultos={ocultos} className={cn("pb-2", collapsed ? "px-2" : "px-3")} />
 
       <div className={cn("border-sidebar-border flex flex-col gap-1 border-t p-2.5", collapsed && "items-center px-2")}>
         {collapsed && (

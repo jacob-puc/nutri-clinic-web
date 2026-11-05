@@ -191,6 +191,25 @@ function EtiquetaGrupo({ children }: { children: string }) {
   );
 }
 
+/** Enlaces fijos al pie del menu, fuera del scroll: siempre a la vista sobre el perfil. */
+export function SidebarPie({
+  collapsed,
+  onNavigate,
+  ocultos = SIN_OCULTOS,
+  className,
+}: Pick<SidebarNavProps, "collapsed" | "onNavigate" | "ocultos"> & { className?: string }) {
+  const modulos = MODULOS_NAV.filter((m) => m.activo && m.grupo === "pie" && !ocultos.has(m.href));
+  if (modulos.length === 0) return null;
+
+  return (
+    <nav aria-label="Ajustes" className={cn("flex shrink-0 flex-col gap-1", className)}>
+      {modulos.map((modulo) => (
+        <SidebarLink key={modulo.href} modulo={modulo} collapsed={collapsed} onNavigate={onNavigate} />
+      ))}
+    </nav>
+  );
+}
+
 export function SidebarNav({ collapsed, onNavigate, insignias = {}, ocultos = SIN_OCULTOS }: SidebarNavProps) {
   const grupos = GRUPOS.map((g) => ({
     ...g,

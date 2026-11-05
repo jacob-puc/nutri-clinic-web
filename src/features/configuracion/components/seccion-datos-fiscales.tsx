@@ -16,19 +16,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePermisos } from "@/features/auth/hooks/use-permisos";
 import { useActualizarDatosClinica, useDatosClinica } from "@/features/cobros/hooks/use-cobros";
 import { REGIMENES } from "@/features/cobros/lib/cobros";
 import { mensajeDeError } from "@/lib/api-error";
 import type { ActualizarDatosFiscalesClinicaDto, DatosFiscalesClinica, RegimenFiscal } from "@/types/api";
 
 /** Datos de la clinica como emisor: salen en recibos y facturas. */
-export function TabDatosClinica() {
+export function SeccionDatosFiscales() {
   const datos = useDatosClinica();
 
   if (datos.isPending) {
     return (
-      <div className="hoja max-w-3xl space-y-4 rounded-xl p-6">
+      <div className="hoja mx-auto max-w-3xl space-y-4 rounded-xl p-6">
         <Skeleton className="h-5 w-48" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
@@ -58,8 +57,6 @@ const VACIO: ActualizarDatosFiscalesClinicaDto = {
 
 function Formulario({ inicial }: { inicial: DatosFiscalesClinica | null }) {
   const guardar = useActualizarDatosClinica();
-  /* Solo el administrador cambia los datos de la clinica; el resto los consulta. */
-  const { configurarClinica } = usePermisos();
   const [datos, setDatos] = useState<ActualizarDatosFiscalesClinicaDto>(() =>
     inicial
       ? {
@@ -115,13 +112,7 @@ function Formulario({ inicial }: { inicial: DatosFiscalesClinica | null }) {
   );
 
   return (
-    <form onSubmit={enviar} noValidate className="hoja max-w-3xl space-y-6 rounded-xl p-5 md:p-6">
-      {!configurarClinica && (
-        <p className="bg-info-soft text-info-soft-foreground rounded-lg px-3 py-2.5 text-sm">
-          Solo un administrador puede cambiar los datos fiscales de la clínica.
-        </p>
-      )}
-      <fieldset disabled={!configurarClinica} className="min-w-0 space-y-6">
+    <form onSubmit={enviar} noValidate className="hoja mx-auto max-w-3xl space-y-6 rounded-xl p-5 md:p-6">
       {!inicial && (
         <AlertaFormulario>
           La clínica todavía no tiene datos fiscales: sin ellos no se pueden emitir facturas.
@@ -170,18 +161,14 @@ function Formulario({ inicial }: { inicial: DatosFiscalesClinica | null }) {
         </div>
       </GrupoCampos>
 
-      </fieldset>
-
       {errorGeneral && <AlertaFormulario>{errorGeneral}</AlertaFormulario>}
 
-      {configurarClinica && (
-        <div className="flex justify-end">
-          <Button type="submit" disabled={guardar.isPending}>
-            {guardar.isPending && <Loader2 className="size-4 animate-spin" />}
-            Guardar datos fiscales
-          </Button>
-        </div>
-      )}
+      <div className="flex justify-end">
+        <Button type="submit" disabled={guardar.isPending}>
+          {guardar.isPending && <Loader2 className="size-4 animate-spin" />}
+          Guardar datos fiscales
+        </Button>
+      </div>
     </form>
   );
 }

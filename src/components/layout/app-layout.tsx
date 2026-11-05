@@ -19,6 +19,7 @@ export function AppLayout() {
   }
   if (!permisos.gestionarEquipo) ocultos.add("/nutricionistas");
   if (!permisos.verReportes) ocultos.add("/reportes");
+  if (!permisos.configurarClinica) ocultos.add("/configuracion");
 
   return (
     <div className="bg-background flex h-dvh overflow-hidden">

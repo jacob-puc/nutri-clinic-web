@@ -1,21 +1,19 @@
 import { useSearchParams } from "react-router-dom";
-import { Building2, FileText, Receipt, Wallet } from "lucide-react";
+import { FileText, Receipt, Wallet } from "lucide-react";
 
 import { Subnav, type OpcionSubnav } from "@/components/ui/subnav";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { TabDatosClinica } from "@/features/cobros/components/tab-datos-clinica";
 import { TabFacturas } from "@/features/cobros/components/tab-facturas";
 import { TabPagos } from "@/features/cobros/components/tab-pagos";
 import { TabPorCobrar } from "@/features/cobros/components/tab-por-cobrar";
 
-type Vista = "pendientes" | "cobros" | "facturas" | "clinica";
+type Vista = "pendientes" | "cobros" | "facturas";
 
-/* Ordenadas por frecuencia: lo pendiente primero, la configuracion al final. */
+/* Ordenadas por frecuencia: lo pendiente primero. */
 const VISTAS: (OpcionSubnav & { valor: Vista })[] = [
   { valor: "pendientes", etiqueta: "Por cobrar", icono: Wallet },
   { valor: "cobros", etiqueta: "Cobros y corte", icono: Receipt },
   { valor: "facturas", etiqueta: "Facturas", icono: FileText },
-  { valor: "clinica", etiqueta: "Datos fiscales", icono: Building2 },
 ];
 
 function esVista(valor: string | null): valor is Vista {
@@ -24,8 +22,8 @@ function esVista(valor: string | null): valor is Vista {
 
 /**
  * Lo que no se resolvio al cerrar la consulta: cobros pendientes, el corte
- * del dia, las facturas que se piden despues y los datos fiscales de la
- * clinica. El cobro del dia a dia se hace al cerrar la consulta.
+ * del dia y las facturas que se piden despues. El cobro del dia a dia se hace
+ * al cerrar la consulta.
  */
 export function CobrosPage() {
   const [parametros, setParametros] = useSearchParams();
@@ -59,9 +57,6 @@ export function CobrosPage() {
         </TabsContent>
         <TabsContent value="facturas" className="anim-vista">
           <TabFacturas />
-        </TabsContent>
-        <TabsContent value="clinica" className="anim-vista">
-          <TabDatosClinica />
         </TabsContent>
       </div>
     </Tabs>

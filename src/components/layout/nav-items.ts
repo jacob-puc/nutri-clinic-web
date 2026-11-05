@@ -4,13 +4,14 @@ import {
   ClipboardList,
   LayoutDashboard,
   type LucideIcon,
+  Settings,
   Stethoscope,
   UtensilsCrossed,
   Users,
   Wallet,
 } from "lucide-react";
 
-export type GrupoNav = "hoy" | "clinica" | "gestion";
+export type GrupoNav = "hoy" | "clinica" | "gestion" | "pie";
 
 export interface ModuloNav {
   label: string;
@@ -18,7 +19,7 @@ export interface ModuloNav {
   icon: LucideIcon;
   activo: boolean;
   descripcion: string;
-  /** Solo los activos: "hoy" es el flujo del dia, "clinica" lo de consulta y armado. */
+  /** Solo los activos: "hoy" es el flujo del dia, "clinica" lo de consulta y armado; "pie" va fijo sobre el perfil. */
   grupo?: GrupoNav;
 }
 
@@ -104,5 +105,13 @@ export const MODULOS_NAV: ModuloNav[] = [
     activo: true,
     descripcion: "Ingresos de la clínica por periodo",
     grupo: "gestion",
+  },
+  {
+    label: "Configuración",
+    href: "/configuracion",
+    icon: Settings,
+    activo: true,
+    descripcion: "Datos fiscales y horario de la clínica",
+    grupo: "pie",
   },
 ];

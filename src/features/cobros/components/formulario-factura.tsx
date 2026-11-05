@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePermisos } from "@/features/auth/hooks/use-permisos";
 import { useDatosClinica, useEmitirFactura, useUltimosDatosFiscales } from "@/features/cobros/hooks/use-cobros";
 import {
   formatearMoneda,
@@ -46,6 +47,7 @@ export function FormularioFactura({
 }) {
   const ultimos = useUltimosDatosFiscales(pago.pacienteId);
   const clinica = useDatosClinica();
+  const { configurarClinica } = usePermisos();
 
   if (ultimos.cargando || clinica.isPending) {
     return (
@@ -60,11 +62,18 @@ export function FormularioFactura({
   if (clinica.data === null) {
     return (
       <AlertaFormulario>
-        La clínica todavía no tiene datos fiscales. Configúralos en{" "}
-        <Link to="/cobros?vista=clinica" className="font-semibold underline">
-          Cobros → Datos fiscales
-        </Link>{" "}
-        para poder facturar.
+        La clínica todavía no tiene datos fiscales.{" "}
+        {configurarClinica ? (
+          <>
+            Configúralos en{" "}
+            <Link to="/configuracion" className="font-semibold underline">
+              Configuración
+            </Link>{" "}
+            para poder facturar.
+          </>
+        ) : (
+          "Pídele a un administrador que los capture para poder facturar."
+        )}
       </AlertaFormulario>
     );
   }

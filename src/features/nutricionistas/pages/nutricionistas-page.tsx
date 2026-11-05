@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Building2, CalendarCheck2, CalendarOff, KeyRound, Mail, Phone, Search, UserPlus, Users } from "lucide-react";
+import { CalendarCheck2, CalendarOff, KeyRound, Mail, Phone, Search, UserPlus, Users } from "lucide-react";
 
 import { EstadoError } from "@/components/states/estado-error";
 import { EstadoVacio } from "@/components/states/estado-vacio";
@@ -14,7 +14,6 @@ import { atiendePacientes } from "@/features/auth/lib/permisos";
 import { useCitas } from "@/features/citas/hooks/use-citas";
 import { AvatarPersona, InsigniaRol } from "@/features/nutricionistas/components/comunes";
 import { DialogoNutricionista } from "@/features/nutricionistas/components/dialogo-nutricionista";
-import { DialogoHorarioClinica } from "@/features/nutricionistas/components/dialogos-horario";
 import { useAusencias, useHorarios, useNutricionistas } from "@/features/nutricionistas/hooks/use-nutricionistas";
 import { bloquesDelDia, diaDeClave, diaNoDisponible, reglasDe, textoBloques, type ReglasAgenda } from "@/features/nutricionistas/lib/horario";
 import { subtituloDe } from "@/features/nutricionistas/lib/equipo";
@@ -36,7 +35,6 @@ export function NutricionistasPage() {
   const [vista, setVista] = useState<Vista>("activos");
   const [busqueda, setBusqueda] = useState("");
   const [creando, setCreando] = useState(false);
-  const [horarioClinica, setHorarioClinica] = useState(false);
   const horarios = useHorarios();
   const ausencias = useAusencias();
 
@@ -88,16 +86,10 @@ export function NutricionistasPage() {
             )}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setHorarioClinica(true)} disabled={!horarios.data}>
-            <Building2 className="size-4" />
-            Horario de la clínica
-          </Button>
-          <Button onClick={() => setCreando(true)}>
-            <UserPlus className="size-4" />
-            Agregar al equipo
-          </Button>
-        </div>
+        <Button onClick={() => setCreando(true)}>
+          <UserPlus className="size-4" />
+          Agregar al equipo
+        </Button>
       </div>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -175,9 +167,6 @@ export function NutricionistasPage() {
         onOpenChange={setCreando}
         onCreada={(persona) => navigate(`/nutricionistas/${persona.id}`)}
       />
-      {horarios.data && (
-        <DialogoHorarioClinica abierto={horarioClinica} onOpenChange={setHorarioClinica} horarios={horarios.data} />
-      )}
     </div>
   );
 }

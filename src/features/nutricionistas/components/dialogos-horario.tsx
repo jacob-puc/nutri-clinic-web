@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Building2, Clock, Loader2 } from "lucide-react";
+import { Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
 import { AlertaFormulario, GrupoCampos } from "@/components/ui/grupo-campos";
 import { Segmentado } from "@/components/ui/segmentado";
 import { EditorHorario } from "@/features/nutricionistas/components/editor-horario";
-import { useActualizarHorario, useActualizarHorarioClinica } from "@/features/nutricionistas/hooks/use-nutricionistas";
+import { useActualizarHorario } from "@/features/nutricionistas/hooks/use-nutricionistas";
 import { problemaBloques, resumenSemana } from "@/features/nutricionistas/lib/horario";
 import { mensajeDeError } from "@/lib/api-error";
 import type { BloqueHorario, Horarios, Nutricionista } from "@/types/api";
@@ -147,73 +147,3 @@ function ContenidoPersona({
   );
 }
 
-/** Horario general: lo usa todo el que no tiene uno propio. Solo administrador. */
-export function DialogoHorarioClinica({
-  abierto,
-  onOpenChange,
-  horarios,
-}: {
-  abierto: boolean;
-  onOpenChange: (abierto: boolean) => void;
-  horarios: Horarios;
-}) {
-  return (
-    <Dialog open={abierto} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-2xl">
-        {abierto && <ContenidoClinica horarios={horarios} onCerrar={() => onOpenChange(false)} />}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function ContenidoClinica({ horarios, onCerrar }: { horarios: Horarios; onCerrar: () => void }) {
-  const guardar = useActualizarHorarioClinica();
-  const [bloques, setBloques] = useState<BloqueHorario[]>(horarios.clinica);
-  const [error, setError] = useState<string | null>(null);
-  const usanClinica = horarios.personas.filter((p) => !p.horarioPropio).length;
-
-  const enviar = async () => {
-    setError(null);
-    const problema = problemaBloques(bloques);
-    if (problema) return setError(problema);
-    try {
-      await guardar.mutateAsync(bloques);
-      toast.success("Horario de la clínica guardado");
-      onCerrar();
-    } catch (err) {
-      setError(mensajeDeError(err));
-    }
-  };
-
-  return (
-    <>
-      <DialogHeader icono={Building2}>
-        <DialogTitle>Horario de la clínica</DialogTitle>
-        <DialogDescription>
-          {usanClinica === 0
-            ? "Nadie lo usa ahora: todo el equipo tiene horario propio."
-            : `Lo ${usanClinica === 1 ? "usa 1 persona" : `usan ${usanClinica} personas`} sin horario propio.`}
-        </DialogDescription>
-      </DialogHeader>
-
-      <EditorHorario bloques={bloques} onChange={setBloques} />
-      {bloques.length === 0 && (
-        <p className="text-muted-foreground text-xs">
-          Sin bloques, a quien use el horario de la clínica se le podrá agendar a cualquier hora.
-        </p>
-      )}
-
-      {error && <AlertaFormulario>{error}</AlertaFormulario>}
-
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onCerrar}>
-          Cancelar
-        </Button>
-        <Button type="button" onClick={() => void enviar()} disabled={guardar.isPending}>
-          {guardar.isPending && <Loader2 className="size-4 animate-spin" />}
-          Guardar horario
-        </Button>
-      </DialogFooter>
-    </>
-  );
-}
