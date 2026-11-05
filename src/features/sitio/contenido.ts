@@ -1,12 +1,14 @@
 import {
   Activity,
-  CalendarHeart,
+  CalendarCheck2,
   ClipboardList,
   HeartPulse,
   LineChart,
   Salad,
   type LucideIcon,
 } from "lucide-react";
+
+import type { VistaServicio } from "@/features/sitio/components/vistas-servicio";
 
 /*
  * Textos de la pagina publica. Viven aqui (y no en la base de datos) porque
@@ -16,8 +18,9 @@ import {
  */
 
 export const HERO = {
-  etiqueta: "Consulta nutricional profesional",
-  titulo: "Come mejor, con un plan hecho para ti",
+  titulo: "Come mejor, con un plan",
+  /* Va en cursiva y color: es lo que distingue a la clinica. */
+  acento: "hecho para ti.",
   descripcion:
     "Te acompañamos con valoración clínica, un plan de alimentación a tu medida y seguimiento consulta a consulta para que veas tu avance.",
   puntos: ["Reserva en línea en 2 minutos", "Plan y menú personalizados", "Seguimiento de tu evolución"],
@@ -27,6 +30,9 @@ export interface Servicio {
   icono: LucideIcon;
   titulo: string;
   descripcion: string;
+  /** Con vista, el servicio va en tarjeta con una muestra del sistema. */
+  vista?: VistaServicio;
+  enlace?: { texto: string; href: string };
 }
 
 export const SERVICIOS: Servicio[] = [
@@ -38,27 +44,32 @@ export const SERVICIOS: Servicio[] = [
   {
     icono: Activity,
     titulo: "Composición corporal",
+    vista: "medidas",
     descripcion: "Peso, estatura, IMC, porcentaje de grasa y masa muscular, y medidas de cintura y cadera.",
   },
   {
     icono: Salad,
     titulo: "Plan de alimentación",
+    vista: "plan",
     descripcion: "Un menú semanal con platillos que te gustan, adaptado a tus alergias y a tu rutina.",
   },
   {
     icono: HeartPulse,
     titulo: "Nutrición clínica",
+    vista: "clinica",
     descripcion: "Acompañamiento para diabetes, hipertensión, colesterol alto y otras condiciones de salud.",
   },
   {
     icono: LineChart,
     titulo: "Seguimiento",
+    vista: "seguimiento",
     descripcion: "Consultas de control para ajustar el plan y medir tu progreso con gráficas claras.",
   },
   {
-    icono: CalendarHeart,
-    titulo: "Hábitos sostenibles",
-    descripcion: "Cambios realistas que puedas mantener, sin dietas extremas ni prohibiciones innecesarias.",
+    icono: CalendarCheck2,
+    titulo: "Reserva en línea",
+    descripcion: "Elige profesional, día y hora desde tu celular, sin llamadas ni esperas.",
+    enlace: { texto: "Reservar ahora", href: "/reservar" },
   },
 ];
 

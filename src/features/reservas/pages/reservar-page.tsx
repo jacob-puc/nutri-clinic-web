@@ -68,7 +68,7 @@ export function ReservarPage() {
 
   return (
     <SitioPublico>
-      <main className="mx-auto w-full max-w-4xl px-4 pt-10 pb-16">
+      <main className="mx-auto w-full max-w-[84rem] px-4 pt-8 pb-20">
         {opciones.isPending ? (
           <div className="space-y-4">
             <Skeleton className="h-9 w-64" />
@@ -131,16 +131,16 @@ function Asistente({ opciones }: { opciones: OpcionesReserva }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1.5">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Reserva tu cita</h1>
-        <p className="text-muted-foreground text-sm sm:text-base">
-          {opciones.clinica.nombre} · Elige el horario que te acomode; te contactaremos para confirmarla.
-        </p>
-      </div>
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] lg:items-start lg:gap-8">
+      <PanelReserva
+        pasos={pasos}
+        actual={paso}
+        profesional={paso === "profesional" ? undefined : eleccion.profesional}
+        hora={hora}
+      />
 
-      <Indicador pasos={pasos} actual={paso} />
-
+      {/* La llave repite la entrada al cambiar de paso. */}
+      <div key={paso} className="anim-vista min-w-0">
       {paso === "profesional" && (
         <PasoProfesional
           profesionales={opciones.profesionales}
@@ -184,6 +184,61 @@ function Asistente({ opciones }: { opciones: OpcionesReserva }) {
           }}
         />
       )}
+      </div>
+    </div>
+  );
+}
+
+/** Panel fijo: en que paso vas y como va quedando tu cita. */
+function PanelReserva({
+  pasos,
+  actual,
+  profesional,
+  hora,
+}: {
+  pasos: { id: Paso; etiqueta: string }[];
+  actual: Paso;
+  /** undefined: aun no se elige; null: con quien este disponible. */
+  profesional: ProfesionalPublico | null | undefined;
+  hora: HoraElegida | null;
+}) {
+  return (
+    <aside className="banda-equipo rounded-[2rem] p-7 text-white sm:p-9 lg:sticky lg:top-6">
+      <h1 className="font-editorial text-4xl leading-[1.05] font-normal tracking-tight sm:text-5xl">Reserva tu cita</h1>
+      <p className="mt-3 text-lg text-pretty text-white/75">
+        Elige el horario que te acomode; te contactaremos para confirmarla.
+      </p>
+
+      <div className="mt-7">
+        <Indicador pasos={pasos} actual={actual} />
+      </div>
+
+      {profesional !== undefined && (
+        <dl className="mt-7 space-y-3 border-t border-white/15 pt-6">
+          <DatoCita etiqueta="Con">{profesional?.nombre ?? "Quien esté disponible"}</DatoCita>
+          {hora && (
+            <>
+              <DatoCita etiqueta="Día">
+                <span className="block first-letter:uppercase">
+                  {formatearCalendario(hora.fecha, { weekday: "long", day: "numeric", month: "long" })}
+                </span>
+              </DatoCita>
+              <DatoCita etiqueta="Hora">
+                {hora.hora} h{profesional && ` · ${profesional.duracionMinutos} min`}
+              </DatoCita>
+            </>
+          )}
+        </dl>
+      )}
+    </aside>
+  );
+}
+
+function DatoCita({ etiqueta, children }: { etiqueta: string; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[3.5rem_minmax(0,1fr)] gap-2">
+      <dt className="text-white/60">{etiqueta}</dt>
+      <dd className="font-medium">{children}</dd>
     </div>
   );
 }
@@ -191,26 +246,25 @@ function Asistente({ opciones }: { opciones: OpcionesReserva }) {
 function Indicador({ pasos, actual }: { pasos: { id: Paso; etiqueta: string }[]; actual: Paso }) {
   const indice = pasos.findIndex((p) => p.id === actual);
   return (
-    <ol className="flex items-center gap-2 text-sm">
+    <ol className="flex gap-3 lg:flex-col">
       {pasos.map((p, i) => {
         const hecho = i < indice;
         const activo = i === indice;
         return (
-          <li key={p.id} className="flex flex-1 items-center gap-2 last:flex-none">
+          <li key={p.id} aria-current={activo ? "step" : undefined} className="flex items-center gap-3">
             <span
               className={cn(
-                "grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold",
-                hecho && "bg-primary text-primary-foreground",
-                activo && "bg-primary-soft text-primary-soft-foreground ring-primary ring-2",
-                !hecho && !activo && "bg-surface-subtle text-muted-foreground",
+                "grid size-9 shrink-0 place-items-center rounded-full text-sm font-semibold transition-colors",
+                hecho && "bg-white/20 text-white",
+                activo && "bg-white text-[var(--brand-900)]",
+                !hecho && !activo && "text-white/60 ring-1 ring-white/25",
               )}
             >
-              {hecho ? <Check className="size-3.5" aria-hidden /> : i + 1}
+              {hecho ? <Check className="size-4" aria-hidden /> : i + 1}
             </span>
-            <span className={cn("hidden font-medium sm:inline", activo ? "text-foreground" : "text-muted-foreground")}>
+            <span className={cn("hidden text-base font-medium sm:inline", activo ? "text-white" : "text-white/65")}>
               {p.etiqueta}
             </span>
-            {i < pasos.length - 1 && <span className="bg-border h-px flex-1" aria-hidden />}
           </li>
         );
       })}
@@ -218,7 +272,11 @@ function Indicador({ pasos, actual }: { pasos: { id: Paso; etiqueta: string }[];
   );
 }
 
+const TITULO_PASO = "font-editorial text-3xl leading-tight font-normal tracking-tight sm:text-4xl";
+
 /* ---------- Paso 1: con quien ---------- */
+
+const TINTES = ["tinte-durazno", "tinte-menta", "tinte-arena"];
 
 function PasoProfesional({
   profesionales,
@@ -228,26 +286,22 @@ function PasoProfesional({
   onElegir: (p: ProfesionalPublico | null) => void;
 }) {
   return (
-    <section className="space-y-3">
-      <h2 className="font-semibold">¿Con quién quieres tu cita?</h2>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Tarjeta onClick={() => onElegir(null)}>
-          <span className="bg-primary-soft text-primary-soft-foreground grid size-10 shrink-0 place-items-center rounded-full">
-            <Users className="size-5" aria-hidden />
+    <section className="space-y-5">
+      <h2 className={TITULO_PASO}>¿Con quién quieres tu cita?</h2>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Tarjeta tinte="tinte-marca" onClick={() => onElegir(null)}>
+          <span className="bg-primary text-primary-foreground grid size-16 place-items-center rounded-full">
+            <Users className="size-7" aria-hidden />
           </span>
-          <span className="min-w-0">
-            <span className="block font-semibold">Con quien esté disponible</span>
-            <span className="text-muted-foreground block text-sm">Más horarios para elegir</span>
-          </span>
+          <span className="font-editorial mt-5 block text-2xl leading-tight">Con quien esté disponible</span>
+          <span className="text-foreground/70 mt-1 block text-base">Más horarios para elegir</span>
         </Tarjeta>
-        {profesionales.map((p) => (
-          <Tarjeta key={p.id} onClick={() => onElegir(p)}>
-            <AvatarPersona nombre={p.nombre} id={p.id} />
-            <span className="min-w-0">
-              <span className="block truncate font-semibold">{p.nombre}</span>
-              <span className="text-muted-foreground block truncate text-sm">
-                {p.especialidad ?? "Nutrición"} · {p.duracionMinutos} min
-              </span>
+        {profesionales.map((p, i) => (
+          <Tarjeta key={p.id} tinte={TINTES[i % TINTES.length]!} onClick={() => onElegir(p)}>
+            <AvatarPersona nombre={p.nombre} id={p.id} className="size-16 text-lg" />
+            <span className="font-editorial mt-5 block text-2xl leading-tight">{p.nombre}</span>
+            <span className="text-foreground/70 mt-1 block text-base">
+              {p.especialidad ?? "Nutrición"} · {p.duracionMinutos} min
             </span>
           </Tarjeta>
         ))}
@@ -256,15 +310,21 @@ function PasoProfesional({
   );
 }
 
-function Tarjeta({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+function Tarjeta({ tinte, onClick, children }: { tinte: string; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="border-border bg-card hover:border-primary/50 hover:bg-primary-soft/30 focus-visible:ring-ring flex items-center gap-3 rounded-xl border p-4 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none"
+      className={cn(
+        "anim-entrada tarjeta-viva group focus-visible:ring-ring relative flex cursor-pointer flex-col items-start overflow-hidden rounded-[1.75rem] p-7 text-left focus-visible:ring-2 focus-visible:outline-none",
+        tinte,
+      )}
     >
       {children}
-      <ChevronRight className="text-muted-foreground ml-auto size-4 shrink-0" aria-hidden />
+      <ChevronRight
+        className="text-foreground/60 absolute top-7 right-7 size-6 transition-transform duration-300 group-hover:translate-x-1"
+        aria-hidden
+      />
     </button>
   );
 }
@@ -314,14 +374,9 @@ function PasoHorario({
   const semanaVacia = disponibilidad.isSuccess && dias.every((d) => d.horas.length === 0);
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-semibold">
-          ¿Cuándo?{" "}
-          <span className="text-muted-foreground font-normal">
-            · {profesional ? `${profesional.nombre}, ${profesional.duracionMinutos} min` : "Con quien esté disponible"}
-          </span>
-        </h2>
+        <h2 className={TITULO_PASO}>¿Cuándo te acomoda?</h2>
         {onCambiarProfesional && (
           <Button variant="ghost" size="sm" onClick={onCambiarProfesional}>
             <ArrowLeft className="size-4" aria-hidden /> Cambiar profesional
@@ -331,8 +386,8 @@ function PasoHorario({
 
       {aviso && <AlertaFormulario>{aviso}</AlertaFormulario>}
 
-      <div className="border-border bg-card rounded-xl border p-3 sm:p-4">
-        <div className="mb-3 flex items-center justify-between gap-2">
+      <div className="bg-card rounded-[1.75rem] p-4 sm:p-7">
+        <div className="mb-4 flex items-center justify-between gap-2">
           <Button
             variant="outline"
             size="icon"
@@ -346,7 +401,7 @@ function PasoHorario({
           >
             <ChevronLeft className="size-4" />
           </Button>
-          <p className="text-sm font-medium first-letter:uppercase">
+          <p className="text-base font-semibold first-letter:uppercase">
             {formatearCalendario(semana, { day: "numeric", month: "short" })} –{" "}
             {formatearCalendario(finSemana, { day: "numeric", month: "short", year: "numeric" })}
           </p>
@@ -364,7 +419,7 @@ function PasoHorario({
           </Button>
         </div>
 
-        <div className="grid grid-cols-7 gap-1 sm:gap-2">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2.5">
           {Array.from({ length: 7 }, (_, i) => sumarDias(semana, i)).map((fecha) => {
             const dia = dias.find((d) => d.fecha === fecha);
             const libres = dia?.horas.length ?? 0;
@@ -376,19 +431,26 @@ function PasoHorario({
                 disabled={!dia || libres === 0}
                 onClick={() => setDiaElegido(fecha)}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 rounded-lg border px-0.5 py-2 text-center transition-colors",
-                  seleccionado
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:border-primary/50 disabled:hover:border-border",
-                  "disabled:cursor-not-allowed disabled:opacity-40",
+                  "flex cursor-pointer flex-col items-center gap-1 rounded-2xl px-0.5 py-3 text-center transition-colors sm:py-4",
+                  seleccionado ? "bg-primary text-primary-foreground" : "bg-surface-subtle hover:bg-primary-soft",
+                  "disabled:hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40",
                 )}
               >
-                <span className="text-[11px] font-medium uppercase opacity-80">
+                <span className="text-xs font-medium uppercase opacity-80">
                   {formatearCalendario(fecha, { weekday: "short" }).replace(".", "")}
                 </span>
-                <span className="text-lg leading-none font-semibold">{formatearCalendario(fecha, { day: "numeric" })}</span>
-                <span className={cn("text-[10px]", seleccionado ? "opacity-90" : "text-muted-foreground")}>
-                  {disponibilidad.isPending ? "·" : libres > 0 ? `${libres} libres` : "—"}
+                <span className="font-editorial text-2xl leading-none sm:text-3xl">{formatearCalendario(fecha, { day: "numeric" })}</span>
+                <span className={cn("text-[11px] sm:text-xs", seleccionado ? "opacity-90" : "text-muted-foreground")}>
+                  {disponibilidad.isPending ? (
+                    "·"
+                  ) : libres > 0 ? (
+                    <>
+                      {libres}
+                      <span className="hidden sm:inline"> libres</span>
+                    </>
+                  ) : (
+                    "—"
+                  )}
                 </span>
               </button>
             );
@@ -415,8 +477,8 @@ function PasoHorario({
         </div>
       ) : (
         activo && (
-          <div className="space-y-4">
-            <p className="text-sm font-medium first-letter:uppercase">
+          <div key={activo.fecha} className="anim-vista space-y-5">
+            <p className="font-editorial text-2xl first-letter:uppercase">
               {formatearCalendario(activo.fecha, { weekday: "long", day: "numeric", month: "long" })}
             </p>
             {FRANJAS.map((franja) => {
@@ -425,8 +487,8 @@ function PasoHorario({
               const Icono = franja.icono;
               return (
                 <div key={franja.titulo} className="space-y-2">
-                  <p className="text-muted-foreground flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase">
-                    <Icono className="size-3.5" aria-hidden /> {franja.titulo}
+                  <p className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
+                    <Icono className="size-4" aria-hidden /> {franja.titulo}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {horas.map((h) => (
@@ -435,8 +497,8 @@ function PasoHorario({
                         type="button"
                         onClick={() => onElegir({ ...h, fecha: activo.fecha })}
                         className={cn(
-                          "border-border bg-card hover:border-primary hover:bg-primary-soft/40 min-w-20 rounded-lg border px-3 py-2 text-sm font-semibold tabular-nums transition-colors",
-                          horaElegida?.inicio === h.inicio && "border-primary bg-primary-soft text-primary-soft-foreground",
+                          "bg-card hover:bg-primary hover:text-primary-foreground h-12 min-w-24 cursor-pointer rounded-full px-5 text-base font-semibold tabular-nums transition-colors",
+                          horaElegida?.inicio === h.inicio && "bg-primary text-primary-foreground",
                         )}
                       >
                         {h.hora}
@@ -450,7 +512,7 @@ function PasoHorario({
         )
       )}
 
-      <p className="text-muted-foreground text-xs">
+      <p className="text-muted-foreground text-sm">
         Horarios en hora del centro de México. Reserva con al menos {opciones.anticipacionHoras} horas de anticipación.
       </p>
     </section>
@@ -531,9 +593,9 @@ function PasoDatos({
   const errores = form.formState.errors;
 
   return (
-    <section className="grid gap-6 md:grid-cols-[1fr_17rem]">
-      <form onSubmit={enviar} noValidate className="space-y-4">
-        <h2 className="font-semibold">Tus datos</h2>
+    <section className="space-y-5">
+      <h2 className={TITULO_PASO}>Tus datos</h2>
+      <form onSubmit={enviar} noValidate className="bg-card relative space-y-5 rounded-[1.75rem] p-6 sm:p-8">
         {error && <AlertaFormulario>{error}</AlertaFormulario>}
 
         <Campo id="nombreCompleto" etiqueta="Nombre completo" error={errores.nombreCompleto?.message}>
@@ -579,7 +641,7 @@ function PasoDatos({
           <input id="sitio" tabIndex={-1} autoComplete="off" {...form.register("sitio")} />
         </div>
 
-        <p className="text-muted-foreground text-xs">
+        <p className="text-muted-foreground text-sm">
           Usaremos tus datos solo para gestionar tu cita y contactarte sobre ella.
         </p>
 
@@ -593,21 +655,6 @@ function PasoDatos({
           </Button>
         </div>
       </form>
-
-      <aside className="border-border bg-card h-fit space-y-3 rounded-xl border p-4 md:sticky md:top-24">
-        <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">Tu cita</p>
-        <p className="font-semibold first-letter:uppercase">
-          {formatearCalendario(hora.fecha, { weekday: "long", day: "numeric", month: "long" })}
-        </p>
-        <p className="flex items-center gap-2 text-sm">
-          <Clock className="text-muted-foreground size-4" aria-hidden /> {hora.hora} h
-          {profesional && <span className="text-muted-foreground">· {profesional.duracionMinutos} min</span>}
-        </p>
-        <p className="flex items-center gap-2 text-sm">
-          <Users className="text-muted-foreground size-4" aria-hidden />
-          {profesional?.nombre ?? "Con quien esté disponible"}
-        </p>
-      </aside>
     </section>
   );
 }
@@ -626,19 +673,21 @@ function Campo({ id, etiqueta, error, children }: { id: string; etiqueta: string
 
 function Confirmacion({ reserva, onOtra }: { reserva: ReservaConfirmada; onOtra: () => void }) {
   return (
-    <div className="mx-auto max-w-lg space-y-6 py-6 text-center">
-      <span className="bg-success-soft text-success-soft-foreground mx-auto grid size-16 place-items-center rounded-full">
-        <Check className="size-8" strokeWidth={2.5} aria-hidden />
+    <div className="tinte-menta anim-entrada mx-auto max-w-3xl space-y-7 rounded-[2.5rem] p-7 text-center sm:p-12">
+      <span className="bg-primary text-primary-foreground mx-auto grid size-20 place-items-center rounded-full">
+        <Check className="size-10" strokeWidth={2.5} aria-hidden />
       </span>
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight">¡Listo! Tu cita quedó registrada</h1>
-        <p className="text-muted-foreground text-sm">
+      <div className="space-y-3">
+        <h1 className="font-editorial text-4xl leading-tight font-normal tracking-tight sm:text-5xl">
+          ¡Listo! Tu cita quedó <em className="text-primary font-normal">registrada</em>
+        </h1>
+        <p className="text-foreground/70 mx-auto max-w-md text-lg text-pretty">
           La clínica te contactará para confirmarla. Si necesitas cambiarla, comunícate con nosotros.
         </p>
       </div>
 
-      <div className="border-border bg-card space-y-3 rounded-xl border p-5 text-left">
-        <p className="text-lg font-semibold first-letter:uppercase">
+      <div className="bg-card space-y-3 rounded-[1.75rem] p-6 text-left">
+        <p className="font-editorial text-2xl first-letter:uppercase">
           {formatearInstante(reserva.fechaInicio, { weekday: "long", day: "numeric", month: "long" })}
         </p>
         <p className="flex items-center gap-2 text-sm">

@@ -593,3 +593,131 @@ body .fc .fc-popover-header {
     transition: transform 0.4s var(--ease-out-soft);
   }
 }
+
+/* Foto de la pagina publica: se funde con el fondo. Los laterales se difuminan
+   mas que arriba y abajo para no comerse el motivo de la foto. */
+.foto-difuminada {
+  --borde-x: 9%;
+  --borde-y: 5%;
+  -webkit-mask-image:
+    linear-gradient(to right, transparent, #000 var(--borde-x), #000 calc(100% - var(--borde-x)), transparent),
+    linear-gradient(to bottom, transparent, #000 var(--borde-y), #000 calc(100% - var(--borde-y)), transparent);
+  mask-image:
+    linear-gradient(to right, transparent, #000 var(--borde-x), #000 calc(100% - var(--borde-x)), transparent),
+    linear-gradient(to bottom, transparent, #000 var(--borde-y), #000 calc(100% - var(--borde-y)), transparent);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+/* ---------- Fondo de la pagina publica ----------
+   Verde azulado de la marca con manchas de luz, en lugar del blanco del
+   sistema. Va en una capa fija aparte para no repintarse al hacer scroll. */
+.fondo-sitio {
+  --mancha-a: oklch(0.985 0.012 95 / 0.9);
+  --mancha-b: oklch(0.87 0.05 186 / 0.7);
+  --mancha-c: oklch(0.95 0.035 75 / 0.65);
+  --mancha-d: oklch(0.88 0.045 165 / 0.6);
+  background-color: var(--background);
+}
+
+:root:not(.dark) .fondo-sitio {
+  --background: oklch(0.94 0.022 178);
+  --color-background: oklch(0.94 0.022 178);
+  --border: oklch(0.82 0.03 180);
+  --color-border: oklch(0.82 0.03 180);
+  --muted-foreground: oklch(0.4 0.03 190);
+  --color-muted-foreground: oklch(0.4 0.03 190);
+  --card: oklch(0.975 0.012 150);
+  --color-card: oklch(0.975 0.012 150);
+}
+
+.dark .fondo-sitio {
+  --mancha-a: oklch(0.3 0.05 185 / 0.45);
+  --mancha-b: oklch(0.27 0.05 170 / 0.4);
+  --mancha-c: oklch(0.26 0.03 90 / 0.22);
+  --mancha-d: oklch(0.28 0.05 200 / 0.35);
+}
+
+.fondo-sitio::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(48% 55% at 10% 12%, var(--mancha-a), transparent 72%),
+    radial-gradient(42% 52% at 88% 10%, var(--mancha-b), transparent 72%),
+    radial-gradient(46% 50% at 72% 88%, var(--mancha-c), transparent 72%),
+    radial-gradient(38% 46% at 12% 90%, var(--mancha-d), transparent 72%);
+}
+
+/* Aparece al entrar en pantalla (ver Revelar): cada origen fija desde donde
+   llega. Solo transform y opacity. Sin movimiento, se ve desde el inicio. */
+@media (prefers-reduced-motion: no-preference) {
+  .revelar {
+    --desde-x: 0px;
+    --desde-y: 36px;
+    --giro: 0deg;
+    opacity: 0;
+    transform: translate3d(var(--desde-x), var(--desde-y), 0) rotate(var(--giro)) scale(0.97);
+    transition:
+      opacity 0.75s var(--ease-out-soft) var(--retraso, 0ms),
+      transform 0.9s var(--ease-out-soft) var(--retraso, 0ms);
+  }
+  .revelar[data-desde="izquierda"] { --desde-x: -56px; --desde-y: 0px; }
+  .revelar[data-desde="derecha"] { --desde-x: 56px; --desde-y: 0px; }
+  .revelar[data-desde="esquina-izquierda"] { --desde-x: -110px; --desde-y: 90px; --giro: -3deg; }
+  .revelar[data-desde="esquina-derecha"] { --desde-x: 110px; --desde-y: 90px; --giro: 3deg; }
+
+  .revelar[data-visible="true"] {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Las piezas de cada escena llegan un instante despues de su bloque. */
+  .revelar .escena-pieza {
+    opacity: 0;
+    translate: 0 26px;
+    transition:
+      opacity 0.6s var(--ease-out-soft) 0.45s,
+      translate 0.7s var(--ease-out-soft) 0.45s;
+  }
+  .revelar[data-visible="true"] .escena-pieza {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  /* Graficas que se dibujan al aparecer. */
+  .revelar .linea-dibujo {
+    stroke-dashoffset: 100;
+    transition: stroke-dashoffset 1.6s var(--ease-out-soft) 0.4s;
+  }
+  .revelar[data-visible="true"] .linea-dibujo {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (max-width: 640px) {
+  .revelar[data-desde="esquina-izquierda"] { --desde-x: -40px; --desde-y: 50px; }
+  .revelar[data-desde="esquina-derecha"] { --desde-x: 40px; --desde-y: 50px; }
+  .revelar[data-desde="izquierda"] { --desde-x: -32px; }
+  .revelar[data-desde="derecha"] { --desde-x: 32px; }
+}
+
+/* ---------- Bloques de la pagina publica ---------- */
+.tinte-marca { background-color: oklch(0.885 0.05 186); }
+.tinte-durazno { background-color: oklch(0.925 0.05 60); }
+.tinte-menta { background-color: oklch(0.915 0.055 155); }
+.tinte-arena { background-color: oklch(0.945 0.05 95); }
+
+.dark .tinte-marca { background-color: oklch(0.29 0.045 186); }
+.dark .tinte-durazno { background-color: oklch(0.28 0.04 55); }
+.dark .tinte-menta { background-color: oklch(0.28 0.045 155); }
+.dark .tinte-arena { background-color: oklch(0.28 0.035 95); }
+
+.banda-equipo {
+  background:
+    radial-gradient(60% 90% at 88% 8%, color-mix(in oklch, var(--brand-500) 42%, transparent), transparent 70%),
+    radial-gradient(50% 80% at 8% 100%, color-mix(in oklch, var(--brand-400) 18%, transparent), transparent 70%),
+    linear-gradient(135deg, var(--brand-800), var(--brand-950));
+}

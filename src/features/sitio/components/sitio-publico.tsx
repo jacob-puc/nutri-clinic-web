@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { CalendarCheck2, LayoutDashboard, MapPin, Menu, Phone, X } from "lucide-react";
+import { LayoutDashboard, MapPin, Menu, Phone, X } from "lucide-react";
 
 import { LogoNutriClinica } from "@/components/layout/logo";
 import { useAuth } from "@/features/auth/hooks/use-auth";
@@ -8,8 +8,8 @@ import { formatearTelefono, useOpcionesPublicas } from "@/features/sitio/hooks/u
 import { cn } from "@/lib/utils";
 
 /*
- * Cascaron de las paginas publicas (inicio y reservacion): navbar flotante en
- * forma de pildora, halo de marca y pie. Todo sale de un solo endpoint
+ * Cascaron de las paginas publicas (inicio y reservacion): fondo salvia propio
+ * del sitio, navbar sobre la pagina y pie. Todo sale de un solo endpoint
  * publico, compartido por ambas paginas con la misma clave de cache.
  */
 
@@ -22,18 +22,15 @@ const ENLACES = [
 
 export function SitioPublico({ children }: { children: ReactNode }) {
   return (
-    <div className="bg-background text-foreground relative isolate flex min-h-dvh flex-col overflow-x-clip">
-      {/* Halo de marca detras del encabezado: es la cara publica de la clinica. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[32rem] bg-[radial-gradient(60%_100%_at_50%_0%,color-mix(in_oklch,var(--brand-500)_18%,transparent),transparent)]"
-      />
+    <div className="fondo-sitio text-foreground relative isolate flex min-h-dvh flex-col overflow-x-clip">
       <NavbarPublico />
       <div className="flex-1">{children}</div>
       <PiePublico />
     </div>
   );
 }
+
+const CLASE_ENLACE = "text-foreground/75 hover:text-foreground text-[15px] font-medium transition-colors";
 
 function NavbarPublico() {
   const [abierto, setAbierto] = useState(false);
@@ -42,47 +39,35 @@ function NavbarPublico() {
   const telefono = opciones.data?.clinica.telefono;
 
   return (
-    <header className="sticky top-3 z-30 px-4 pt-3">
+    <header className="relative z-30 px-4 pt-5">
       <nav
         aria-label="Principal"
-        className="border-border/70 bg-card/75 shadow-raised supports-[backdrop-filter]:bg-card/60 relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 rounded-full border p-2 backdrop-blur-md"
+        className="relative mx-auto flex max-w-[84rem] items-center justify-between gap-6"
       >
         <Link
           to="/"
           onClick={() => setAbierto(false)}
-          className="focus-visible:ring-ring flex min-w-0 items-center gap-2.5 rounded-full pr-2 outline-none focus-visible:ring-2"
+          className="focus-visible:ring-ring flex min-w-0 items-center gap-2.5 rounded-full outline-none focus-visible:ring-2"
         >
-          <LogoNutriClinica className="size-10 shrink-0 rounded-full" />
-          <span className="flex min-w-0 flex-col leading-tight">
-            <span className="truncate text-sm font-bold tracking-tight">
-              Nutri<span className="text-gradient-brand">Clinica</span>
-            </span>
-            <span className="text-muted-foreground truncate text-[11px] font-medium">Consulta nutricional</span>
-          </span>
+          <LogoNutriClinica className="size-11 shrink-0 rounded-full" />
+          <span className="font-editorial truncate text-2xl leading-none tracking-tight">NutriClínica</span>
         </Link>
 
-        <ul className="hidden items-center gap-1 lg:flex">
+        <ul className="ml-auto hidden items-center gap-7 lg:flex">
           {ENLACES.map((e) => (
             <li key={e.href}>
-              <a
-                href={e.href}
-                className="text-muted-foreground hover:text-foreground hover:bg-surface-subtle rounded-full px-3.5 py-2 text-sm font-medium transition-colors"
-              >
+              <a href={e.href} className={CLASE_ENLACE}>
                 {e.etiqueta}
               </a>
             </li>
           ))}
         </ul>
 
-        <div className="flex shrink-0 items-center gap-1.5">
+        <div className="flex shrink-0 items-center justify-end gap-4">
           {telefono && (
-            <a
-              href={`tel:${telefono}`}
-              aria-label={`Llamar a la clínica: ${telefono}`}
-              className="text-muted-foreground hover:text-foreground hover:bg-surface-subtle hidden h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold transition-colors md:flex"
-            >
+            <a href={`tel:${telefono}`} aria-label={`Llamar a la clínica: ${telefono}`} className={cn(CLASE_ENLACE, "hidden items-center gap-2 xl:flex")}>
               <Phone className="size-4" aria-hidden />
-              <span className="hidden xl:inline">{formatearTelefono(telefono)}</span>
+              {formatearTelefono(telefono)}
             </a>
           )}
           <NavLink
@@ -90,28 +75,24 @@ function NavbarPublico() {
             onClick={() => setAbierto(false)}
             className={({ isActive }) =>
               cn(
-                "bg-primary text-primary-foreground hover:bg-primary/90 flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold shadow-sm transition-colors",
+                "bg-primary text-primary-foreground hover:bg-primary/90 flex h-11 items-center rounded-full px-5 text-[15px] font-semibold transition-colors",
                 isActive && "ring-primary/30 ring-4",
               )
             }
           >
-            <CalendarCheck2 className="size-4" aria-hidden />
-            <span>
-              Reservar<span className="hidden sm:inline"> cita</span>
-            </span>
+            Reservar<span className="hidden sm:inline">&nbsp;cita</span>
           </NavLink>
           <button
             type="button"
             onClick={() => setAbierto((v) => !v)}
             aria-expanded={abierto}
             aria-label={abierto ? "Cerrar menú" : "Abrir menú"}
-            className="hover:bg-surface-subtle grid size-10 place-items-center rounded-full lg:hidden"
+            className="hover:bg-foreground/5 grid size-10 place-items-center rounded-full lg:hidden"
           >
             {abierto ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
         </div>
 
-        {/* Menu movil: tarjeta flotante bajo la pildora. */}
         {abierto && (
           <div className="border-border/70 bg-card shadow-overlay absolute inset-x-0 top-[calc(100%+0.5rem)] rounded-2xl border p-2 lg:hidden">
             <ul className="grid">
@@ -120,7 +101,7 @@ function NavbarPublico() {
                   <a
                     href={e.href}
                     onClick={() => setAbierto(false)}
-                    className="hover:bg-surface-subtle block rounded-xl px-4 py-3 text-sm font-medium"
+                    className="hover:bg-surface-subtle block rounded-xl px-4 py-3 text-base font-medium"
                   >
                     {e.etiqueta}
                   </a>
@@ -128,7 +109,7 @@ function NavbarPublico() {
               ))}
               {telefono && (
                 <li>
-                  <a href={`tel:${telefono}`} className="hover:bg-surface-subtle flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium">
+                  <a href={`tel:${telefono}`} className="hover:bg-surface-subtle flex items-center gap-2 rounded-xl px-4 py-3 text-base font-medium">
                     <Phone className="size-4" aria-hidden /> Llamar · {formatearTelefono(telefono)}
                   </a>
                 </li>
@@ -140,10 +121,10 @@ function NavbarPublico() {
 
       {/* Quien ya tiene sesion del equipo vuelve al sistema en un clic. */}
       {autenticado && (
-        <div className="mx-auto mt-2 flex max-w-6xl justify-end">
+        <div className="mx-auto mt-3 flex max-w-[84rem] justify-end">
           <Link
             to="/panel"
-            className="bg-card/80 border-border/70 text-muted-foreground hover:text-foreground flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium backdrop-blur"
+            className="text-foreground/70 hover:text-foreground flex items-center gap-1.5 text-sm font-medium"
           >
             <LayoutDashboard className="size-3.5" aria-hidden /> Ir al panel
           </Link>
@@ -159,7 +140,7 @@ function PiePublico() {
 
   return (
     <footer className="border-border/60 text-muted-foreground border-t">
-      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-xs sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto flex max-w-[84rem] flex-col gap-3 px-4 py-8 text-xs sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <p>
             © {new Date().getFullYear()} {clinica?.nombre ?? "NutriClínica"}
