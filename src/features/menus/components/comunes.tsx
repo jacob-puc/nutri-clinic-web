@@ -50,7 +50,16 @@ export function BadgeEstadoPlan({ estado }: { estado: MenuAsignadoEstado }) {
  * aporta cada macro a la energia (4/4/9 kcal por gramo), que es lo que se
  * compara de un vistazo entre platos.
  */
-export function LineaMacros({ macros, conBarra = false }: { macros: Macros; conBarra?: boolean }) {
+export function LineaMacros({
+  macros,
+  conBarra = false,
+  grueso = false,
+}: {
+  macros: Macros;
+  conBarra?: boolean;
+  /** Barra mas alta y a todo el ancho disponible. */
+  grueso?: boolean;
+}) {
   const energia = {
     p: macros.proteinas * 4,
     c: macros.carbohidratos * 4,
@@ -68,7 +77,7 @@ export function LineaMacros({ macros, conBarra = false }: { macros: Macros; conB
         <span className="text-[var(--chart-3)] font-semibold">G</span> {formatearGramos(macros.grasas)}
       </p>
       {conBarra && total > 0 && (
-        <div className="bg-muted mt-1.5 flex h-1.5 w-full max-w-44 overflow-hidden rounded-full" aria-hidden>
+        <div className={cn("bg-muted mt-1.5 flex w-full overflow-hidden rounded-full", grueso ? "h-2.5" : "h-1.5 max-w-44")} aria-hidden>
           <span className="bg-[var(--chart-1)]" style={{ width: `${(energia.p / total) * 100}%` }} />
           <span className="bg-[var(--chart-2)]" style={{ width: `${(energia.c / total) * 100}%` }} />
           <span className="bg-[var(--chart-3)]" style={{ width: `${(energia.g / total) * 100}%` }} />
@@ -111,6 +120,57 @@ export function CaloriasVsObjetivo({
         </p>
       ) : (
         <p className="text-muted-foreground text-xs">Sin objetivo</p>
+      )}
+    </div>
+  );
+}
+
+/** Desvio aceptado frente al objetivo: un menu real nunca cuadra a la caloria. */
+export const TOLERANCIA_OBJETIVO = 0.1;
+
+/** Promedio diario contra el objetivo: la marca es la meta y la barra lo planeado. */
+export function MedidorCalorias({
+  calorias,
+  objetivo,
+  grueso = false,
+}: {
+  calorias: number | null;
+  objetivo: number | null;
+  /** Barra mas alta, para cuando el medidor es la cifra principal del bloque. */
+  grueso?: boolean;
+}) {
+  if (calorias === null) return <p className="text-muted-foreground text-sm">Sin platos todavía</p>;
+
+  const desvio = objetivo ? (calorias - objetivo) / objetivo : null;
+  const fuera = desvio !== null && Math.abs(desvio) > TOLERANCIA_OBJETIVO;
+  /* La escala llega a 150 % de la meta: la marca siempre queda en el mismo lugar. */
+  const escala = objetivo ? objetivo * 1.5 : 0;
+
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-foreground text-sm font-semibold tabular-nums">
+          {formatearKcal(calorias)}
+          <span className="text-muted-foreground font-normal"> /día</span>
+        </p>
+        <p className={cn("text-xs tabular-nums", fuera ? "text-warning-soft-foreground" : "text-muted-foreground")}>
+          {desvio === null
+            ? "Sin objetivo"
+            : !fuera
+              ? "En objetivo"
+              : `${Math.abs(Math.round(desvio * 100))}% ${desvio > 0 ? "arriba" : "abajo"} de ${formatearKcal(objetivo)}`}
+        </p>
+      </div>
+      {objetivo && (
+        <div className="relative mt-1.5" aria-hidden>
+          <div className={cn("bg-surface-muted overflow-hidden rounded-full", grueso ? "h-2.5" : "h-1.5")}>
+            <div
+              className={cn("barra-gpu h-full w-full origin-left rounded-full", fuera ? "bg-warning" : "bg-primary")}
+              style={{ transform: `scaleX(${Math.min(1, calorias / escala)})` }}
+            />
+          </div>
+          <span className={cn("bg-foreground absolute -top-0.5 left-2/3 w-0.5 rounded-full", grueso ? "h-3.5" : "h-2.5")} />
+        </div>
       )}
     </div>
   );

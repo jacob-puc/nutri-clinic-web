@@ -1,3 +1,4 @@
+import { lunesDe } from "@/lib/periodo";
 import type {
   DetalleSemanal,
   DetalleSemanalDto,
@@ -193,4 +194,20 @@ export function promedioDiario(detalles: DetalleSemanal[]): number | null {
   );
   if (conPlatos.length === 0) return null;
   return conPlatos.reduce((suma, dia) => suma + porDia[dia], 0) / conPlatos.length;
+}
+
+/** Posicion del dia en la semana del plan: lunes = 0. */
+export function indiceDiaSemana(dia: string): number {
+  return (Date.parse(dia) - Date.parse(lunesDe(dia))) / 86_400_000;
+}
+
+/**
+ * Avance de un plan en curso. Se repite cada semana y no tiene fecha de fin, asi
+ * que se cuenta desde su inicio; null si todavia no empieza.
+ */
+export function avanceDelPlan(fechaInicio: string, hoy: string): { semana: number; dia: number } | null {
+  const inicio = fechaInicio.slice(0, 10);
+  if (inicio > hoy) return null;
+  const semana = (Date.parse(lunesDe(hoy)) - Date.parse(lunesDe(inicio))) / (7 * 86_400_000) + 1;
+  return { semana, dia: indiceDiaSemana(hoy) + 1 };
 }

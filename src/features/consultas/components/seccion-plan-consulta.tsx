@@ -1,11 +1,28 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, ClipboardCheck, Copy, Loader2, Pencil, Play, Plus, Printer, RefreshCw } from "lucide-react";
+import { AlertTriangle, ClipboardCheck, Copy, Loader2, MoreHorizontal, Pencil, Play, Plus, Printer, RefreshCw, X } from "lucide-react";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EncabezadoBloque } from "@/features/consultas/components/encabezado-bloque";
-import { BadgeEstadoPlan, CaloriasVsObjetivo, LineaMacros } from "@/features/menus/components/comunes";
+import { BadgeEstadoPlan, LineaMacros, MedidorCalorias, TOLERANCIA_OBJETIVO } from "@/features/menus/components/comunes";
 import { DialogoAsignarPlan } from "@/features/menus/components/dialogo-asignar-plan";
 import { DialogoDuplicarPlan } from "@/features/menus/components/dialogo-duplicar-plan";
 import { DialogoPlan } from "@/features/menus/components/dialogo-plan";
@@ -16,6 +33,7 @@ import {
   perfilDesdeHistorial,
 } from "@/features/menus/lib/compatibilidad";
 import {
+  avanceDelPlan,
   caloriasPorDia,
   DIAS_SEMANA,
   ETIQUETA_DIA,
@@ -23,6 +41,7 @@ import {
   ETIQUETA_TIEMPO,
   formatearKcal,
   formatearNumero,
+  indiceDiaSemana,
   lineasADetallesDto,
   lineasDesdeDetalles,
   MACROS_CERO,
@@ -36,18 +55,17 @@ import { abrirPdfConAviso } from "@/lib/pdf";
 import { menusApi } from "@/features/menus/api/menus-api";
 import { formatearFechaCorta } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import type { DiaSemana, Guid, HistorialClinico, MedidaAntropometrica, MenuAsignado } from "@/types/api";
-import { hoyCalendario } from "@/lib/zona-horaria";
-
-/* Date.getDay(): 0 es domingo. */
-const DIA_DE_JS: DiaSemana[] = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
+import type { DiaSemana, Guid, HistorialClinico, MedidaAntropometrica, MenuAsignado, MenuAsignadoEstado } from "@/types/api";
+import { hoyEnClinica } from "@/lib/zona-horaria";
 
 /**
  * El plan del paciente dentro de la consulta. Es donde se revisa como le fue
  * con el plan vigente y se ajusta, o donde se le da uno si no tiene.
  *
- * - Con plan: el menu de hoy, la semana contra su objetivo y los avisos de
- *   alergias. "Ajustar" abre el editor; "Cambiar" asigna otro y cierra este.
+ * - Con plan: la semana contra su objetivo, el menu del dia elegido y los
+ *   avisos de alergias. "Ajustar" abre el editor; "Cambiar" asigna otro y
+ *   cierra este; "Quitar" lo finaliza: el paciente se queda sin plan, pero el
+ *   plan no se borra y se puede reutilizar.
  * - Sin plan: asignar desde una plantilla (ordenadas por compatibilidad con
  *   su requerimiento estimado) o reutilizar un plan anterior. Al asignar se
  *   abre el editor para dejarlo a su medida en la misma consulta.
@@ -66,11 +84,12 @@ export function SeccionPlanConsulta({
 }) {
   const planes = useMenusAsignadosPorPaciente(pacienteId);
   const paciente = usePaciente(pacienteId);
-  const activar = useActualizarMenuAsignado();
+  const actualizar = useActualizarMenuAsignado();
 
   const [editando, setEditando] = useState<MenuAsignado | null>(null);
   const [asignando, setAsignando] = useState(false);
   const [reutilizando, setReutilizando] = useState<MenuAsignado | null>(null);
+  const [quitando, setQuitando] = useState<MenuAsignado | null>(null);
 
   const ordenados = useMemo(
     () => [...(planes.data ?? [])].sort((a, b) => b.fechaInicio.localeCompare(a.fechaInicio)),
@@ -87,8 +106,8 @@ export function SeccionPlanConsulta({
   });
   const perfil = perfilDesdeHistorial(historial);
 
-  const activarPlan = (plan: MenuAsignado) =>
-    activar.mutate(
+  const cambiarEstado = (plan: MenuAsignado, estado: MenuAsignadoEstado, exito: string, fallo: string) =>
+    actualizar.mutate(
       {
         menuId: plan.id,
         dto: {
@@ -96,13 +115,16 @@ export function SeccionPlanConsulta({
           descripcion: plan.descripcion,
           objetivoCalorico: plan.objetivoCalorico,
           fechaInicio: null,
-          estado: "Activo",
+          estado,
           detalles: lineasADetallesDto(lineasDesdeDetalles(plan.detalles)),
         },
       },
       {
-        onSuccess: () => toast.success("Plan activado", { description: plan.nombre }),
-        onError: (error) => toast.error("No se pudo activar", { description: mensajeDeError(error) }),
+        onSuccess: () => {
+          toast.success(exito, { description: plan.nombre });
+          setQuitando(null);
+        },
+        onError: (error) => toast.error(fallo, { description: mensajeDeError(error) }),
       },
     );
 
@@ -120,10 +142,11 @@ export function SeccionPlanConsulta({
             plan={vigente}
             perfil={perfil}
             soloLectura={soloLectura}
-            activando={activar.isPending}
+            activando={actualizar.isPending}
             onAjustar={() => setEditando(vigente)}
             onCambiar={() => setAsignando(true)}
-            onActivar={() => activarPlan(vigente)}
+            onQuitar={() => setQuitando(vigente)}
+            onActivar={() => cambiarEstado(vigente, "Activo", "Plan activado", "No se pudo activar")}
           />
         ) : (
           <div className="space-y-2">
@@ -176,6 +199,29 @@ export function SeccionPlanConsulta({
         onOpenChange={(a) => !a && setReutilizando(null)}
         onDuplicado={setEditando}
       />
+
+      <AlertDialog open={quitando !== null} onOpenChange={(a) => !a && setQuitando(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Quitar «{quitando?.nombre}» del paciente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              El paciente se queda sin este plan. No se borra: pasa a Finalizados y podrás reutilizarlo cuando quieras.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actualizar.isPending}>Volver</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={actualizar.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (quitando) cambiarEstado(quitando, "Finalizado", "Plan quitado", "No se pudo quitar el plan");
+              }}
+            >
+              {actualizar.isPending ? "Quitando..." : "Quitar plan"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }
@@ -187,6 +233,7 @@ function TarjetaPlan({
   activando,
   onAjustar,
   onCambiar,
+  onQuitar,
   onActivar,
 }: {
   plan: MenuAsignado;
@@ -195,14 +242,19 @@ function TarjetaPlan({
   activando: boolean;
   onAjustar: () => void;
   onCambiar: () => void;
+  onQuitar: () => void;
   onActivar: () => void;
 }) {
-  const hoy = DIA_DE_JS[hoyCalendario().getDay()]!;
+  const claveHoy = hoyEnClinica();
+  const hoy = DIAS_SEMANA[indiceDiaSemana(claveHoy)]!;
+  const [diaElegido, setDiaElegido] = useState<DiaSemana>(hoy);
+
   const porDia = caloriasPorDia(plan.detalles);
   const promedio = promedioDiario(plan.detalles);
   const maximo = Math.max(plan.objetivoCalorico ?? 0, ...Object.values(porDia), 1);
+  const avance = plan.estado === "Activo" ? avanceDelPlan(plan.fechaInicio, claveHoy) : null;
 
-  const deHoy = plan.detalles.filter((d) => d.diaSemana === hoy).sort((a, b) => a.orden - b.orden);
+  const delDia = plan.detalles.filter((d) => d.diaSemana === diaElegido).sort((a, b) => a.orden - b.orden);
   const diasConPlatos = DIAS_SEMANA.filter((d) => porDia[d] > 0).length || 1;
   const macrosPromedio = plan.detalles.reduce((s, d) => sumarMacros(s, d, 1 / diasConPlatos), MACROS_CERO);
 
@@ -224,16 +276,16 @@ function TarjetaPlan({
             <BadgeEstadoPlan estado={plan.estado} />
           </div>
           <p className="text-muted-foreground text-xs">
-            Desde el {formatearFechaCorta(plan.fechaInicio)}
+            {avance ? `Semana ${avance.semana} · día ${avance.dia} de 7` : `Desde el ${formatearFechaCorta(plan.fechaInicio)}`}
             {plan.plantillaMenuNombre && ` · basado en ${plan.plantillaMenuNombre}`}
           </p>
         </div>
         {/* Imprimir siempre esta disponible, tambien con la consulta cerrada:
             el menu se entrega al paciente al final de la atencion o despues. */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" variant="outline" onClick={() => abrirPdfConAviso(() => menusApi.abrirMenuPdf(plan.id))}>
             <Printer className="size-4" />
-            Imprimir menú
+            Imprimir
           </Button>
           {!soloLectura && (
           <>
@@ -247,10 +299,24 @@ function TarjetaPlan({
               <Pencil className="size-4" />
               Ajustar plan
             </Button>
-            <Button size="sm" variant="ghost" onClick={onCambiar}>
-              <RefreshCw className="size-4" />
-              Cambiar
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon-sm" variant="ghost" className="text-muted-foreground" aria-label="Más acciones del plan">
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onSelect={onCambiar}>
+                  <RefreshCw />
+                  Cambiar plan
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive" onSelect={onQuitar}>
+                  <X />
+                  Quitar plan
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
           )}
         </div>
@@ -269,68 +335,95 @@ function TarjetaPlan({
         </p>
       )}
 
-      <div className="border-border grid gap-x-8 gap-y-5 border-t border-dashed px-4 py-4 md:grid-cols-2 md:px-5">
-        {/* ---------- Menu de hoy ---------- */}
-        <div className="min-w-0">
-          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-            Hoy · {ETIQUETA_DIA[hoy]}
-          </p>
-          {deHoy.length === 0 ? (
+      <div className="border-border space-y-5 border-t border-dashed px-4 py-4 md:px-5">
+        {/* ---------- Promedio de la semana ---------- */}
+        <div className="grid items-center gap-x-8 gap-y-3 md:grid-cols-[65fr_35fr]">
+          <MedidorCalorias calorias={promedio} objetivo={plan.objetivoCalorico} grueso />
+          <LineaMacros macros={macrosPromedio} conBarra grueso />
+        </div>
+
+        {/* ---------- Semana: cada dia abre su menu ---------- */}
+        <div className="grid grid-cols-7 gap-1 sm:gap-1.5" role="group" aria-label="Días de la semana del plan">
+          {DIAS_SEMANA.map((dia) => {
+            const kcal = porDia[dia];
+            const fuera =
+              Boolean(plan.objetivoCalorico) &&
+              kcal > 0 &&
+              Math.abs(kcal - plan.objetivoCalorico!) / plan.objetivoCalorico! > TOLERANCIA_OBJETIVO;
+            const elegido = dia === diaElegido;
+            return (
+              <button
+                key={dia}
+                type="button"
+                aria-pressed={elegido}
+                aria-label={`${ETIQUETA_DIA[dia]}${dia === hoy ? " (hoy)" : ""}: ${kcal > 0 ? formatearKcal(kcal) : "sin platos"}`}
+                onClick={() => setDiaElegido(dia)}
+                className={cn(
+                  "focus-visible:ring-ring/50 flex min-w-0 cursor-pointer flex-col items-center gap-1.5 rounded-xl px-1 pt-3 pb-2.5 transition-colors outline-none focus-visible:ring-[3px]",
+                  elegido ? "bg-muted" : "hover:bg-accent",
+                )}
+              >
+                <span
+                  className={cn(
+                    "text-sm",
+                    dia === hoy ? "text-primary font-semibold" : "text-muted-foreground font-medium",
+                  )}
+                >
+                  {ETIQUETA_DIA_CORTA[dia]}
+                </span>
+                <span className="flex h-16 w-full max-w-12 items-end">
+                  <span
+                    className={cn(
+                      "columna-gpu h-full w-full origin-bottom rounded-t-md",
+                      kcal === 0 ? "bg-surface-muted" : fuera ? "bg-warning" : "bg-primary/70",
+                    )}
+                    style={{ transform: `scaleY(${kcal > 0 ? Math.max(0.12, kcal / maximo) : 0.06})` }}
+                  />
+                </span>
+                <span className="text-muted-foreground text-xs tabular-nums">
+                  {kcal > 0 ? formatearNumero(Math.round(kcal)) : "—"}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ---------- Menu del dia elegido ---------- */}
+        <div key={diaElegido} className="anim-vista">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="text-foreground text-sm font-semibold">
+              {ETIQUETA_DIA[diaElegido]}
+              {diaElegido === hoy && <span className="text-primary font-medium"> · Hoy</span>}
+            </p>
+            {porDia[diaElegido] > 0 && (
+              <p className="text-muted-foreground text-xs tabular-nums">{formatearKcal(porDia[diaElegido])}</p>
+            )}
+          </div>
+          {delDia.length === 0 ? (
             <p className="text-muted-foreground mt-2 text-sm">Este día no tiene platos en el plan.</p>
           ) : (
-            <dl className="mt-2 space-y-1.5">
-              {TIEMPOS_COMIDA.filter((t) => deHoy.some((d) => d.tiempoComida === t)).map((tiempo) => (
-                <div key={tiempo} className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-2 text-sm">
+            <dl className="divide-border/60 mt-2 divide-y">
+              {TIEMPOS_COMIDA.filter((t) => delDia.some((d) => d.tiempoComida === t)).map((tiempo) => (
+                <div key={tiempo} className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-2 py-2 text-sm">
                   <dt className="text-muted-foreground">{ETIQUETA_TIEMPO[tiempo]}</dt>
-                  <dd className="text-foreground min-w-0">
-                    {deHoy
+                  <dd className="text-foreground min-w-0 space-y-1">
+                    {delDia
                       .filter((d) => d.tiempoComida === tiempo)
-                      .map((d) => (d.cantidad === 1 ? d.platoNombre : `${d.platoNombre} ×${formatearNumero(d.cantidad)}`))
-                      .join(" · ")}
+                      .map((d) => (
+                        <div key={d.id} className="flex items-baseline justify-between gap-3">
+                          <span className="min-w-0">
+                            {d.cantidad === 1 ? d.platoNombre : `${d.platoNombre} ×${formatearNumero(d.cantidad)}`}
+                          </span>
+                          <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                            {formatearKcal(d.calorias)}
+                          </span>
+                        </div>
+                      ))}
                   </dd>
                 </div>
               ))}
             </dl>
           )}
-        </div>
-
-        {/* ---------- Semana contra el objetivo ---------- */}
-        <div className="min-w-0">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">Promedio diario</p>
-              <div className="mt-1">
-                <CaloriasVsObjetivo calorias={promedio} objetivo={plan.objetivoCalorico} />
-              </div>
-            </div>
-            <LineaMacros macros={macrosPromedio} conBarra />
-          </div>
-
-          <div className="mt-3 grid h-20 grid-cols-7 items-end gap-1.5" aria-label="Calorías por día">
-            {DIAS_SEMANA.map((dia) => {
-              const kcal = porDia[dia];
-              const fuera =
-                plan.objetivoCalorico && kcal > 0 && Math.abs(kcal - plan.objetivoCalorico) / plan.objetivoCalorico > 0.1;
-              return (
-                <div key={dia} className="flex h-full flex-col items-center justify-end gap-1">
-                  <span
-                    className={cn(
-                      "w-full rounded-t-md",
-                      kcal === 0 ? "bg-muted h-1" : fuera ? "bg-[var(--warning)]" : "bg-primary/70",
-                      dia === hoy && kcal > 0 && "bg-primary",
-                    )}
-                    style={kcal > 0 ? { height: `${Math.max(8, (kcal / maximo) * 100)}%` } : undefined}
-                    aria-label={`${ETIQUETA_DIA[dia]}: ${formatearKcal(kcal)}`}
-                  />
-                  <span
-                    className={cn("text-[10px]", dia === hoy ? "text-foreground font-semibold" : "text-muted-foreground")}
-                  >
-                    {ETIQUETA_DIA_CORTA[dia]}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
         </div>
       </div>
     </div>

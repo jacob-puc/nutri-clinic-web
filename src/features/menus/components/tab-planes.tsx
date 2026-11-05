@@ -35,6 +35,8 @@ import {
   BadgeEstadoPlan,
   BarraHerramientas,
   ConfirmarEliminacion,
+  MedidorCalorias,
+  TOLERANCIA_OBJETIVO,
   type FiltroVigencia,
 } from "@/features/menus/components/comunes";
 import { DialogoAsignarPlan } from "@/features/menus/components/dialogo-asignar-plan";
@@ -46,43 +48,26 @@ import {
   useRestaurarMenuAsignado,
 } from "@/features/menus/hooks/use-menus";
 import {
+  avanceDelPlan,
   DIAS_SEMANA,
   ETIQUETA_DIA,
   ETIQUETA_DIA_CORTA,
-  formatearKcal,
+  indiceDiaSemana,
   promedioDiario,
 } from "@/features/menus/lib/menus";
 import { menusApi } from "@/features/menus/api/menus-api";
 import { mensajeDeError } from "@/lib/api-error";
 import { formatearFechaCorta, normalizar } from "@/lib/formatters";
 import { abrirPdfConAviso } from "@/lib/pdf";
-import { lunesDe } from "@/lib/periodo";
 import { cn } from "@/lib/utils";
 import { hoyEnClinica } from "@/lib/zona-horaria";
 import type { DiaSemana, MenuAsignado } from "@/types/api";
-
-/** Mismo margen que `CaloriasVsObjetivo`: un menu real nunca cuadra a la caloria. */
-const TOLERANCIA_OBJETIVO = 0.1;
-const MS_SEMANA = 7 * 86_400_000;
 
 function desvioDelPlan(plan: MenuAsignado): number | null {
   const calorias = promedioDiario(plan.detalles);
   return calorias !== null && plan.objetivoCalorico
     ? (calorias - plan.objetivoCalorico) / plan.objetivoCalorico
     : null;
-}
-
-/** Dia de la semana de hoy, en el orden del plan (lunes = 0). */
-function indiceDeHoy(hoy: string) {
-  return (Date.parse(hoy) - Date.parse(lunesDe(hoy))) / 86_400_000;
-}
-
-/** El plan se repite cada semana y no tiene fecha de fin: se cuenta desde su inicio. */
-function avanceDelPlan(plan: MenuAsignado, hoy: string) {
-  const inicio = plan.fechaInicio.slice(0, 10);
-  if (inicio > hoy) return null;
-  const semana = (Date.parse(lunesDe(hoy)) - Date.parse(lunesDe(inicio))) / MS_SEMANA + 1;
-  return { semana, dia: indiceDeHoy(hoy) + 1 };
 }
 
 export function TabPlanes() {
@@ -338,7 +323,7 @@ function TarjetaPlan({
   const hoy = hoyEnClinica();
   const editable = plan.isActive && plan.estado !== "Finalizado";
   const enCurso = plan.isActive && plan.estado === "Activo";
-  const avance = enCurso ? avanceDelPlan(plan, hoy) : null;
+  const avance = enCurso ? avanceDelPlan(plan.fechaInicio, hoy) : null;
 
   return (
     <article
@@ -408,7 +393,7 @@ function TarjetaPlan({
           )}
         </div>
 
-        <SemanaPlan plan={plan} hoy={enCurso ? DIAS_SEMANA[indiceDeHoy(hoy)] : undefined} />
+        <SemanaPlan plan={plan} hoy={enCurso ? DIAS_SEMANA[indiceDiaSemana(hoy)] : undefined} />
 
         <MedidorCalorias calorias={promedioDiario(plan.detalles)} objetivo={plan.objetivoCalorico} />
       </div>
@@ -472,45 +457,6 @@ function SemanaPlan({ plan, hoy }: { plan: MenuAsignado; hoy: DiaSemana | undefi
           </div>
         );
       })}
-    </div>
-  );
-}
-
-/** Promedio diario contra el objetivo: la marca es la meta y la barra lo planeado. */
-function MedidorCalorias({ calorias, objetivo }: { calorias: number | null; objetivo: number | null }) {
-  if (calorias === null) return <p className="text-muted-foreground text-sm">Sin platos todavía</p>;
-
-  const desvio = objetivo ? (calorias - objetivo) / objetivo : null;
-  const fuera = desvio !== null && Math.abs(desvio) > TOLERANCIA_OBJETIVO;
-  /* La escala llega a 150 % de la meta: la marca siempre queda en el mismo lugar. */
-  const escala = objetivo ? objetivo * 1.5 : 0;
-
-  return (
-    <div>
-      <div className="flex items-baseline justify-between gap-3">
-        <p className="text-foreground text-sm font-semibold tabular-nums">
-          {formatearKcal(calorias)}
-          <span className="text-muted-foreground font-normal"> /día</span>
-        </p>
-        <p className={cn("text-xs tabular-nums", fuera ? "text-warning-soft-foreground" : "text-muted-foreground")}>
-          {desvio === null
-            ? "Sin objetivo"
-            : !fuera
-              ? "En objetivo"
-              : `${Math.abs(Math.round(desvio * 100))}% ${desvio > 0 ? "arriba" : "abajo"} de ${formatearKcal(objetivo)}`}
-        </p>
-      </div>
-      {objetivo && (
-        <div className="relative mt-1.5" aria-hidden>
-          <div className="bg-surface-muted h-1.5 overflow-hidden rounded-full">
-            <div
-              className={cn("barra-gpu h-full w-full origin-left rounded-full", fuera ? "bg-warning" : "bg-primary")}
-              style={{ transform: `scaleX(${Math.min(1, calorias / escala)})` }}
-            />
-          </div>
-          <span className="bg-foreground absolute -top-0.5 left-2/3 h-2.5 w-0.5 rounded-full" />
-        </div>
-      )}
     </div>
   );
 }
