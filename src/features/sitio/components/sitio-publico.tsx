@@ -56,9 +56,9 @@ function NavbarPublico() {
         <ul className="ml-auto hidden items-center gap-7 lg:flex">
           {ENLACES.map((e) => (
             <li key={e.href}>
-              <a href={e.href} className={CLASE_ENLACE}>
+              <Link to={e.href} className={CLASE_ENLACE}>
                 {e.etiqueta}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
@@ -98,13 +98,13 @@ function NavbarPublico() {
             <ul className="grid">
               {ENLACES.map((e) => (
                 <li key={e.href}>
-                  <a
-                    href={e.href}
+                  <Link
+                    to={e.href}
                     onClick={() => setAbierto(false)}
                     className="hover:bg-surface-subtle block rounded-xl px-4 py-3 text-base font-medium"
                   >
                     {e.etiqueta}
-                  </a>
+                  </Link>
                 </li>
               ))}
               {telefono && (

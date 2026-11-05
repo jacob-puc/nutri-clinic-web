@@ -1,6 +1,7 @@
 import "@fontsource-variable/fraunces";
 import "@fontsource-variable/fraunces/wght-italic.css";
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
   Check,
   Clock,
@@ -28,6 +29,7 @@ import type { ClinicaPublica, OpcionesReserva } from "@/types/api";
  */
 export function InicioPage() {
   const opciones = useOpcionesPublicas();
+  useIrASeccion(!opciones.isPending);
 
   return (
     <SitioPublico>
@@ -43,6 +45,21 @@ export function InicioPage() {
 
 const BOTON_PRINCIPAL =
   "bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-13 items-center justify-center rounded-full px-8 text-base font-semibold transition-colors";
+
+/**
+ * Los enlaces del menu navegan sin recargar, asi que el navegador ya no busca
+ * la seccion por si solo. Espera a `listo`: el equipo y el contacto dependen de
+ * datos, y bajar antes dejaria la pagina en otra altura.
+ */
+function useIrASeccion(listo: boolean) {
+  const { hash } = useLocation();
+
+  useEffect(() => {
+    if (!hash || !listo) return;
+    const suave = window.matchMedia("(prefers-reduced-motion: no-preference)").matches;
+    document.querySelector(hash)?.scrollIntoView({ behavior: suave ? "smooth" : "auto" });
+  }, [hash, listo]);
+}
 
 function Seccion({
   id,
