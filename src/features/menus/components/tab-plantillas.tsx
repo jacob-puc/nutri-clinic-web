@@ -14,7 +14,6 @@ import { toast } from "sonner";
 
 import { EstadoError } from "@/components/states/estado-error";
 import { EstadoVacio } from "@/components/states/estado-vacio";
-import { SkeletonTabla } from "@/components/states/skeleton-tabla";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,14 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   BarraHerramientas,
   CaloriasVsObjetivo,
@@ -45,7 +37,7 @@ import {
   usePlantillasMenu,
   useRestaurarPlantillaMenu,
 } from "@/features/menus/hooks/use-menus";
-import { DIAS_SEMANA, ETIQUETA_DIA, ETIQUETA_DIA_CORTA, promedioDiario } from "@/features/menus/lib/menus";
+import { DIAS_SEMANA, ETIQUETA_DIA, ETIQUETA_DIA_CORTA, ETIQUETA_TIEMPO, TIEMPOS_COMIDA, promedioDiario } from "@/features/menus/lib/menus";
 import { mensajeDeError } from "@/lib/api-error";
 import { normalizar } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -106,7 +98,13 @@ export function TabPlantillas() {
         }
       />
 
-      {consulta.isPending && <SkeletonTabla anchos={["w-64", "w-40", "w-28", "w-12"]} filas={5} />}
+      {consulta.isPending && (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }, (_, i) => (
+            <Skeleton key={i} className="h-72 rounded-xl" />
+          ))}
+        </div>
+      )}
 
       {consulta.isError && (
         <EstadoError
@@ -134,83 +132,20 @@ export function TabPlantillas() {
       )}
 
       {plantillas.length > 0 && (
-        <div className="hoja overflow-hidden rounded-xl">
-          <Table>
-            <caption className="sr-only">Plantillas semanales</caption>
-            <TableHeader>
-              <TableRow className="bg-surface-subtle/70 hover:bg-surface-subtle/70">
-                <TableHead className="text-muted-foreground px-4 py-3 text-xs font-medium md:px-6">Plantilla</TableHead>
-                <TableHead className="text-muted-foreground hidden px-4 py-3 text-xs font-medium md:table-cell">Semana</TableHead>
-                <TableHead className="text-muted-foreground px-4 py-3 text-xs font-medium">Promedio diario</TableHead>
-                <TableHead className="w-12 py-3 pr-3 pl-0 md:pr-4">
-                  <span className="sr-only">Acciones</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {plantillas.map((plantilla) => (
-                <TableRow
-                  key={plantilla.id}
-                  className={cn("hover:bg-accent", !plantilla.isActive && "opacity-60", plantilla.isActive && "cursor-pointer")}
-                  onClick={() => plantilla.isActive && setEditando(plantilla)}
-                >
-                  <TableCell className="px-4 py-3 whitespace-normal md:px-6">
-                    <div className="flex items-center gap-2">
-                      <p className="text-foreground font-medium">{plantilla.nombre}</p>
-                      {!plantilla.isActive && <span className="text-destructive text-xs">Eliminada</span>}
-                    </div>
-                    <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
-                      {plantilla.descripcion ?? `${plantilla.detalles.length} platos en la semana`}
-                    </p>
-                  </TableCell>
-                  <TableCell className="hidden px-4 py-3 md:table-cell">
-                    <DiasCubiertos plantilla={plantilla} />
-                  </TableCell>
-                  <TableCell className="px-4 py-3">
-                    <CaloriasVsObjetivo calorias={promedioDiario(plantilla.detalles)} objetivo={plantilla.objetivoCalorico} />
-                  </TableCell>
-                  <TableCell className="w-12 py-3 pr-3 pl-0 text-right md:pr-4" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-muted-foreground" aria-label={`Acciones de ${plantilla.nombre}`}>
-                          <MoreHorizontal className="size-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-52">
-                        {plantilla.isActive ? (
-                          <>
-                            <DropdownMenuItem onSelect={() => setAsignando(plantilla)} disabled={plantilla.detalles.length === 0}>
-                              <ClipboardCheck />
-                              Asignar a paciente
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => setEditando(plantilla)}>
-                              <Pencil />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => duplicarPlantilla(plantilla)}>
-                              <Copy />
-                              Duplicar
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem variant="destructive" onSelect={() => setEliminando(plantilla)}>
-                              <Trash2 />
-                              Eliminar
-                            </DropdownMenuItem>
-                          </>
-                        ) : (
-                          <DropdownMenuItem onSelect={() => restaurarPlantilla(plantilla)}>
-                            <RotateCcw />
-                            Restaurar
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {plantillas.map((plantilla) => (
+            <li key={plantilla.id}>
+              <TarjetaPlantilla
+                plantilla={plantilla}
+                onAsignar={() => setAsignando(plantilla)}
+                onEditar={() => setEditando(plantilla)}
+                onDuplicar={() => duplicarPlantilla(plantilla)}
+                onEliminar={() => setEliminando(plantilla)}
+                onRestaurar={() => restaurarPlantilla(plantilla)}
+              />
+            </li>
+          ))}
+        </ul>
       )}
 
       <DialogoPlantilla abierto={creando} onOpenChange={setCreando} />
@@ -237,25 +172,151 @@ export function TabPlantillas() {
   );
 }
 
-/** Siete puntos, uno por dia: lleno si ese dia tiene platos. */
-function DiasCubiertos({ plantilla }: { plantilla: PlantillaMenu }) {
+/* ---------------- Tarjeta de plantilla ---------------- */
+
+function TarjetaPlantilla({
+  plantilla,
+  onAsignar,
+  onEditar,
+  onDuplicar,
+  onEliminar,
+  onRestaurar,
+}: {
+  plantilla: PlantillaMenu;
+  onAsignar: () => void;
+  onEditar: () => void;
+  onDuplicar: () => void;
+  onEliminar: () => void;
+  onRestaurar: () => void;
+}) {
+  const vacia = plantilla.detalles.length === 0;
+  const dias = new Set(plantilla.detalles.map((d) => d.diaSemana)).size;
+
   return (
-    <div className="flex gap-1">
-      {DIAS_SEMANA.map((dia) => {
-        const lleno = plantilla.detalles.some((d) => d.diaSemana === dia);
-        return (
-          <span
-            key={dia}
-            aria-label={`${ETIQUETA_DIA[dia]}: ${lleno ? "con platos" : "vacío"}`}
-            className={cn(
-              "grid size-6 place-items-center rounded-md text-[10px] font-semibold",
-              lleno ? "bg-primary-soft text-primary-soft-foreground" : "bg-muted text-muted-foreground-subtle",
+    <article
+      className={cn(
+        "hoja flex h-full flex-col rounded-xl transition-shadow",
+        plantilla.isActive ? "hover:shadow-[0_14px_30px_-20px_rgb(0_0_0/0.35)]" : "opacity-60",
+      )}
+    >
+      <header className="flex items-start justify-between gap-3 px-5 pt-5">
+        <button
+          type="button"
+          onClick={plantilla.isActive ? onEditar : undefined}
+          disabled={!plantilla.isActive}
+          className="focus-visible:ring-ring min-w-0 rounded-md text-left outline-none focus-visible:ring-2"
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-foreground font-semibold leading-snug">{plantilla.nombre}</h3>
+            {!plantilla.isActive && <span className="text-destructive text-xs">Eliminada</span>}
+          </div>
+          <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
+            {plantilla.descripcion ?? `${plantilla.detalles.length} platos · ${dias} de 7 días`}
+          </p>
+        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-muted-foreground -mt-1 -mr-2 shrink-0" aria-label={`Acciones de ${plantilla.nombre}`}>
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            {plantilla.isActive ? (
+              <>
+                <DropdownMenuItem onSelect={onAsignar} disabled={vacia}>
+                  <ClipboardCheck />
+                  Asignar a paciente
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={onEditar}>
+                  <Pencil />
+                  Editar
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={onDuplicar}>
+                  <Copy />
+                  Duplicar
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive" onSelect={onEliminar}>
+                  <Trash2 />
+                  Eliminar
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <DropdownMenuItem onSelect={onRestaurar}>
+                <RotateCcw />
+                Restaurar
+              </DropdownMenuItem>
             )}
-          >
-            {ETIQUETA_DIA_CORTA[dia].charAt(0)}
-          </span>
-        );
-      })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </header>
+
+      <div className="px-5 pt-4 pb-4">
+        <MiniSemana plantilla={plantilla} />
+      </div>
+
+      <footer className="border-border-strong mt-auto flex items-center justify-between gap-3 border-t border-dashed px-5 py-4">
+        <CaloriasVsObjetivo calorias={promedioDiario(plantilla.detalles)} objetivo={plantilla.objetivoCalorico} />
+        {plantilla.isActive && (
+          <Button variant="outline" size="sm" onClick={onAsignar} disabled={vacia} className="shrink-0">
+            <ClipboardCheck className="size-4" />
+            Asignar
+          </Button>
+        )}
+      </footer>
+    </article>
+  );
+}
+
+/**
+ * Vista previa de la semana: una columna por dia y una fila por tiempo de
+ * comida. Cada casilla se llena con la intensidad de cuantos platos tiene.
+ */
+function MiniSemana({ plantilla }: { plantilla: PlantillaMenu }) {
+  const conteo = new Map<string, number>();
+  for (const d of plantilla.detalles) {
+    const clave = `${d.diaSemana}|${d.tiempoComida}`;
+    conteo.set(clave, (conteo.get(clave) ?? 0) + 1);
+  }
+  /* Solo los tiempos que se usan en alguna plantilla de la semana; si esta
+     vacia, los cuatro principales para que se lea como calendario. */
+  const usados = TIEMPOS_COMIDA.filter((t) => plantilla.detalles.some((d) => d.tiempoComida === t));
+  const filas = usados.length > 0 ? usados : TIEMPOS_COMIDA.slice(0, 4);
+
+  return (
+    <div className="grid grid-cols-[4.75rem_repeat(7,minmax(0,1fr))] items-center gap-1">
+      <span />
+      {DIAS_SEMANA.map((dia) => (
+        <span key={dia} className="text-muted-foreground text-center text-[10px] font-semibold">
+          {ETIQUETA_DIA_CORTA[dia].charAt(0)}
+        </span>
+      ))}
+      {filas.map((tiempo) => (
+        <Fila key={tiempo} etiqueta={ETIQUETA_TIEMPO[tiempo]}>
+          {DIAS_SEMANA.map((dia) => {
+            const n = conteo.get(`${dia}|${tiempo}`) ?? 0;
+            return (
+              <span
+                key={dia}
+                aria-label={`${ETIQUETA_DIA[dia]}, ${ETIQUETA_TIEMPO[tiempo]}: ${n === 0 ? "vacío" : `${n} plato${n === 1 ? "" : "s"}`}`}
+                className={cn(
+                  "h-4 rounded-[4px]",
+                  n === 0 ? "bg-muted" : n === 1 ? "bg-primary/45" : "bg-primary/80",
+                )}
+              />
+            );
+          })}
+        </Fila>
+      ))}
     </div>
+  );
+}
+
+function Fila({ etiqueta, children }: { etiqueta: string; children: React.ReactNode }) {
+  return (
+    <>
+      <span className="text-muted-foreground truncate pr-1 text-[10px]">{etiqueta}</span>
+      {children}
+    </>
   );
 }

@@ -13,7 +13,6 @@ import { toast } from "sonner";
 
 import { EstadoError } from "@/components/states/estado-error";
 import { EstadoVacio } from "@/components/states/estado-vacio";
-import { SkeletonTabla } from "@/components/states/skeleton-tabla";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,14 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   BarraHerramientas,
   ConfirmarEliminacion,
@@ -42,6 +34,7 @@ import {
   useEliminarPlato,
   usePlatos,
   useRestaurarPlato,
+  useAlimentos,
 } from "@/features/menus/hooks/use-menus";
 import { formatearKcal, formatearNumero } from "@/features/menus/lib/menus";
 import { esVariante } from "@/features/menus/lib/variantes";
@@ -61,6 +54,12 @@ export function TabPlatos() {
   const duplicar = useDuplicarPlato();
   const eliminar = useEliminarPlato();
   const restaurar = useRestaurarPlato();
+  /* Las fotos de los ingredientes arman la portada de cada plato. */
+  const alimentos = useAlimentos();
+  const imagenes = useMemo(
+    () => new Map((alimentos.data ?? []).filter((a) => a.imagenUrl).map((a) => [a.id, a.imagenUrl as string])),
+    [alimentos.data],
+  );
 
   /* La busqueda tambien mira los ingredientes: "avena" encuentra todos los
      platos que la llevan, no solo los que la tienen en el nombre. */
@@ -111,7 +110,13 @@ export function TabPlatos() {
         }
       />
 
-      {consulta.isPending && <SkeletonTabla anchos={["w-64", "w-20", "w-48", "w-12"]} filas={6} />}
+      {consulta.isPending && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }, (_, i) => (
+            <Skeleton key={i} className="h-72 rounded-xl" />
+          ))}
+        </div>
+      )}
 
       {consulta.isError && (
         <EstadoError
@@ -139,89 +144,20 @@ export function TabPlatos() {
       )}
 
       {platos.length > 0 && (
-        <div className="hoja overflow-hidden rounded-xl">
-          <Table>
-            <caption className="sr-only">Platos</caption>
-            <TableHeader>
-              <TableRow className="bg-surface-subtle/70 hover:bg-surface-subtle/70">
-                <TableHead className="text-muted-foreground px-4 py-3 text-xs font-medium md:px-6">Plato</TableHead>
-                <TableHead className="text-muted-foreground px-4 py-3 text-xs font-medium">Energía</TableHead>
-                <TableHead className="text-muted-foreground hidden px-4 py-3 text-xs font-medium md:table-cell">Macros</TableHead>
-                <TableHead className="w-12 py-3 pr-3 pl-0 md:pr-4">
-                  <span className="sr-only">Acciones</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {platos.map((plato) => (
-                <TableRow key={plato.id} className={cn("hover:bg-accent", !plato.isActive && "opacity-60")}>
-                  <TableCell className="px-4 py-3 whitespace-normal md:px-6">
-                    <div className="flex items-center gap-2">
-                      <p className="text-foreground font-medium">{plato.nombre}</p>
-                      {!plato.isActive && <span className="text-destructive text-xs">Eliminado</span>}
-                      {esVariante(plato) && (
-                        <span className="bg-primary-soft text-primary-soft-foreground rounded px-1.5 py-px text-[10px] font-semibold">
-                          {plato.descripcion}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
-                      {[...plato.detalles]
-                        .sort((a, b) => a.orden - b.orden)
-                        .map((d) => `${d.alimentoNombre} ${formatearNumero(d.racionGramos)} g`)
-                        .join(" · ")}
-                    </p>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 font-semibold tabular-nums">{formatearKcal(plato.caloriasTotales)}</TableCell>
-                  <TableCell className="hidden px-4 py-3 md:table-cell">
-                    <LineaMacros
-                      macros={{
-                        calorias: plato.caloriasTotales,
-                        proteinas: plato.proteinasTotales,
-                        carbohidratos: plato.carbohidratosTotales,
-                        grasas: plato.grasasTotales,
-                      }}
-                      conBarra
-                    />
-                  </TableCell>
-                  <TableCell className="w-12 py-3 pr-3 pl-0 text-right md:pr-4">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-muted-foreground" aria-label={`Acciones de ${plato.nombre}`}>
-                          <MoreHorizontal className="size-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        {plato.isActive ? (
-                          <>
-                            <DropdownMenuItem onSelect={() => setEditando(plato)}>
-                              <Pencil />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => duplicarPlato(plato)}>
-                              <Copy />
-                              Duplicar
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem variant="destructive" onSelect={() => setEliminando(plato)}>
-                              <Trash2 />
-                              Eliminar
-                            </DropdownMenuItem>
-                          </>
-                        ) : (
-                          <DropdownMenuItem onSelect={() => restaurarPlato(plato)}>
-                            <RotateCcw />
-                            Restaurar
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {platos.map((plato) => (
+            <li key={plato.id}>
+              <TarjetaPlato
+                plato={plato}
+                imagenes={imagenes}
+                onEditar={() => setEditando(plato)}
+                onDuplicar={() => duplicarPlato(plato)}
+                onEliminar={() => setEliminando(plato)}
+                onRestaurar={() => restaurarPlato(plato)}
+              />
+            </li>
+          ))}
+        </ul>
       )}
 
       <DialogoPlato abierto={creando} onOpenChange={setCreando} />
@@ -238,6 +174,182 @@ export function TabPlatos() {
           toast.success("Plato eliminado", { description: eliminando.nombre });
         }}
       />
+    </div>
+  );
+}
+
+/* ---------------- Tarjeta de plato ---------------- */
+
+function TarjetaPlato({
+  plato,
+  imagenes,
+  onEditar,
+  onDuplicar,
+  onEliminar,
+  onRestaurar,
+}: {
+  plato: Plato;
+  imagenes: Map<string, string>;
+  onEditar: () => void;
+  onDuplicar: () => void;
+  onEliminar: () => void;
+  onRestaurar: () => void;
+}) {
+  const ingredientes = [...plato.detalles].sort((a, b) => a.orden - b.orden);
+
+  return (
+    <article
+      className={cn(
+        "hoja group relative flex h-full flex-col overflow-hidden rounded-xl transition-shadow",
+        plato.isActive ? "hover:shadow-[0_14px_30px_-20px_rgb(0_0_0/0.35)]" : "opacity-60",
+      )}
+    >
+      <div className="relative">
+        <PortadaPlato plato={plato} imagenes={imagenes} />
+        <span className="bg-card/90 text-foreground absolute top-2.5 left-2.5 rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums shadow-sm backdrop-blur">
+          {formatearKcal(plato.caloriasTotales)}
+        </span>
+        <div className="absolute top-2 right-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="bg-card/85 hover:bg-card size-8 rounded-full shadow-sm backdrop-blur"
+                aria-label={`Acciones de ${plato.nombre}`}
+              >
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {plato.isActive ? (
+                <>
+                  <DropdownMenuItem onSelect={onEditar}>
+                    <Pencil />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={onDuplicar}>
+                    <Copy />
+                    Duplicar
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive" onSelect={onEliminar}>
+                    <Trash2 />
+                    Eliminar
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <DropdownMenuItem onSelect={onRestaurar}>
+                  <RotateCcw />
+                  Restaurar
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={plato.isActive ? onEditar : undefined}
+        disabled={!plato.isActive}
+        className="focus-visible:ring-ring flex flex-1 flex-col gap-3 p-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset"
+      >
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <h3 className="text-foreground font-semibold leading-snug">{plato.nombre}</h3>
+            {!plato.isActive && <span className="text-destructive text-xs">Eliminado</span>}
+          </div>
+          {esVariante(plato) && (
+            <span className="bg-primary-soft text-primary-soft-foreground inline-block rounded px-1.5 py-px text-[10px] font-semibold">
+              {plato.descripcion}
+            </span>
+          )}
+          <p className="text-muted-foreground line-clamp-2 text-xs">
+            {ingredientes.map((d) => `${d.alimentoNombre} ${formatearNumero(d.racionGramos)} g`).join(" · ")}
+          </p>
+        </div>
+        <div className="mt-auto">
+          <LineaMacros
+            macros={{
+              calorias: plato.caloriasTotales,
+              proteinas: plato.proteinasTotales,
+              carbohidratos: plato.carbohidratosTotales,
+              grasas: plato.grasasTotales,
+            }}
+            conBarra
+          />
+        </div>
+      </button>
+    </article>
+  );
+}
+
+/**
+ * Portada: la foto del plato si tiene; si no, un mosaico con las fotos de sus
+ * ingredientes (hasta cuatro). Sin ninguna foto, un fondo de marca con icono.
+ */
+function PortadaPlato({ plato, imagenes }: { plato: Plato; imagenes: Map<string, string> }) {
+  const fotos = plato.imagenUrl
+    ? [plato.imagenUrl]
+    : [...plato.detalles]
+        .sort((a, b) => a.orden - b.orden)
+        .map((d) => imagenes.get(d.alimentoId))
+        .filter((u): u is string => Boolean(u))
+        .slice(0, 4);
+
+  if (fotos.length === 0) {
+    /* Sin fotos: el color del macro que mas energia aporta, para que cada
+       plato se distinga a simple vista (los ingredientes van abajo). */
+    const energia = [
+      { macro: "Proteína", color: "var(--chart-1)", kcal: plato.proteinasTotales * 4 },
+      { macro: "Carbohidratos", color: "var(--chart-2)", kcal: plato.carbohidratosTotales * 4 },
+      { macro: "Grasas", color: "var(--chart-3)", kcal: plato.grasasTotales * 9 },
+    ];
+    const dominante = energia.reduce((max, m) => (m.kcal > max.kcal ? m : max), energia[0]!);
+    return (
+      <div
+        className="relative flex aspect-[16/10] flex-col justify-end overflow-hidden p-3"
+        style={{
+          backgroundImage: `radial-gradient(120% 90% at 100% 0%, color-mix(in oklch, ${dominante.color} 28%, transparent), transparent 70%), linear-gradient(160deg, color-mix(in oklch, ${dominante.color} 10%, var(--color-card)), var(--color-card))`,
+        }}
+      >
+        <UtensilsCrossed
+          aria-hidden
+          strokeWidth={1.25}
+          className="absolute -right-4 -bottom-6 size-32 -rotate-12 opacity-[0.14]"
+          style={{ color: dominante.color }}
+        />
+        <p
+          className="bg-card/85 w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase shadow-sm"
+          style={{ color: dominante.color }}
+        >
+          Alto en {dominante.macro.toLowerCase()}
+        </p>
+      </div>
+    );
+  }
+
+  const disposicion =
+    fotos.length === 1
+      ? "grid-cols-1"
+      : fotos.length === 2
+        ? "grid-cols-2"
+        : fotos.length === 3
+          ? "grid-cols-2 grid-rows-2 [&>*:first-child]:row-span-2"
+          : "grid-cols-2 grid-rows-2";
+
+  return (
+    <div className={cn("bg-muted grid aspect-[16/10] gap-0.5", disposicion)}>
+      {fotos.map((url, i) => (
+        <img
+          key={`${url}-${i}`}
+          src={url}
+          alt=""
+          loading="lazy"
+          className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+        />
+      ))}
     </div>
   );
 }
