@@ -1,4 +1,9 @@
-import type { EstadoCita } from "@/types/api";
+import type { Cita, EstadoCita } from "@/types/api";
+
+/** Sigue pendiente de atender. La hora no basta: una consulta puede cerrarse antes de su fin. */
+export function estaPorAtender(cita: Pick<Cita, "estado">): boolean {
+  return cita.estado === "Programada" || cita.estado === "Confirmada";
+}
 
 export const ETIQUETA_ESTADO_CITA: Record<EstadoCita, string> = {
   Programada: "Programada",

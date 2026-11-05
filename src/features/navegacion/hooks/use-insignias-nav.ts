@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import type { InsigniasNav } from "@/components/layout/nav-items";
 import { usePorCobrar } from "@/features/cobros/hooks/use-cobros";
 import { useCitas } from "@/features/citas/hooks/use-citas";
+import { estaPorAtender } from "@/features/citas/lib/estados-cita";
 import { useConsultasAbiertas } from "@/features/consultas/hooks/use-consultas";
 import { hoyEnClinica, rangoDelDia } from "@/lib/zona-horaria";
 
@@ -17,9 +18,7 @@ export function useInsigniasNav(): InsigniasNav {
   const abiertas = useConsultasAbiertas();
   const { pendientes } = usePorCobrar();
 
-  const citasPendientes = (citas.data ?? []).filter(
-    (c) => c.estado === "Programada" || c.estado === "Confirmada",
-  ).length;
+  const citasPendientes = (citas.data ?? []).filter(estaPorAtender).length;
   const enCurso = abiertas.data?.length ?? 0;
 
   const insignias: InsigniasNav = {};

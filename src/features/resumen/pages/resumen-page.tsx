@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { usePermisos } from "@/features/auth/hooks/use-permisos";
+import { estaPorAtender } from "@/features/citas/lib/estados-cita";
 import { DialogoCita } from "@/features/citas/components/dialogo-cita";
 import { JornadaDia } from "@/features/citas/components/jornada-dia";
 import { useCitas } from "@/features/citas/hooks/use-citas";
@@ -132,7 +133,7 @@ export function ResumenPage() {
           etiqueta={soloMias ? "Mis citas hoy" : "Citas hoy"}
           destacada
           valor={citasHoy.isSuccess ? citas.length : null}
-          detalle={`${atendidas} atendidas · ${proximas.length} por atender`}
+          detalle={`${atendidas} atendidas · ${proximas.filter(estaPorAtender).length} por atender`}
           href="/citas"
         />
         {permisos.verClinico ? (

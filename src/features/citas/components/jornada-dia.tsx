@@ -4,7 +4,7 @@ import { CalendarDays, CalendarPlus, Coffee } from "lucide-react";
 
 import { BotonesEstadoCita } from "@/features/citas/components/acciones-cita";
 import { BadgeEstadoCita, InsigniaEnLinea } from "@/features/citas/components/badge-estado-cita";
-import { COLOR_ESTADO_CITA } from "@/features/citas/lib/estados-cita";
+import { COLOR_ESTADO_CITA, estaPorAtender } from "@/features/citas/lib/estados-cita";
 import { formatearHoraLocal } from "@/features/citas/lib/fechas-cita";
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
 import { HojaCalendario } from "@/components/ficha/hoja-calendario";
@@ -63,7 +63,11 @@ export function JornadaDia({
   onVerCalendario,
 }: JornadaDiaProps) {
   const fecha = fechaDeClave(clave);
-  const siguiente = citas.find((c) => new Date(c.fechaInicio).getTime() >= ahora);
+  const porAtender = citas.filter(estaPorAtender);
+  const siguiente = porAtender.find((c) => new Date(c.fechaInicio).getTime() >= ahora);
+  /* Hoy solo se cuenta lo pendiente; la lista aun muestra lo que se cerro antes
+     de su hora de fin, con su estado. */
+  const conteo = esHoy ? porAtender.length : citas.length;
   /* La marca va justo antes de la primera cita que aun no empieza. Si todas
      estan en curso, va al final. */
   const indiceAhora = esHoy
@@ -92,11 +96,11 @@ export function JornadaDia({
           </h2>
           {!cargando && (
             <p className="text-muted-foreground mt-0.5 text-sm">
-              {citas.length === 0
+              {conteo === 0
                 ? esHoy
                   ? "Sin citas pendientes"
                   : "Sin citas"
-                : `${citas.length} ${citas.length === 1 ? "cita" : "citas"}${esHoy ? " por atender" : ""}`}
+                : `${conteo} ${conteo === 1 ? "cita" : "citas"}${esHoy ? " por atender" : ""}`}
               {esHoy && siguiente && (
                 <>
                   , la siguiente a las{" "}
