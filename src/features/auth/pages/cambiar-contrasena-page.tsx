@@ -36,7 +36,7 @@ export function CambiarContrasenaPage() {
           <span className="bg-primary-soft text-primary-soft-foreground grid size-11 place-items-center rounded-xl">
             <KeyRound className="size-5" aria-hidden />
           </span>
-          <h1 className="text-foreground mt-4 text-xl font-semibold tracking-tight">
+          <h1 className="font-editorial text-foreground mt-4 text-3xl font-normal tracking-tight">
             {nombre ? `Bienvenido, ${nombre}` : "Bienvenido"}
           </h1>
           <p className="text-muted-foreground mt-1.5 text-sm">

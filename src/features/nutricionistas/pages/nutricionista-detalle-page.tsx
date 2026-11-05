@@ -106,7 +106,7 @@ function Ficha({ persona, esPropia }: { persona: Nutricionista; esPropia: boolea
             <AvatarPersona nombre={persona.nombreCompleto} id={persona.id} className="size-16 text-lg" />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">
+                <h1 className="font-editorial text-foreground text-3xl font-normal tracking-tight md:text-4xl">
                   {persona.nombreCompleto}
                 </h1>
                 {esPropia && (

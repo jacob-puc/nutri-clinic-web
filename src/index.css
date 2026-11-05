@@ -721,3 +721,26 @@ body .fc .fc-popover-header {
     radial-gradient(50% 80% at 8% 100%, color-mix(in oklch, var(--brand-400) 18%, transparent), transparent 70%),
     linear-gradient(135deg, var(--brand-800), var(--brand-950));
 }
+
+/* ---------- Entrada al sistema (ver BienvenidaSistema) ---------- */
+@keyframes bienvenida-sale {
+  0%, 62% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes menu-entra {
+  from { opacity: 0; transform: translate3d(-24px, 0, 0); }
+}
+
+.bienvenida-sistema {
+  animation: bienvenida-sale 1.3s var(--ease-out-soft) forwards;
+  pointer-events: none;
+}
+
+.entrada-sistema > aside {
+  animation: menu-entra 0.7s var(--ease-out-soft) 0.75s backwards;
+}
+
+.entrada-sistema main {
+  animation: vista-gpu 0.7s var(--ease-out-soft) 0.8s backwards;
+}

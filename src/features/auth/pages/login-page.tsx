@@ -4,6 +4,7 @@ import { AlertCircle, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 import imagenLogin from "@/assets/sitio/login-verduras.jpg";
+import { marcarBienvenida } from "@/components/layout/bienvenida-sistema";
 import { LogoNutriClinica } from "@/components/layout/logo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,6 +73,7 @@ export function LoginPage() {
 
     try {
       await login(correoElectronico.trim(), contrasena);
+      marcarBienvenida();
       navigate(desde, { replace: true });
     } catch (err) {
       if (err instanceof ApiError) {

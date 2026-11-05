@@ -59,7 +59,8 @@
   /* Controles a 8px y tarjetas a 12px: mas sobrio que el 10px uniforme. */
   --radius: 0.5rem;
 
-  --background: var(--neutral-50);
+  /* Un toque del tono de la marca: mismo aire que el sitio, sin manchas. */
+  --background: oklch(0.971 0.013 178);
   /* Tinta con subtejo teal (185°): 18.8:1 sobre la tarjeta. */
   --foreground: oklch(0.175 0.015 180);
 

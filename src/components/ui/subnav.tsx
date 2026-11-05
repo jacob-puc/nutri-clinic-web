@@ -37,7 +37,7 @@ export function Subnav({
       <div className="mx-auto grid w-full max-w-7xl items-center gap-x-4 px-4 py-2.5 md:px-8 lg:grid-cols-[1fr_auto_1fr]">
         <div className="sr-only flex items-center gap-1.5 lg:not-sr-only lg:flex">
           <div>
-            <h1 className="text-foreground text-xl font-semibold tracking-tight whitespace-nowrap">{titulo}</h1>
+            <h1 className="font-editorial text-foreground text-[1.75rem] leading-tight font-normal tracking-tight whitespace-nowrap">{titulo}</h1>
             {subtitulo && (
               <p className="text-muted-foreground text-xs whitespace-nowrap first-letter:uppercase">{subtitulo}</p>
             )}

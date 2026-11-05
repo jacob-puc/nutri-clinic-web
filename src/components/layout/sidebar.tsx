@@ -14,10 +14,7 @@ export function MarcaSidebar({ collapsed = false }: { collapsed?: boolean }) {
       <LogoNutriClinica className="size-9 shrink-0 rounded-[10px] shadow-[inset_0_1px_0_0_oklch(1_0_0/0.3),0_4px_14px_-4px_var(--sidebar-glow)]" />
       {!collapsed && (
         <span className="flex flex-col leading-none">
-          <span className="text-sidebar-foreground text-base font-bold tracking-tight">
-            Nutri
-            <span className="text-sidebar-primary">Clinica</span>
-          </span>
+          <span className="font-editorial text-sidebar-foreground text-xl tracking-tight">NutriClínica</span>
           <span className="text-sidebar-muted-foreground mt-1 text-[11px] font-medium">
             Consulta nutricional
           </span>

@@ -223,7 +223,7 @@ function EncabezadoPacientes({
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-2">
       <div className="flex items-center gap-3">
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">
+        <h1 className="font-editorial text-foreground text-3xl font-normal tracking-tight md:text-4xl">
           Pacientes
         </h1>
         <span className="bg-primary-soft text-primary-soft-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums">

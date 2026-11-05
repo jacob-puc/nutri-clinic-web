@@ -1,5 +1,3 @@
-import "@fontsource-variable/fraunces";
-import "@fontsource-variable/fraunces/wght-italic.css";
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {

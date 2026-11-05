@@ -107,7 +107,7 @@ export function ResumenPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-muted-foreground text-sm first-letter:uppercase">{fechaLarga}</p>
-          <h1 className="text-foreground mt-0.5 text-2xl font-semibold tracking-tight md:text-3xl">
+          <h1 className="font-editorial text-foreground mt-0.5 text-3xl font-normal tracking-tight md:text-4xl">
             {saludo}
             {nombre && `, ${nombre}`}
           </h1>

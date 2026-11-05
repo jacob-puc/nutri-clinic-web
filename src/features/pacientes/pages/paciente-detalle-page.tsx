@@ -370,7 +370,7 @@ function EncabezadoFicha({
           />
 
           <div className="min-w-0">
-            <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">
+            <h1 className="font-editorial text-foreground text-3xl font-normal tracking-tight md:text-4xl">
               {paciente.nombreCompleto}
             </h1>
 
@@ -529,7 +529,7 @@ function FichaAdministrativa({ paciente }: { paciente: Paciente }) {
         <div className="flex min-w-0 items-center gap-4">
           <AvatarPaciente nombre={paciente.nombreCompleto} id={paciente.id} className="size-14 shrink-0 text-base" />
           <div className="min-w-0">
-            <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">{paciente.nombreCompleto}</h1>
+            <h1 className="font-editorial text-foreground text-3xl font-normal tracking-tight md:text-4xl">{paciente.nombreCompleto}</h1>
             <p className="text-muted-foreground mt-1 text-sm tabular-nums">
               {paciente.edad !== null && <>{paciente.edad} años · </>}
               Tel: {paciente.telefono}

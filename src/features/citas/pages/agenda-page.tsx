@@ -229,7 +229,7 @@ export function AgendaPage() {
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
       <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">Citas</h1>
+        <h1 className="font-editorial text-foreground text-3xl font-normal tracking-tight md:text-4xl">Citas</h1>
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="bg-surface-muted flex items-center gap-1 rounded-lg p-1 shadow-[inset_0_1px_2px_0_oklch(0.21_0.008_190/0.08)]" aria-label="Vista de citas">

@@ -111,7 +111,7 @@ export function ReportesPage() {
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5 px-4 py-6 md:px-8 md:py-8">
       <div>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">Reportes</h1>
+        <h1 className="font-editorial text-foreground text-3xl font-normal tracking-tight md:text-4xl">Reportes</h1>
         <p className="text-muted-foreground mt-1 text-sm">Ingresos de la clínica por periodo.</p>
       </div>
 

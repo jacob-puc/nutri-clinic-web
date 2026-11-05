@@ -103,7 +103,7 @@ export function ConsultasPage() {
   if (citas.isError) {
     return (
       <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">Consultas</h1>
+        <h1 className="font-editorial text-foreground text-3xl font-normal tracking-tight md:text-4xl">Consultas</h1>
         <div className="mt-4">
           <EstadoError
             titulo="No pudimos cargar la agenda del día"
