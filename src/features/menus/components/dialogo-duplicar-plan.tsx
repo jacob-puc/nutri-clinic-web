@@ -110,7 +110,13 @@ function Contenido({
         imagenUrl: original.imagenUrl,
         detalles: [...original.detalles]
           .sort((a, b) => a.orden - b.orden)
-          .map((d, orden) => ({ alimentoId: d.alimentoId, racionGramos: d.racionGramos, orden })),
+          .map((d, orden) => ({
+            alimentoId: d.alimentoId,
+            racionGramos: d.racionGramos,
+            medidaCantidad: d.medidaCantidad,
+            medidaNombre: d.medidaNombre,
+            orden,
+          })),
       });
       reemplazos.set(id, nueva.id);
     }

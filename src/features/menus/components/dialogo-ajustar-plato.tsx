@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { AlertaFormulario } from "@/components/ui/grupo-campos";
 import { Input } from "@/components/ui/input";
-import { InputUnidad } from "@/components/ui/input-unidad";
 import { Label } from "@/components/ui/label";
 import { Segmentado } from "@/components/ui/segmentado";
 import {
@@ -22,9 +21,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CampoRacion, ResumenRacion } from "@/features/menus/components/campo-racion";
 import { ImagenAlimento } from "@/features/menus/components/imagen-alimento";
 import { LineaMacros } from "@/features/menus/components/comunes";
 import { useAlimentos } from "@/features/menus/hooks/use-menus";
+import { camposDeMedida, racionDeDetalle, racionEnGramos, type Racion } from "@/features/menus/lib/medidas";
 import { formatearKcal, LIMITES, MACROS_CERO, nuevaClave, sumarMacros, type Macros } from "@/features/menus/lib/menus";
 import {
   esVarianteDe,
@@ -63,7 +64,7 @@ export function DialogoAjustarPlato({
 }) {
   return (
     <Dialog open={abierto} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-2xl">
         {abierto && plato && (
           <Contenido
             plato={plato}
@@ -82,7 +83,8 @@ export function DialogoAjustarPlato({
   );
 }
 
-interface Fila extends IngredienteVariante {
+interface Fila extends Pick<IngredienteVariante, "alimentoId" | "alimentoNombre"> {
+  racion: Racion;
   clave: string;
 }
 
@@ -111,8 +113,23 @@ function Contenido({
     (varianteActual?.ingredientes ??
       [...plato.detalles]
         .sort((a, b) => a.orden - b.orden)
-        .map((d) => ({ alimentoId: d.alimentoId, alimentoNombre: d.alimentoNombre, racionGramos: d.racionGramos }))
-    ).map((i) => ({ ...i, clave: nuevaClave() })),
+        .map((d) => ({
+          alimentoId: d.alimentoId,
+          alimentoNombre: d.alimentoNombre,
+          racionGramos: d.racionGramos,
+          medidaCantidad: d.medidaCantidad,
+          medidaNombre: d.medidaNombre,
+        }))
+    ).map((i) => ({
+      alimentoId: i.alimentoId,
+      alimentoNombre: i.alimentoNombre,
+      racion: racionDeDetalle({
+        racionGramos: i.racionGramos,
+        medidaCantidad: i.medidaCantidad ?? null,
+        medidaNombre: i.medidaNombre ?? null,
+      }),
+      clave: nuevaClave(),
+    })),
   );
   const [alcance, setAlcance] = useState<Alcance>(ocurrencias > 1 ? "todas" : "esta");
   const [intento, setIntento] = useState(false);
@@ -128,10 +145,11 @@ function Contenido({
     return mapa;
   }, [plato, alimentosConsulta.data]);
 
-  const macrosDe = (lista: { alimentoId: Guid; racionGramos: number }[]) =>
+  const macrosDe = (lista: Fila[]) =>
     lista.reduce((s, f) => {
       const m = porGramo.get(f.alimentoId);
-      return m && f.racionGramos > 0 ? sumarMacros(s, m, f.racionGramos) : s;
+      const gramos = f.racion.gramos ?? 0;
+      return m && gramos > 0 ? sumarMacros(s, m, gramos) : s;
     }, MACROS_CERO);
 
   const original: Macros = {
@@ -143,6 +161,7 @@ function Contenido({
   const ajustado = macrosDe(filas);
   const diferencia = ajustado.calorias - original.calorias;
 
+  const medidasDe = new Map((alimentosConsulta.data ?? []).map((a) => [a.id, a.medidas]));
   const usados = new Set(filas.map((f) => f.alimentoId));
   const disponibles = (alimentosConsulta.data ?? []).filter((a) => !usados.has(a.id));
 
@@ -151,13 +170,16 @@ function Contenido({
     filas:
       filas.length === 0
         ? "El plato necesita al menos un ingrediente."
-        : filas.some((f) => !(f.racionGramos > 0) || f.racionGramos > LIMITES.racionGramos)
+        : filas.some((f) => !((f.racion.gramos ?? 0) > 0) || (f.racion.gramos ?? 0) > LIMITES.racionGramos)
           ? `Cada ración debe estar entre 1 y ${LIMITES.racionGramos} g.`
           : null,
   };
 
   const agregar = (alimento: Alimento) =>
-    setFilas((a) => [...a, { clave: nuevaClave(), alimentoId: alimento.id, alimentoNombre: alimento.nombre, racionGramos: 100 }]);
+    setFilas((a) => [
+      ...a,
+      { clave: nuevaClave(), alimentoId: alimento.id, alimentoNombre: alimento.nombre, racion: racionEnGramos(100) },
+    ]);
 
   const aplicar = () => {
     setIntento(true);
@@ -168,10 +190,11 @@ function Contenido({
         nombre: nombre.trim(),
         platoBaseId: varianteActual?.platoBaseId ?? plato.id,
         platoVarianteId: varianteActual?.platoVarianteId ?? (yaEsVariante ? plato.id : undefined),
-        ingredientes: filas.map(({ alimentoId, alimentoNombre, racionGramos }) => ({
+        ingredientes: filas.map(({ alimentoId, alimentoNombre, racion }) => ({
           alimentoId,
           alimentoNombre,
-          racionGramos,
+          racionGramos: racion.gramos as number,
+          ...camposDeMedida(racion),
         })),
         macros: ajustado,
       },
@@ -207,32 +230,30 @@ function Contenido({
           {filas.map((fila) => {
             const kcal = macrosDe([fila]).calorias;
             return (
-              <div key={fila.clave} className="grid grid-cols-[minmax(0,1fr)_7rem_4.5rem_auto] items-center gap-2">
-                <span className="text-foreground truncate text-sm">{fila.alimentoNombre}</span>
-                <InputUnidad
-                  unidad="g"
-                  inputMode="decimal"
-                  step="5"
-                  min={1}
-                  aria-label={`Gramos de ${fila.alimentoNombre}`}
-                  value={Number.isNaN(fila.racionGramos) ? "" : fila.racionGramos}
-                  onChange={(e) =>
-                    setFilas((a) =>
-                      a.map((f) =>
-                        f.clave === fila.clave
-                          ? { ...f, racionGramos: e.target.value === "" ? Number.NaN : Number(e.target.value) }
-                          : f,
-                      ),
-                    )
+              <div
+                key={fila.clave}
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 sm:grid-cols-[minmax(0,1fr)_15rem_5rem_auto]"
+              >
+                <span className="flex min-h-9 items-center">
+                  <span className="text-foreground line-clamp-2 text-sm leading-tight">{fila.alimentoNombre}</span>
+                </span>
+                <CampoRacion
+                  racion={fila.racion}
+                  medidas={medidasDe.get(fila.alimentoId)}
+                  etiqueta={fila.alimentoNombre}
+                  alto="h-9"
+                  className="col-span-2 row-start-2 sm:col-span-1 sm:row-start-auto"
+                  onChange={(racion) =>
+                    setFilas((a) => a.map((f) => (f.clave === fila.clave ? { ...f, racion } : f)))
                   }
-                  className="h-9"
                 />
-                <span className="text-muted-foreground text-right text-xs tabular-nums">{formatearKcal(kcal)}</span>
+                <ResumenRacion kcal={formatearKcal(kcal)} racion={fila.racion} className="hidden h-9 sm:flex" />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon-sm"
                   aria-label={`Quitar ${fila.alimentoNombre}`}
+                  className="col-start-2 row-start-1 sm:col-start-auto sm:row-start-auto"
                   onClick={() => setFilas((a) => a.filter((f) => f.clave !== fila.clave))}
                 >
                   <X className="size-4" />

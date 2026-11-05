@@ -48,6 +48,8 @@ export interface IngredienteVariante {
   alimentoId: Guid;
   alimentoNombre: string;
   racionGramos: number;
+  medidaCantidad?: number | null;
+  medidaNombre?: string | null;
 }
 
 /** Ajuste pendiente de guardar sobre una o varias comidas del plan. */

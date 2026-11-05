@@ -266,7 +266,13 @@ function TarjetaPlato({
             </span>
           )}
           <p className="text-muted-foreground line-clamp-2 text-xs">
-            {ingredientes.map((d) => `${d.alimentoNombre} ${formatearNumero(d.racionGramos)} g`).join(" · ")}
+            {ingredientes
+              .map((d) =>
+                d.medidaTexto
+                  ? `${d.alimentoNombre} ${d.medidaTexto} (${formatearNumero(d.racionGramos)} g)`
+                  : `${d.alimentoNombre} ${formatearNumero(d.racionGramos)} g`,
+              )
+              .join(" · ")}
           </p>
         </div>
         <div className="mt-auto">

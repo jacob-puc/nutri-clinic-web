@@ -408,9 +408,17 @@ export type MenuAsignadoEstado = 'Borrador' | 'Activo' | 'Finalizado';
 
 /* ---------- Alimentos: macros por cada 100 g ---------- */
 
+/** Medida casera de un alimento: "pieza" = 50 g. */
+export interface MedidaCasera {
+  id?: Guid | null;
+  nombre: string;
+  gramos: number;
+}
+
 export interface Alimento {
   id: Guid;
   nombre: string;
+  medidas: MedidaCasera[];
   calorias: number;
   proteinas: number;
   carbohidratos: number;
@@ -430,6 +438,8 @@ export interface CrearAlimentoDto {
   carbohidratos: number;
   grasas: number;
   imagenUrl?: string | null;
+  /** Lista completa; sin ella se dejan las que tenga. */
+  medidas?: MedidaCasera[];
 }
 
 export type ActualizarAlimentoDto = CrearAlimentoDto;
@@ -447,7 +457,13 @@ export interface DetallePlato {
   id: Guid;
   alimentoId: Guid;
   alimentoNombre: string;
+  /** Siempre en gramos: de aqui salen las macros. */
   racionGramos: number;
+  /** Como se capturo, si fue en medida casera. */
+  medidaCantidad: number | null;
+  medidaNombre: string | null;
+  /** "2 piezas"; null si se capturo en gramos. */
+  medidaTexto: string | null;
   orden: number;
   calorias: number;
   proteinas: number;
@@ -478,6 +494,8 @@ export interface DetallePlatoDto {
   id?: Guid | null;
   alimentoId: Guid;
   racionGramos: number;
+  medidaCantidad?: number | null;
+  medidaNombre?: string | null;
   orden: number;
 }
 

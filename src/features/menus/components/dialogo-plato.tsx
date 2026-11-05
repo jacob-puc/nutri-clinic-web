@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dialog";
 import { AlertaFormulario } from "@/components/ui/grupo-campos";
 import { Input } from "@/components/ui/input";
-import { InputUnidad } from "@/components/ui/input-unidad";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -23,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { CampoRacion, ResumenRacion } from "@/features/menus/components/campo-racion";
 import { ImagenAlimento } from "@/features/menus/components/imagen-alimento";
 import { LineaMacros } from "@/features/menus/components/comunes";
 import { useActualizarPlato, useAlimentos, useCrearPlato } from "@/features/menus/hooks/use-menus";
@@ -34,6 +34,7 @@ import {
   sumarMacros,
   type Macros,
 } from "@/features/menus/lib/menus";
+import { camposDeMedida, racionDeDetalle, racionEnGramos, type Racion } from "@/features/menus/lib/medidas";
 import { mensajeDeError } from "@/lib/api-error";
 import type { Alimento, Guid, Plato } from "@/types/api";
 
@@ -41,7 +42,7 @@ interface Ingrediente {
   clave: string;
   id?: Guid;
   alimentoId: Guid | "";
-  gramos: number | undefined;
+  racion: Racion;
 }
 
 export function DialogoPlato({
@@ -55,7 +56,7 @@ export function DialogoPlato({
 }) {
   return (
     <Dialog open={abierto} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-3xl">
         {abierto && <Contenido plato={plato ?? null} onCerrar={() => onOpenChange(false)} />}
       </DialogContent>
     </Dialog>
@@ -73,8 +74,8 @@ function Contenido({ plato, onCerrar }: { plato: Plato | null; onCerrar: () => v
     plato
       ? [...plato.detalles]
           .sort((a, b) => a.orden - b.orden)
-          .map((d) => ({ clave: nuevaClave(), id: d.id, alimentoId: d.alimentoId, gramos: d.racionGramos }))
-      : [{ clave: nuevaClave(), alimentoId: "", gramos: 100 }],
+          .map((d) => ({ clave: nuevaClave(), id: d.id, alimentoId: d.alimentoId, racion: racionDeDetalle(d) }))
+      : [{ clave: nuevaClave(), alimentoId: "", racion: racionEnGramos(100) }],
   );
   const [intentoEnviar, setIntentoEnviar] = useState(false);
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
@@ -102,8 +103,8 @@ function Contenido({ plato, onCerrar }: { plato: Plato | null; onCerrar: () => v
 
   const macrosDe = (ingrediente: Ingrediente): Macros | null => {
     const alimento = ingrediente.alimentoId ? alimentos.get(ingrediente.alimentoId) : undefined;
-    if (!alimento || !ingrediente.gramos) return null;
-    return sumarMacros(MACROS_CERO, alimento, ingrediente.gramos / 100);
+    if (!alimento || !ingrediente.racion.gramos) return null;
+    return sumarMacros(MACROS_CERO, alimento, ingrediente.racion.gramos / 100);
   };
 
   const total = ingredientes.reduce((suma, i) => {
@@ -115,12 +116,12 @@ function Contenido({ plato, onCerrar }: { plato: Plato | null; onCerrar: () => v
     setIngredientes((actuales) => actuales.map((i) => (i.clave === clave ? { ...i, ...cambios } : i)));
 
   const errorNombre = intentoEnviar && nombre.trim() === "" ? "El nombre es obligatorio." : null;
-  const filasValidas = ingredientes.filter((i) => i.alimentoId && i.gramos && i.gramos > 0);
+  const filasValidas = ingredientes.filter((i) => i.alimentoId && i.racion.gramos && i.racion.gramos > 0);
+  const excede = ingredientes.some((i) => i.racion.gramos !== undefined && i.racion.gramos > LIMITES.racionGramos);
   const errorFilas = (() => {
     if (!intentoEnviar) return null;
     if (filasValidas.length === 0) return "Agrega al menos un alimento con su ración.";
-    if (ingredientes.some((i) => i.gramos !== undefined && i.gramos > LIMITES.racionGramos))
-      return `Una ración no puede superar ${LIMITES.racionGramos} g.`;
+    if (excede) return `Una ración no puede superar ${LIMITES.racionGramos} g.`;
     return null;
   })();
 
@@ -131,12 +132,13 @@ function Contenido({ plato, onCerrar }: { plato: Plato | null; onCerrar: () => v
     setIntentoEnviar(true);
     setErrorGeneral(null);
     if (nombre.trim() === "" || filasValidas.length === 0) return;
-    if (ingredientes.some((i) => i.gramos !== undefined && i.gramos > LIMITES.racionGramos)) return;
+    if (excede) return;
 
     const detalles = filasValidas.map((i, orden) => ({
       id: i.id ?? null,
       alimentoId: i.alimentoId as Guid,
-      racionGramos: i.gramos as number,
+      racionGramos: i.racion.gramos as number,
+      ...camposDeMedida(i.racion),
       orden,
     }));
     const dto = {
@@ -161,6 +163,7 @@ function Contenido({ plato, onCerrar }: { plato: Plato | null; onCerrar: () => v
   };
 
   const listaAlimentos = alimentosConsulta.data ?? [];
+  const catalogo = new Map<string, Alimento>(listaAlimentos.map((a) => [a.id, a]));
   const sinCatalogo = alimentosConsulta.isSuccess && listaAlimentos.length === 0;
 
   return (
@@ -168,7 +171,7 @@ function Contenido({ plato, onCerrar }: { plato: Plato | null; onCerrar: () => v
       <DialogHeader icono={UtensilsCrossed}>
         <DialogTitle>{plato ? "Editar plato" : "Nuevo plato"}</DialogTitle>
         <DialogDescription>
-          Arma el plato con alimentos del catálogo y su ración en gramos; las macros se calculan solas.
+          Arma el plato con alimentos del catálogo, en gramos o en medidas caseras; las macros se calculan solas.
         </DialogDescription>
       </DialogHeader>
 
@@ -226,14 +229,25 @@ function Contenido({ plato, onCerrar }: { plato: Plato | null; onCerrar: () => v
               return (
                 <div
                   key={ingrediente.clave}
-                  className="grid grid-cols-[minmax(0,1fr)_7.5rem_auto] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_7.5rem_6rem_auto]"
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 sm:grid-cols-[minmax(0,1fr)_15rem_5rem_auto]"
                 >
                   <Select
                     value={ingrediente.alimentoId}
-                    onValueChange={(valor) => cambiar(ingrediente.clave, { alimentoId: valor })}
+                    /* Las medidas son de cada alimento: al cambiarlo se vuelve a gramos. */
+                    onValueChange={(valor) =>
+                      cambiar(ingrediente.clave, { alimentoId: valor, racion: racionEnGramos(ingrediente.racion.gramos) })
+                    }
                   >
-                    <SelectTrigger className="bg-card h-10 w-full" aria-label="Alimento">
-                      <SelectValue placeholder="Elige un alimento" />
+                    <SelectTrigger className="bg-card w-full data-[size=default]:h-10" aria-label="Alimento">
+                      {/* Cerrado solo va foto y nombre: las kcal/100 g no caben y estan en la lista. */}
+                      <SelectValue placeholder="Elige un alimento" className="min-w-0">
+                        {actual && (
+                          <span className="flex min-w-0 items-center gap-2">
+                            <ImagenAlimento url={(actual as Alimento).imagenUrl} nombre={actual.nombre} className="size-6 rounded-md" />
+                            <span className="truncate">{actual.nombre}</span>
+                          </span>
+                        )}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {opciones.map((a) => (
@@ -248,29 +262,26 @@ function Contenido({ plato, onCerrar }: { plato: Plato | null; onCerrar: () => v
                     </SelectContent>
                   </Select>
 
-                  <InputUnidad
-                    unidad="g"
-                    inputMode="decimal"
-                    min={1}
-                    step="1"
-                    aria-label="Ración en gramos"
-                    value={ingrediente.gramos ?? ""}
-                    onChange={(e) =>
-                      cambiar(ingrediente.clave, {
-                        gramos: e.target.value === "" ? undefined : Number(e.target.value),
-                      })
-                    }
+                  <CampoRacion
+                    racion={ingrediente.racion}
+                    medidas={catalogo.get(ingrediente.alimentoId)?.medidas}
+                    etiqueta={actual?.nombre ?? "este ingrediente"}
+                    onChange={(racion) => cambiar(ingrediente.clave, { racion })}
+                    className="col-span-2 row-start-2 sm:col-span-1 sm:row-start-auto"
                   />
 
-                  <span className="text-muted-foreground hidden text-right text-sm tabular-nums sm:block">
-                    {macros ? formatearKcal(macros.calorias) : "—"}
-                  </span>
+                  <ResumenRacion
+                    kcal={macros ? formatearKcal(macros.calorias) : "—"}
+                    racion={ingrediente.racion}
+                    className="hidden h-10 sm:flex"
+                  />
 
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     aria-label="Quitar ingrediente"
+                    className="col-start-2 row-start-1 sm:col-start-auto sm:row-start-auto"
                     disabled={ingredientes.length === 1}
                     onClick={() => setIngredientes((a) => a.filter((i) => i.clave !== ingrediente.clave))}
                   >
@@ -286,7 +297,9 @@ function Contenido({ plato, onCerrar }: { plato: Plato | null; onCerrar: () => v
             variant="outline"
             size="sm"
             disabled={sinCatalogo || ingredientes.length >= listaAlimentos.length}
-            onClick={() => setIngredientes((a) => [...a, { clave: nuevaClave(), alimentoId: "", gramos: 100 }])}
+            onClick={() =>
+              setIngredientes((a) => [...a, { clave: nuevaClave(), alimentoId: "", racion: racionEnGramos(100) }])
+            }
           >
             <Plus className="size-3.5" />
             Agregar ingrediente

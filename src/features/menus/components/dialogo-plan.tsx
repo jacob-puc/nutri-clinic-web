@@ -120,6 +120,8 @@ function Contenido({ plan, onCerrar }: { plan: MenuAsignado; onCerrar: () => voi
         detalles: variante.ingredientes.map((i, orden) => ({
           alimentoId: i.alimentoId,
           racionGramos: i.racionGramos,
+          medidaCantidad: i.medidaCantidad,
+          medidaNombre: i.medidaNombre,
           orden,
         })),
       };

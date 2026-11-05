@@ -3,7 +3,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Apple, ImagePlus, Loader2, Trash2 } from "lucide-react";
+import { Apple, ImagePlus, Loader2, Plus, Scale, Trash2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +27,8 @@ import { Input } from "@/components/ui/input";
 import { InputUnidad } from "@/components/ui/input-unidad";
 import { ImagenAlimento } from "@/features/menus/components/imagen-alimento";
 import { useActualizarAlimento, useCrearAlimento, useSubirImagenAlimento } from "@/features/menus/hooks/use-menus";
-import { formatearKcal, LIMITES } from "@/features/menus/lib/menus";
+import { formatearKcal, LIMITES, nuevaClave } from "@/features/menus/lib/menus";
+import { MEDIDAS_SUGERIDAS } from "@/features/menus/lib/medidas";
 import { mensajeDeError } from "@/lib/api-error";
 import { campoNumero } from "@/lib/campos-formulario";
 import type { Alimento } from "@/types/api";
@@ -101,6 +102,12 @@ function Contenido({ alimento, onCerrar }: { alimento: Alimento | null; onCerrar
     setQuitarImagen(false);
   };
 
+  /* Medidas caseras: opcionales, los gramos siguen siendo la base. */
+  const [medidas, setMedidas] = useState<FilaMedida[]>(() =>
+    (alimento?.medidas ?? []).map((m) => ({ clave: nuevaClave(), nombre: m.nombre, gramos: m.gramos })),
+  );
+  const [errorMedidas, setErrorMedidas] = useState<string | null>(null);
+
   const form = useForm<Valores>({
     resolver: zodResolver(schema),
     defaultValues: alimento
@@ -127,10 +134,15 @@ function Contenido({ alimento, onCerrar }: { alimento: Alimento | null; onCerrar
 
   const enviar = form.handleSubmit(async (valores) => {
     setErrorGeneral(null);
+    const problema = problemaMedidas(medidas);
+    setErrorMedidas(problema);
+    if (problema) return;
+
     const dto = {
       ...valores,
       nombre: valores.nombre.trim(),
       imagenUrl: quitarImagen ? null : (alimento?.imagenUrl ?? null),
+      medidas: medidas.map((m) => ({ nombre: m.nombre.trim().toLowerCase(), gramos: m.gramos as number })),
     };
     try {
       let alimentoId: string;
@@ -250,6 +262,8 @@ function Contenido({ alimento, onCerrar }: { alimento: Alimento | null; onCerrar
             </p>
           )}
 
+          <EditorMedidas medidas={medidas} onChange={setMedidas} error={errorMedidas} />
+
           {errorGeneral && <AlertaFormulario>{errorGeneral}</AlertaFormulario>}
 
           <DialogFooter>
@@ -264,6 +278,118 @@ function Contenido({ alimento, onCerrar }: { alimento: Alimento | null; onCerrar
         </form>
       </Form>
     </>
+  );
+}
+
+interface FilaMedida {
+  clave: string;
+  nombre: string;
+  gramos: number | undefined;
+}
+
+const MAXIMO_MEDIDAS = 8;
+
+function problemaMedidas(medidas: FilaMedida[]): string | null {
+  if (medidas.some((m) => m.nombre.trim() === "")) return "Ponle nombre a cada medida.";
+  if (medidas.some((m) => !m.gramos || m.gramos <= 0)) return "Indica cuántos gramos pesa cada medida.";
+  if (medidas.some((m) => (m.gramos ?? 0) > LIMITES.racionGramos))
+    return `Una medida no puede superar ${LIMITES.racionGramos} g.`;
+  const nombres = medidas.map((m) => m.nombre.trim().toLowerCase());
+  if (new Set(nombres).size !== nombres.length) return "Hay dos medidas con el mismo nombre.";
+  return null;
+}
+
+/** Equivalencias del alimento: "pieza" = 50 g. Se ofrecen al armar platos, junto a los gramos. */
+function EditorMedidas({
+  medidas,
+  onChange,
+  error,
+}: {
+  medidas: FilaMedida[];
+  onChange: (medidas: FilaMedida[]) => void;
+  error: string | null;
+}) {
+  const cambiar = (clave: string, cambios: Partial<FilaMedida>) =>
+    onChange(medidas.map((m) => (m.clave === clave ? { ...m, ...cambios } : m)));
+  const agregar = (nombre: string) =>
+    onChange([...medidas, { clave: nuevaClave(), nombre, gramos: undefined }]);
+  const usadas = new Set(medidas.map((m) => m.nombre.trim().toLowerCase()));
+  const sugeridas = MEDIDAS_SUGERIDAS.filter((s) => !usadas.has(s));
+  const lleno = medidas.length >= MAXIMO_MEDIDAS;
+
+  return (
+    <fieldset className="border-border-strong space-y-2.5 border-t border-dashed pt-4">
+      <legend className="sr-only">Medidas caseras</legend>
+      <div>
+        <p className="text-foreground flex items-center gap-1.5 text-sm font-medium">
+          <Scale className="text-muted-foreground size-4" aria-hidden />
+          Medidas caseras
+          <span className="text-muted-foreground-subtle text-xs font-normal">(opcional)</span>
+        </p>
+        <p className="text-muted-foreground mt-0.5 text-xs">
+          Permiten capturar “2 piezas” en lugar de gramos. Indica cuánto pesa cada una.
+        </p>
+      </div>
+
+      {medidas.map((medida) => (
+        <div key={medida.clave} className="grid grid-cols-[minmax(0,1fr)_7rem_auto] items-center gap-2">
+          <Input
+            aria-label="Nombre de la medida"
+            value={medida.nombre}
+            maxLength={40}
+            placeholder="pieza"
+            onChange={(e) => cambiar(medida.clave, { nombre: e.target.value })}
+            className="bg-card h-9"
+          />
+          <InputUnidad
+            unidad="g"
+            inputMode="decimal"
+            min={1}
+            step="1"
+            aria-label={`Gramos de una ${medida.nombre || "medida"}`}
+            value={medida.gramos ?? ""}
+            onChange={(e) =>
+              cambiar(medida.clave, { gramos: e.target.value === "" ? undefined : Number(e.target.value) })
+            }
+            className="h-9"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Quitar ${medida.nombre || "medida"}`}
+            onClick={() => onChange(medidas.filter((m) => m.clave !== medida.clave))}
+          >
+            <X className="size-4" />
+          </Button>
+        </div>
+      ))}
+
+      {!lleno && (
+        <div className="flex flex-wrap gap-1.5">
+          {sugeridas.map((nombre) => (
+            <button
+              key={nombre}
+              type="button"
+              onClick={() => agregar(nombre)}
+              className="border-border text-muted-foreground hover:border-primary/50 hover:text-foreground flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors"
+            >
+              <Plus className="size-3" aria-hidden />
+              {nombre}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => agregar("")}
+            className="text-primary rounded-full px-2 py-1 text-xs font-semibold hover:underline"
+          >
+            Otra medida
+          </button>
+        </div>
+      )}
+
+      {error && <p className="text-destructive text-sm">{error}</p>}
+    </fieldset>
   );
 }
 
