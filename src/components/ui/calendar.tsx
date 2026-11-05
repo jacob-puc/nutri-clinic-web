@@ -55,6 +55,38 @@ function DesplegableCalendario({
   );
 }
 
+/**
+ * Calendario de rango. El clic lo interpreta quien lo usa: asi un rango ya
+ * marcado se reemplaza con dos clics nuevos en vez de estirarse.
+ */
+export function CalendarioRango({
+  desde,
+  hasta,
+  maximo,
+  onTocarDia,
+}: {
+  desde: Date;
+  /** Sin `hasta`, el rango esta a medias y solo se marca el primer dia. */
+  hasta: Date | undefined;
+  maximo?: Date;
+  onTocarDia: (dia: Date) => void;
+}) {
+  return (
+    <div className="w-fit p-2">
+      <DayPicker
+        mode="range"
+        selected={{ from: desde, to: hasta }}
+        onSelect={(_rango, dia) => onTocarDia(dia)}
+        locale={es}
+        showOutsideDays
+        defaultMonth={hasta ?? desde}
+        disabled={maximo ? { after: maximo } : undefined}
+        endMonth={maximo}
+      />
+    </div>
+  );
+}
+
 interface CalendarProps {
   className?: string;
   selected?: Date | undefined;

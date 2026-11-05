@@ -13,6 +13,8 @@ export interface Permisos {
   gestionarEquipo: boolean;
   /** Datos fiscales de la clinica. */
   configurarClinica: boolean;
+  /** Ingresos de toda la clinica. */
+  verReportes: boolean;
 }
 
 export function permisosDe(rol: RolUsuario | undefined): Permisos {
@@ -22,6 +24,7 @@ export function permisosDe(rol: RolUsuario | undefined): Permisos {
     atiende: clinico,
     gestionarEquipo: rol === "Administrador",
     configurarClinica: rol === "Administrador",
+    verReportes: rol === "Administrador",
   };
 }
 

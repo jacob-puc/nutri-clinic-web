@@ -711,6 +711,35 @@ export interface PagoFiltro {
   fechaFin?: DateTimeString;
 }
 
+export type AgrupacionReporte = 'Dia' | 'Semana' | 'Mes';
+
+export interface PuntoIngresos {
+  /** Primer dia del tramo, en fecha de calendario. */
+  clave: string;
+  total: number;
+  cobros: number;
+}
+
+export interface ReporteIngresos {
+  desde: DateTimeString;
+  hasta: DateTimeString;
+  agrupacion: AgrupacionReporte;
+  total: number;
+  cobros: number;
+  ticketPromedio: number;
+  anulados: number;
+  montoAnulado: number;
+  consultasAtendidas: number;
+  consultasPorCobrar: number;
+  /** Periodo anterior de la misma duracion. */
+  totalAnterior: number;
+  cobrosAnterior: number;
+  serie: PuntoIngresos[];
+  porMetodo: { metodo: MetodoPago; total: number; cobros: number }[];
+  porNutricionista: { nutricionistaId: Guid; nombre: string; total: number; cobros: number }[];
+  porTipoConsulta: { tipo: TipoConsulta; total: number; cobros: number }[];
+}
+
 export type TipoPersona = 'Fisica' | 'Moral';
 
 /** El nombre viaja por JSON; la clave SAT (601, 612…) es el valor numérico del enum. */

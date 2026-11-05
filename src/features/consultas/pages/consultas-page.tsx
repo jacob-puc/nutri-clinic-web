@@ -7,12 +7,12 @@ import {
   PlayCircle,
   Stethoscope,
   UserCheck,
-  Filter,
 } from "lucide-react";
 
 import { BadgeEstadoCita } from "@/features/citas/components/badge-estado-cita";
 import { formatearHoraLocal } from "@/features/citas/lib/fechas-cita";
 import { useCitas } from "@/features/citas/hooks/use-citas";
+import { HistorialConsultas } from "@/features/consultas/components/historial-consultas";
 import { useConsultas, useConsultasAbiertas } from "@/features/consultas/hooks/use-consultas";
 import { ETIQUETA_TIPO_CONSULTA } from "@/features/consultas/lib/etiquetas-consulta";
 import { useCrearConsulta } from "@/features/consultas/hooks/use-mutaciones-consulta";
@@ -24,11 +24,10 @@ import { EstadoVacio } from "@/components/states/estado-vacio";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { SelectorFecha } from "@/components/ui/selector-fecha";
 import { mensajeDeError } from "@/lib/api-error";
 import { toast } from "sonner";
-import type { Cita, ConsultaFiltro } from "@/types/api";
-import { calendarioDeClave, claveDia, hoyCalendario, hoyEnClinica, rangoDelDia } from "@/lib/zona-horaria";
+import type { Cita } from "@/types/api";
+import { hoyCalendario, hoyEnClinica, rangoDelDia } from "@/lib/zona-horaria";
 
 
 const FORMATO_DIA = new Intl.DateTimeFormat("es-MX", {
@@ -49,7 +48,7 @@ export function ConsultasPage() {
   const rango = useMemo(() => rangoDelDia(hoyEnClinica()), []);
 
   /* Las vistas se controlan desde la URL (?vista=historial) para que el
-     historial del día sea compartible y sobreviva al refresh. */
+     historial sea compartible y sobreviva al refresh. */
   const vista = parametros.get("vista") === "historial" ? "historial" : "cola";
   const cambiarVista = (siguiente: string) => {
     const siguientes = new URLSearchParams(parametros);
@@ -62,18 +61,6 @@ export function ConsultasPage() {
   /* Un solo traqueo de consultas para saber el tipo de cada paciente: si va
      con la primera, se abre como Inicial; si ya tiene, como Seguimiento. */
   const consultas = useConsultas({});
-
-  /* Filtros del historial: se guardan en la URL para ser compartibles y
-     persistentes. Por defecto, el día de hoy. */
-  const [filtroDesde, setFiltroDesde] = useSearchParams();
-  const desdeUrl = filtroDesde.get("desde");
-  const hastaUrl = filtroDesde.get("hasta");
-  const filtroInicial: ConsultaFiltro = useMemo(() => ({
-    desde: desdeUrl ?? undefined,
-    hasta: hastaUrl ?? undefined,
-  }), [desdeUrl, hastaUrl]);
-
-  const consultasHistorial = useConsultas(filtroInicial);
 
   const iniciar = useCrearConsulta();
   const abiertas = useConsultasAbiertas();
@@ -92,17 +79,6 @@ export function ConsultasPage() {
     () => lista.filter((c) => c.estado === "Completada").length,
     [lista],
   );
-
-  /* Historial del día (cola): todo lo que ya pasó en la consulta, ya sea con cierre
-     o con la atención abierta. Se lee de más reciente a más antigua. */
-  const historial = useMemo(() => {
-    const pasadas = lista
-      .filter(
-        (c) => c.estado === "Completada" || c.estado === "EnCurso",
-      )
-      .sort((a, b) => b.fechaInicio.localeCompare(a.fechaInicio));
-    return pasadas;
-  }, [lista]);
 
   const pendientes = porAtender.length;
 
@@ -158,10 +134,10 @@ export function ConsultasPage() {
             )}
           </TabsTrigger>
           <TabsTrigger value="historial">
-            Historial del día
-            {historial.length > 0 && (
+            Historial
+            {completadas > 0 && (
               <span className="bg-primary/12 text-primary ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">
-                {historial.length}
+                {completadas}
               </span>
             )}
           </TabsTrigger>
@@ -246,138 +222,7 @@ export function ConsultasPage() {
         </TabsContent>
 
         <TabsContent value="historial" className="mt-4">
-          <Seccion
-            titulo="Historial del día"
-            icono={CheckCircle2}
-            meta={consultasHistorial.data && consultasHistorial.data.length > 0
-              ? `${consultasHistorial.data.length} consultas`
-              : undefined}
-            acciones={
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    const params = new URLSearchParams(filtroDesde);
-                    params.delete("desde");
-                    params.delete("hasta");
-                    setFiltroDesde(params, { replace: true });
-                  }}
-                  disabled={!filtroInicial.desde && !filtroInicial.hasta}
-                >
-                  <Filter className="size-3.5 mr-1.5" aria-hidden />
-                  Ver todos
-                </Button>
-              </div>
-            }
-          >
-            <div className="flex flex-wrap items-center gap-3 mb-4">
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Desde</span>
-                <SelectorFecha
-                  value={filtroInicial.desde ? calendarioDeClave(claveDia(filtroInicial.desde)) : undefined}
-                  onChange={(fecha) => {
-                    const params = new URLSearchParams(filtroDesde);
-                    if (fecha) {
-                      /* Medianoche LOCAL convertida a instante. Antes se
-                         armaba "T00:00:00Z" (medianoche UTC), que en Mexico
-                         es la tarde del dia anterior: el selector mostraba
-                         un dia menos y el filtro cubria otro rango. */
-                      params.set("desde", rangoDelDia(fecha).desde);
-                    } else {
-                      params.delete("desde");
-                    }
-                    setFiltroDesde(params, { replace: true });
-                  }}
-                  placeholder="Fecha inicio"
-                  formato="corto"
-                  limpiable
-                />
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Hasta</span>
-                <SelectorFecha
-                  value={filtroInicial.hasta ? calendarioDeClave(claveDia(filtroInicial.hasta)) : undefined}
-                  onChange={(fecha) => {
-                    const params = new URLSearchParams(filtroDesde);
-                    if (fecha) {
-                      params.set("hasta", rangoDelDia(fecha).hasta);
-                    } else {
-                      params.delete("hasta");
-                    }
-                    setFiltroDesde(params, { replace: true });
-                  }}
-                  placeholder="Fecha fin"
-                  formato="corto"
-                  limpiable
-                />
-              </div>
-            </div>
-
-            {consultasHistorial.isPending ? (
-              <FilasSkeleton n={2} />
-            ) : consultasHistorial.isError ? (
-              <div className="flex flex-col items-center gap-3 py-6 text-center">
-                <p className="text-muted-foreground text-sm">
-                  No pudimos cargar el historial.
-                </p>
-                <Button variant="outline" size="sm" onClick={() => void consultasHistorial.refetch()}>
-                  Reintentar
-                </Button>
-              </div>
-            ) : !consultasHistorial.data || consultasHistorial.data.length === 0 ? (
-              <p className="text-muted-foreground py-2 text-sm">
-                {filtroInicial.desde || filtroInicial.hasta
-                  ? "Sin consultas en el rango seleccionado."
-                  : "Todavía no se ha iniciado ninguna atención."}
-              </p>
-            ) : (
-              <ul className="divide-border/60 divide-y">
-                {consultasHistorial.data
-                  .sort((a, b) => b.fechaInicio.localeCompare(a.fechaInicio))
-                  .map((consulta) => (
-                    <li key={consulta.id} className="flex flex-wrap items-center gap-3 py-2.5">
-                      <span className="text-foreground w-12 shrink-0 text-sm font-semibold tabular-nums">
-                        {formatearHoraLocal(consulta.fechaInicio)}
-                      </span>
-                      <AvatarPaciente
-                        nombre={consulta.pacienteNombre}
-                        id={consulta.pacienteId}
-                        className="size-9 shrink-0"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                          <Link
-                            to={`/pacientes/${consulta.pacienteId}`}
-                            className="text-foreground rounded-sm text-sm font-semibold outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-                          >
-                            {consulta.pacienteNombre}
-                          </Link>
-                          <BadgeEstadoCita
-                            estado={consulta.fechaFin ? "Completada" : "EnCurso"}
-                          />
-                          <span className="text-muted-foreground text-xs">
-                            {consulta.tipoConsulta}
-                          </span>
-                        </div>
-                        <p className="text-muted-foreground truncate text-xs">
-                          {consulta.nutricionistaNombre}
-                          {consulta.notasClinicas && ` · ${consulta.notasClinicas}`}
-                        </p>
-                      </div>
-                      <div className="ml-auto shrink-0">
-                        <Button
-                          size="sm"
-                          onClick={() => navigate(`/consultas/${consulta.id}`)}
-                        >
-                          Ver consulta
-                        </Button>
-                      </div>
-                    </li>
-                  ))}
-              </ul>
-            )}
-          </Seccion>
+          <HistorialConsultas />
         </TabsContent>
       </Tabs>
     </div>

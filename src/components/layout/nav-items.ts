@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   CalendarDays,
   ClipboardList,
   LayoutDashboard,
@@ -93,7 +94,15 @@ export const MODULOS_NAV: ModuloNav[] = [
     href: "/cobros",
     icon: Wallet,
     activo: true,
-    descripcion: "Cobros pendientes, corte del día y facturas",
+    descripcion: "Cobros pendientes, cortes y facturas",
     grupo: "hoy",
+  },
+  {
+    label: "Reportes",
+    href: "/reportes",
+    icon: BarChart3,
+    activo: true,
+    descripcion: "Ingresos de la clínica por periodo",
+    grupo: "gestion",
   },
 ];

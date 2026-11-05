@@ -13,6 +13,7 @@ import { ConsultasPage } from "@/features/consultas/pages/consultas-page";
 import { ConsultaDetallePage } from "@/features/consultas/pages/consulta-detalle-page";
 import { PlanesPage } from "@/features/menus/pages/planes-page";
 import { CobrosPage } from "@/features/cobros/pages/cobros-page";
+import { ReportesPage } from "@/features/reportes/pages/reportes-page";
 import { ResumenPage } from "@/features/resumen/pages/resumen-page";
 import { NutricionistasPage } from "@/features/nutricionistas/pages/nutricionistas-page";
 import { NutricionistaDetallePage } from "@/features/nutricionistas/pages/nutricionista-detalle-page";
@@ -60,6 +61,10 @@ export const router = createBrowserRouter([
               { path: "nutricionistas", element: <NutricionistasPage /> },
               { path: "nutricionistas/:id", element: <NutricionistaDetallePage /> },
             ],
+          },
+          {
+            element: <RequierePermiso permiso="verReportes" />,
+            children: [{ path: "reportes", element: <ReportesPage /> }],
           },
           /* La sección pasó de llamarse Agenda a Citas: las rutas viejas
              redirigen para no dejar enlaces muertos. */

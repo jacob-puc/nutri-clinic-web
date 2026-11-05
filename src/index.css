@@ -105,6 +105,15 @@ body .rdp-root .rdp-selected .rdp-day_button {
   font-weight: 600;
 }
 
+/* Los dias entre los extremos de un rango van tenues, solo los extremos llenos. */
+body .rdp-root .rdp-range_middle .rdp-day_button {
+  background-color: var(--rdp-accent-background-color);
+  border-color: transparent;
+  border-radius: 0;
+  color: var(--foreground);
+  font-weight: 500;
+}
+
 body .rdp-root .rdp-today:not(.rdp-selected) .rdp-day_button {
   box-shadow: inset 0 0 0 1.5px var(--primary);
   color: var(--primary);

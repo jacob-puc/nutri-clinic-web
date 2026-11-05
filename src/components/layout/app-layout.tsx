@@ -18,6 +18,7 @@ export function AppLayout() {
     ocultos.add("/planes");
   }
   if (!permisos.gestionarEquipo) ocultos.add("/nutricionistas");
+  if (!permisos.verReportes) ocultos.add("/reportes");
 
   return (
     <div className="bg-background flex h-dvh overflow-hidden">

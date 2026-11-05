@@ -46,7 +46,7 @@ export function CobrosPage() {
       <div className="pb-2">
         <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">Cobros</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Las consultas se cobran al cerrarlas; aquí queda lo pendiente, el corte del día y las facturas.
+          Las consultas se cobran al cerrarlas; aquí queda lo pendiente, los cortes y las facturas.
         </p>
       </div>
 

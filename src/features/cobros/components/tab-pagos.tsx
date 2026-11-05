@@ -30,7 +30,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SelectorFecha } from "@/components/ui/selector-fecha";
+import { FiltroPeriodo } from "@/components/ui/filtro-periodo";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -45,16 +52,13 @@ import { FormularioFactura } from "@/features/cobros/components/formulario-factu
 import { useAnularPago, useFacturas, usePagos } from "@/features/cobros/hooks/use-cobros";
 import { ETIQUETA_METODO, formatearMoneda, METODOS_PAGO } from "@/features/cobros/lib/cobros";
 import { formatearHoraLocal } from "@/features/citas/lib/fechas-cita";
+import { usePeriodoUrl } from "@/hooks/use-periodo-url";
 import { mensajeDeError } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
-import type { Factura, Pago } from "@/types/api";
-import { hoyCalendario, rangoDelDia } from "@/lib/zona-horaria";
+import { formatearInstante } from "@/lib/zona-horaria";
+import type { Factura, MetodoPago, Pago, PagoFiltro } from "@/types/api";
 
-/** Dia completo de la clinica, con los nombres de filtro de la API de pagos. */
-function rangoDePagos(dia: Date) {
-  const { desde, hasta } = rangoDelDia(dia);
-  return { fechaInicio: desde, fechaFin: hasta };
-}
+const TODOS = "todos";
 
 const folio = (f: Factura) => `${f.serie}-${String(f.folio).padStart(4, "0")}`;
 
@@ -63,14 +67,22 @@ function abrirPdf(accion: () => Promise<void>) {
 }
 
 /**
- * Cobros de un dia con el corte arriba: total cobrado y desglose por metodo,
- * que es lo que se cuadra contra la caja y la terminal al cerrar el dia.
+ * Cobros de un periodo con el corte arriba: total cobrado y desglose por
+ * metodo, que es lo que se cuadra contra la caja y la terminal. Abre en el dia.
  */
 export function TabPagos() {
-  const [dia, setDia] = useState<Date>(() => hoyCalendario());
-  const rango = useMemo(() => rangoDePagos(dia), [dia]);
+  const { periodo, rango, cambiar } = usePeriodoUrl("dia");
+  const [metodo, setMetodo] = useState<MetodoPago | typeof TODOS>(TODOS);
+  const filtro = useMemo<PagoFiltro>(
+    () => ({
+      fechaInicio: rango.desde,
+      fechaFin: rango.hasta,
+      ...(metodo !== TODOS && { metodoPago: metodo }),
+    }),
+    [rango.desde, rango.hasta, metodo],
+  );
 
-  const pagos = usePagos(rango);
+  const pagos = usePagos(filtro);
   /* Facturas sin filtro de fecha: un pago de hoy puede facturarse otro dia. */
   const facturas = useFacturas({});
   const [facturando, setFacturando] = useState<Pago | null>(null);
@@ -94,21 +106,29 @@ export function TabPagos() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="w-56">
-          <SelectorFecha
-            value={dia}
-            onChange={(fecha) => fecha && setDia(fecha)}
-            formato="corto"
-            hasta={hoyCalendario()}
-          />
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        <FiltroPeriodo periodo={periodo} onChange={cambiar} />
+        <Select value={metodo} onValueChange={(valor) => setMetodo(valor as MetodoPago | typeof TODOS)}>
+          <SelectTrigger className="w-full data-[size=default]:h-10 sm:w-52" aria-label="Método de pago">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={TODOS}>Todos los métodos</SelectItem>
+            {METODOS_PAGO.map((m) => (
+              <SelectItem key={m.valor} value={m.valor}>
+                {m.etiqueta}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* ---------- Corte del dia ---------- */}
+      {/* ---------- Corte del periodo ---------- */}
       <div className="hoja grid gap-4 rounded-xl px-4 py-4 sm:grid-cols-[auto_minmax(0,1fr)] md:px-6">
         <div>
-          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">Corte del día</p>
+          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+            {rango.esUnDia ? "Corte del día" : "Corte del periodo"}
+          </p>
           <p className="text-foreground mt-1 text-3xl font-bold tracking-tight tabular-nums">{formatearMoneda(total)}</p>
           <p className="text-muted-foreground text-xs">
             {vigentes.length === 1 ? "1 cobro" : `${vigentes.length} cobros`}
@@ -117,7 +137,7 @@ export function TabPagos() {
         </div>
         <div className="flex flex-wrap content-center gap-2 sm:justify-end">
           {porMetodo.length === 0 ? (
-            <span className="text-muted-foreground text-sm">Sin cobros este día.</span>
+            <span className="text-muted-foreground text-sm">Sin cobros en este periodo.</span>
           ) : (
             porMetodo.map((m) => (
               <span key={m.valor} className="bg-surface-subtle rounded-lg border px-3 py-1.5 text-sm">
@@ -134,16 +154,16 @@ export function TabPagos() {
         <EstadoError titulo="No pudimos cargar los cobros" mensaje={mensajeDeError(pagos.error)} onReintentar={pagos.refetch} />
       )}
       {pagos.isSuccess && lista.length === 0 && (
-        <EstadoVacio icono={Receipt} titulo="Sin cobros" descripcion="No se registraron cobros este día." />
+        <EstadoVacio icono={Receipt} titulo="Sin cobros" descripcion="No se registraron cobros en este periodo." />
       )}
 
       {lista.length > 0 && (
         <div className="hoja overflow-hidden rounded-xl">
           <Table>
-            <caption className="sr-only">Cobros del día</caption>
+            <caption className="sr-only">Cobros: {rango.etiqueta}</caption>
             <TableHeader>
               <TableRow className="bg-surface-subtle/70 hover:bg-surface-subtle/70">
-                <TableHead className="text-muted-foreground px-4 py-3 text-xs font-medium md:px-6">Hora</TableHead>
+                <TableHead className="text-muted-foreground px-4 py-3 text-xs font-medium md:px-6">{rango.esUnDia ? "Hora" : "Fecha"}</TableHead>
                 <TableHead className="text-muted-foreground px-4 py-3 text-xs font-medium">Paciente</TableHead>
                 <TableHead className="text-muted-foreground hidden px-4 py-3 text-xs font-medium sm:table-cell">Método</TableHead>
                 <TableHead className="text-muted-foreground px-4 py-3 text-right text-xs font-medium">Monto</TableHead>
@@ -160,7 +180,10 @@ export function TabPagos() {
                 return (
                   <TableRow key={pago.id} className={cn("hover:bg-accent", anulado && "opacity-60")}>
                     <TableCell className="px-4 py-3 tabular-nums md:px-6">
-                      <p className="text-foreground text-sm">{formatearHoraLocal(pago.fechaPago)}</p>
+                      <p className="text-foreground text-sm">
+                        {!rango.esUnDia && `${formatearInstante(pago.fechaPago, { day: "numeric", month: "short" })} · `}
+                        {formatearHoraLocal(pago.fechaPago)}
+                      </p>
                       <p className="text-muted-foreground text-xs">{pago.numeroRecibo}</p>
                     </TableCell>
                     <TableCell className="px-4 py-3 whitespace-normal">
