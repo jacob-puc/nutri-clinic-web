@@ -47,11 +47,11 @@ export function TarjetaEstadistica({
   const color = destacada ? "white" : `var(${VARIABLE_TONO[tono]})`;
 
   const clases = cn(
-    "group relative isolate flex min-h-[7.5rem] flex-col overflow-hidden rounded-xl p-4 outline-none transition-shadow",
+    "anim-entrada group relative isolate flex min-h-[7.5rem] flex-col overflow-hidden rounded-xl p-4 outline-none",
     destacada
       ? "bg-[linear-gradient(140deg,var(--brand-700),var(--brand-900))] text-white shadow-[0_16px_32px_-18px_var(--brand-900)]"
       : "hoja",
-    href && "hover:shadow-[0_12px_28px_-18px_rgb(0_0_0/0.25)] focus-visible:ring-[3px] focus-visible:ring-primary/30",
+    href && "tarjeta-viva focus-visible:ring-[3px] focus-visible:ring-primary/30",
     className,
   );
 
@@ -79,7 +79,7 @@ export function TarjetaEstadistica({
         aria-hidden
         stroke={`url(#${idDegradado})`}
         strokeWidth={1.6}
-        className="pointer-events-none absolute -right-4 -bottom-5 -z-10 size-24 -rotate-12 transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-6"
+        className="pointer-events-none absolute -right-4 -bottom-5 -z-10 size-24 -rotate-12 transition-transform duration-500 ease-(--ease-out-soft) group-hover:scale-105 group-hover:-rotate-6"
       />
 
       <span className={cn("text-xs font-medium", destacada ? "text-white/75" : "text-muted-foreground")}>{etiqueta}</span>

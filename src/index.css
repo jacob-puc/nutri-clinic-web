@@ -275,7 +275,7 @@ body .fc .fc-event {
   margin: 0.22rem 0.35rem;
   padding: 0.18rem 0.35rem;
   box-shadow: 0 1px 2px oklch(0.22 0.03 185 / 0.09);
-  transition: filter 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+  transition: filter 120ms ease, transform 120ms ease;
 }
 
 body .fc .fc-event:hover {
@@ -466,5 +466,122 @@ body .fc .fc-popover-header {
   }
   .login-entrada {
     animation: login-entrada 0.6s var(--ease-out-soft) both;
+  }
+}
+
+/* ---------- Animaciones del sistema ----------
+   Solo transform y opacity: el navegador las resuelve en la GPU, sin recalcular
+   el layout ni repintar. Por eso la sombra del hover es una capa aparte que
+   solo cambia de opacidad. `backwards` no deja transform al terminar, asi que
+   no quedan contextos de apilamiento ni afectan a menus o barras fijas. */
+@keyframes entrada-gpu {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.985);
+  }
+}
+
+@keyframes vista-gpu {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 4px, 0);
+  }
+}
+
+@keyframes barra-gpu {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Cascada entre hermanas: tarjetas de una cuadricula, cifras de un tablero. */
+  .anim-entrada {
+    animation: entrada-gpu 0.5s var(--ease-out-soft) backwards;
+  }
+  .anim-entrada:nth-child(2) { animation-delay: 45ms; }
+  .anim-entrada:nth-child(3) { animation-delay: 90ms; }
+  .anim-entrada:nth-child(4) { animation-delay: 135ms; }
+  .anim-entrada:nth-child(5) { animation-delay: 180ms; }
+  .anim-entrada:nth-child(6) { animation-delay: 225ms; }
+  .anim-entrada:nth-child(n + 7) { animation-delay: 270ms; }
+
+  /* Bloque que aparece de una pieza: tablas, graficas, pestañas. */
+  .anim-vista {
+    animation: vista-gpu 0.3s var(--ease-out-soft) backwards;
+  }
+
+  /* Barra de avance: el ancho va en scaleX sobre un elemento de ancho completo. */
+  .barra-gpu {
+    animation: barra-gpu 0.7s var(--ease-out-soft) 0.15s backwards;
+    transition: transform 0.4s var(--ease-out-soft);
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .tarjeta-viva {
+    position: relative;
+    isolation: isolate;
+    transition: transform 0.25s var(--ease-out-soft);
+  }
+  .tarjeta-viva::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: 0.75rem;
+    box-shadow: 0 18px 34px -20px rgb(0 0 0 / 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s var(--ease-out-soft);
+  }
+  .tarjeta-viva:hover {
+    transform: translate3d(0, -3px, 0);
+  }
+  .tarjeta-viva:hover::after {
+    opacity: 1;
+  }
+  .tarjeta-viva:active {
+    transform: translate3d(0, -1px, 0);
+  }
+}
+
+/* ---------- Graficas y calendario ----------
+   Las animaciones propias de Recharts cambian atributos del SVG cuadro a cuadro;
+   estas van por CSS. Las barras crecen desde su base y la linea se descubre de
+   izquierda a derecha, sin recalcular la grafica. */
+@keyframes barras-gpu {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes revelar-gpu {
+  from {
+    clip-path: inset(-20% 100% -20% -5%);
+  }
+  to {
+    clip-path: inset(-20% -5% -20% -5%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .grafica-barras .recharts-bar-rectangle {
+    transform-box: fill-box;
+    transform-origin: bottom;
+    animation: barras-gpu 0.7s var(--ease-out-soft) 0.1s backwards;
+  }
+
+  .grafica-linea .recharts-line,
+  .grafica-linea .recharts-area {
+    animation: revelar-gpu 0.9s var(--ease-out-soft) 0.1s backwards;
+  }
+
+  /* El calendario se desvanece al cambiar de vista y cada cita entra suave. */
+  body .fc .fc-view {
+    animation: vista-gpu 0.3s var(--ease-out-soft) backwards;
+  }
+  body .fc .fc-event:not(.fc-event-dragging, .fc-event-mirror) {
+    animation: entrada-gpu 0.35s var(--ease-out-soft) backwards;
   }
 }

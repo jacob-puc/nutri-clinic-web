@@ -311,7 +311,7 @@ export function AgendaPage() {
       <DialogoCita abierto={altaAbierta} onOpenChange={setAltaAbierta} />
 
       {vista === "hoy" ? (
-        <div className="mt-4">
+        <div className="anim-vista mt-4">
           <JornadaDia
             esHoy
             clave={claveHoy}
@@ -324,7 +324,7 @@ export function AgendaPage() {
           />
         </div>
       ) : (
-        <div className="mt-4 flex flex-col gap-4">
+        <div className="anim-vista mt-4 flex flex-col gap-4">
           <Card className="gap-0 overflow-hidden rounded-2xl border border-border/80 py-0 shadow-[0_8px_28px_-20px_oklch(0.27_0.06_185/0.42)]">
             <div className="flex flex-col gap-4 bg-primary-soft/45 px-4 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0">

@@ -56,7 +56,7 @@ export function ResumenEstados({ resumen }: ResumenEstadosProps) {
               contenido={`${ETIQUETA_ESTADO_CITA[valor]}: ${cantidad} (${FORMATO_PORCENTAJE.format(cantidad / total)})`}
             >
               <span
-                className={cn("h-full min-w-1 transition-opacity hover:opacity-80", COLOR_ESTADO_CITA[valor])}
+                className={cn("barra-gpu h-full min-w-1 origin-left transition-opacity hover:opacity-80", COLOR_ESTADO_CITA[valor])}
                 style={{ flexGrow: cantidad, flexBasis: 0 }}
               />
             </TooltipSimple>

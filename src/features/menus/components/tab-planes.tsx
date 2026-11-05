@@ -148,7 +148,7 @@ export function TabPlanes() {
   const tarjetas = (lista: MenuAsignado[]) => (
     <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {lista.map((plan) => (
-        <li key={plan.id}>
+        <li key={plan.id} className="anim-entrada tarjeta-viva">
           <TarjetaPlan
             plan={plan}
             onAbrir={() => setAbierto(plan)}
@@ -343,8 +343,8 @@ function TarjetaPlan({
   return (
     <article
       className={cn(
-        "hoja flex h-full flex-col rounded-xl transition-shadow",
-        plan.isActive ? "hover:shadow-[0_14px_30px_-20px_rgb(0_0_0/0.35)]" : "opacity-60",
+        "hoja flex h-full flex-col rounded-xl",
+        !plan.isActive && "opacity-60",
       )}
     >
       <header className="flex items-start gap-3 px-5 pt-5">
@@ -403,7 +403,7 @@ function TarjetaPlan({
           </div>
           {avance && (
             <div className="bg-surface-muted mt-1.5 h-1.5 overflow-hidden rounded-full" aria-hidden>
-              <div className="bg-primary h-full rounded-full" style={{ width: `${(avance.dia / 7) * 100}%` }} />
+              <div className="barra-gpu bg-primary h-full w-full origin-left rounded-full" style={{ transform: `scaleX(${avance.dia / 7})` }} />
             </div>
           )}
         </div>
@@ -504,8 +504,8 @@ function MedidorCalorias({ calorias, objetivo }: { calorias: number | null; obje
         <div className="relative mt-1.5" aria-hidden>
           <div className="bg-surface-muted h-1.5 overflow-hidden rounded-full">
             <div
-              className={cn("h-full rounded-full", fuera ? "bg-warning" : "bg-primary")}
-              style={{ width: `${Math.min(100, (calorias / escala) * 100)}%` }}
+              className={cn("barra-gpu h-full w-full origin-left rounded-full", fuera ? "bg-warning" : "bg-primary")}
+              style={{ transform: `scaleX(${Math.min(1, calorias / escala)})` }}
             />
           </div>
           <span className="bg-foreground absolute -top-0.5 left-2/3 h-2.5 w-0.5 rounded-full" />

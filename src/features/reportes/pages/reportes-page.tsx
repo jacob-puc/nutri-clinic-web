@@ -185,7 +185,7 @@ export function ReportesPage() {
           ) : (
             datos && (
               <>
-                <Seccion titulo={TITULO_SERIE[datos.agrupacion]} icono={BarChart3}>
+                <Seccion titulo={TITULO_SERIE[datos.agrupacion]} icono={BarChart3} className="anim-vista">
                   <GraficaIngresos serie={datos.serie} agrupacion={datos.agrupacion} />
                 </Seccion>
 
@@ -230,7 +230,8 @@ function GraficaIngresos({ serie, agrupacion }: { serie: PuntoIngresos[]; agrupa
 
   return (
     <>
-      <div className="h-72 w-full">
+      {/* La llave cambia con el periodo para que las barras vuelvan a crecer. */}
+      <div key={`${agrupacion}-${serie[0]?.clave}-${serie.length}`} className="grafica-barras h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={serie} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
             <CartesianGrid vertical={false} stroke="var(--border)" />
@@ -311,7 +312,7 @@ function Desglose({
                 <span className="text-foreground shrink-0 font-semibold tabular-nums">{formatearMoneda(fila.total)}</span>
               </div>
               <div className="bg-surface-muted mt-1.5 h-1.5 overflow-hidden rounded-full">
-                <div className="bg-primary h-full rounded-full" style={{ width: `${parte}%` }} />
+                <div className="barra-gpu bg-primary h-full w-full origin-left rounded-full" style={{ transform: `scaleX(${parte / 100})` }} />
               </div>
               <p className="text-muted-foreground mt-1 text-xs tabular-nums">
                 {Math.round(parte)}% · {plural(fila.cobros, "cobro", "cobros")}

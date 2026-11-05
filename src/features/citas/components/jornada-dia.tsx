@@ -174,7 +174,7 @@ function FilaCita({
   const cerrada = cita.estado === "Cancelada" || cita.estado === "NoAsistio";
 
   return (
-    <li className="flex gap-2">
+    <li className="anim-entrada flex gap-2">
       <div className={cn(MARGEN_HORA, "pt-3 text-right")}>
         <p className="text-foreground text-sm font-semibold tabular-nums">
           {formatearHoraLocal(cita.fechaInicio)}

@@ -186,7 +186,7 @@ export function GraficaMedidas({
 
         {/* h-64 fijo: ResponsiveContainer necesita una altura concreta. */}
         <div className="mt-3 h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer key={serie} width="100%" height="100%" className="grafica-linea">
             <ComposedChart data={puntos} margin={{ top: 16, right: 36, bottom: 0, left: -12 }}>
               <defs>
                 <linearGradient id="relleno-evolucion" x1="0" y1="0" x2="0" y2="1">

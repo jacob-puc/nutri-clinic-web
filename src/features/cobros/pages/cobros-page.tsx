@@ -51,16 +51,16 @@ export function CobrosPage() {
       />
 
       <div className="mx-auto w-full max-w-7xl px-4 pt-3 pb-8 md:px-8 md:pb-10">
-        <TabsContent value="pendientes">
+        <TabsContent value="pendientes" className="anim-vista">
           <TabPorCobrar />
         </TabsContent>
-        <TabsContent value="cobros">
+        <TabsContent value="cobros" className="anim-vista">
           <TabPagos />
         </TabsContent>
-        <TabsContent value="facturas">
+        <TabsContent value="facturas" className="anim-vista">
           <TabFacturas />
         </TabsContent>
-        <TabsContent value="clinica">
+        <TabsContent value="clinica" className="anim-vista">
           <TabDatosClinica />
         </TabsContent>
       </div>

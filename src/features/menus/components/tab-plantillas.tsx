@@ -134,7 +134,7 @@ export function TabPlantillas() {
       {plantillas.length > 0 && (
         <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {plantillas.map((plantilla) => (
-            <li key={plantilla.id}>
+            <li key={plantilla.id} className="anim-entrada tarjeta-viva">
               <TarjetaPlantilla
                 plantilla={plantilla}
                 onAsignar={() => setAsignando(plantilla)}
@@ -195,8 +195,8 @@ function TarjetaPlantilla({
   return (
     <article
       className={cn(
-        "hoja flex h-full flex-col rounded-xl transition-shadow",
-        plantilla.isActive ? "hover:shadow-[0_14px_30px_-20px_rgb(0_0_0/0.35)]" : "opacity-60",
+        "hoja flex h-full flex-col rounded-xl",
+        !plantilla.isActive && "opacity-60",
       )}
     >
       <header className="flex items-start justify-between gap-3 px-5 pt-5">

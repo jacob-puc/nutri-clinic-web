@@ -157,7 +157,7 @@ export function NutricionistasPage() {
         {visibles.length > 0 && (
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {visibles.map((persona) => (
-              <li key={persona.id}>
+              <li key={persona.id} className="anim-entrada tarjeta-viva">
                 <TarjetaPersona
                   persona={persona}
                   esPropia={persona.id === usuario?.id}
@@ -208,8 +208,8 @@ function TarjetaPersona({
     <Link
       to={`/nutricionistas/${persona.id}`}
       className={cn(
-        "hoja group flex h-full flex-col overflow-hidden rounded-xl transition-shadow outline-none",
-        "hover:shadow-[0_12px_28px_-16px_rgb(0_0_0/0.25)] focus-visible:ring-primary/30 focus-visible:ring-[3px]",
+        "hoja group flex h-full flex-col overflow-hidden rounded-xl outline-none",
+        "focus-visible:ring-primary/30 focus-visible:ring-[3px]",
         !persona.isActive && "opacity-70",
       )}
     >

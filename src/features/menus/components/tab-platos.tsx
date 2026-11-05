@@ -146,7 +146,7 @@ export function TabPlatos() {
       {platos.length > 0 && (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {platos.map((plato) => (
-            <li key={plato.id}>
+            <li key={plato.id} className="anim-entrada tarjeta-viva">
               <TarjetaPlato
                 plato={plato}
                 imagenes={imagenes}
@@ -200,8 +200,8 @@ function TarjetaPlato({
   return (
     <article
       className={cn(
-        "hoja group relative flex h-full flex-col overflow-hidden rounded-xl transition-shadow",
-        plato.isActive ? "hover:shadow-[0_14px_30px_-20px_rgb(0_0_0/0.35)]" : "opacity-60",
+        "hoja group relative flex h-full flex-col overflow-hidden rounded-xl",
+        !plato.isActive && "opacity-60",
       )}
     >
       <div className="relative">

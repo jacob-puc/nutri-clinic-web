@@ -133,7 +133,7 @@ export function ConsultasPage() {
       />
 
       <div className="mx-auto w-full max-w-7xl px-4 pt-3 pb-8 md:px-8 md:pb-10">
-        <TabsContent value="cola" className="space-y-4">
+        <TabsContent value="cola" className="anim-vista space-y-4">
         {/* Lo primero de la cola es quien ya esta adentro: una consulta que se
             dejo a medias se retoma desde aqui, no se vuelve a iniciar. */}
         {(abiertas.data?.length ?? 0) > 0 && (
@@ -211,7 +211,7 @@ export function ConsultasPage() {
         )}
         </TabsContent>
 
-        <TabsContent value="historial">
+        <TabsContent value="historial" className="anim-vista">
           <HistorialConsultas />
         </TabsContent>
       </div>
