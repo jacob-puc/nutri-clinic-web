@@ -88,7 +88,7 @@ function aCadena(valor: unknown): string | null {
 
 export function construirApiError(status: number, cuerpo: unknown): ApiError {
   if (cuerpo === null || cuerpo === undefined) {
-    return new ApiError(`Error ${status} sin cuerpo de respuesta.`, {
+    return new ApiError("Algo salió mal. Inténtalo de nuevo en un momento.", {
       status,
       codigo: "ERROR_DESCONOCIDO",
     });
@@ -110,7 +110,7 @@ export function construirApiError(status: number, cuerpo: unknown): ApiError {
         : [];
 
       return new ApiError(
-        aCadena(cuerpoMedio.mensaje) ?? `Error ${status}.`,
+        aCadena(cuerpoMedio.mensaje) ?? "Algo salió mal. Inténtalo de nuevo en un momento.",
         {
           status,
           codigo: codigo as ApiErrorCode,
@@ -135,7 +135,7 @@ export function construirApiError(status: number, cuerpo: unknown): ApiError {
     });
   }
 
-  return new ApiError(`Error ${status} en la solicitud.`, {
+  return new ApiError("Algo salió mal. Inténtalo de nuevo en un momento.", {
     status,
     codigo: "ERROR_DESCONOCIDO",
   });
@@ -144,10 +144,10 @@ export function construirApiError(status: number, cuerpo: unknown): ApiError {
 export function mensajeDeError(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.esRed) {
-      return "No pudimos conectar con el servidor. Revisa que la API este corriendo.";
+      return "No pudimos conectar con NutriClínica. Revisa tu conexión e inténtalo de nuevo.";
     }
     return error.primerDetalle ?? error.message;
   }
   if (error instanceof Error) return error.message;
-  return "Ocurrio un error inesperado.";
+  return "Ocurrió un error inesperado. Inténtalo de nuevo.";
 }
