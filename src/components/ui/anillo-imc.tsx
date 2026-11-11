@@ -30,11 +30,14 @@ export function AnilloImc({
   imc,
   className,
   trazo = "anillo-dia",
+  compacto = false,
 }: {
   imc: number;
   /** Fija el tamaño; todo lo de adentro escala con el. */
   className?: string;
   trazo?: "anillo-dia" | "linea-dibujo";
+  /** Solo el numero adentro: para tamaños chicos, con la categoria escrita al lado. */
+  compacto?: boolean;
 }) {
   const categoria = categoriaImc(imc);
   const parte = Math.round(
@@ -66,11 +69,15 @@ export function AnilloImc({
         )}
       </svg>
       <div className="absolute inset-0 grid place-content-center justify-items-center text-center">
-        <p className="text-muted-foreground text-[8cqw]">IMC</p>
-        <p className="font-editorial text-foreground text-[24cqw] leading-none tabular-nums">{fmt.format(imc)}</p>
-        <p className={cn("mt-[3cqw] rounded-full px-[5cqw] py-[1cqw] text-[6.5cqw] font-medium whitespace-nowrap", PASTILLA_TONO[categoria.tono])}>
-          {categoria.etiqueta}
+        {!compacto && <p className="text-muted-foreground text-[8cqw]">IMC</p>}
+        <p className={cn("font-editorial text-foreground leading-none tabular-nums", compacto ? "text-[30cqw]" : "text-[24cqw]")}>
+          {fmt.format(imc)}
         </p>
+        {!compacto && (
+          <p className={cn("mt-[3cqw] rounded-full px-[5cqw] py-[1cqw] text-[6.5cqw] font-medium whitespace-nowrap", PASTILLA_TONO[categoria.tono])}>
+            {categoria.etiqueta}
+          </p>
+        )}
       </div>
     </div>
   );

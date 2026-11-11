@@ -7,6 +7,7 @@ import { useCita } from "@/features/citas/hooks/use-citas";
 import { formatearFechaLargaLocal, formatearHoraLocal } from "@/features/citas/lib/fechas-cita";
 import { BadgeTipoConsulta } from "@/features/consultas/components/badge-tipo-consulta";
 import { PanelNotas } from "@/features/consultas/components/panel-notas";
+import { ResumenConsulta } from "@/features/consultas/components/resumen-consulta";
 import { SeccionDocumentosConsulta } from "@/features/consultas/components/seccion-documentos-consulta";
 import { SeccionFotosConsulta } from "@/features/consultas/components/seccion-fotos-consulta";
 import { SeccionPlanConsulta } from "@/features/consultas/components/seccion-plan-consulta";
@@ -15,6 +16,7 @@ import { useConsulta } from "@/features/consultas/hooks/use-consultas";
 import { useExpediente } from "@/features/pacientes/hooks/use-expediente";
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import { historialVacio, PanelHistorialClinico } from "@/features/pacientes/components/historial-clinico";
 import { EstadoError } from "@/components/states/estado-error";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -79,7 +81,12 @@ export function ConsultaDetallePage() {
         ]}
       />
 
-      <EspacioDeTrabajo consulta={consulta} cerrada={consulta.fechaFin !== null} />
+      {/* Cerrada se lee como resumen; abierta es el espacio de trabajo. */}
+      {consulta.fechaFin !== null ? (
+        <ResumenConsulta consulta={consulta} />
+      ) : (
+        <EspacioDeTrabajo consulta={consulta} cerrada={false} />
+      )}
     </div>
   );
 }
@@ -202,6 +209,12 @@ function EspacioDeTrabajo({ consulta, cerrada }: { consulta: Consulta; cerrada: 
           />
         )}
       </div>
+
+      {/* Se pide en la consulta solo mientras falte: una vez capturado se
+          consulta y edita desde el expediente. */}
+      {!cargandoExpediente && !cerrada && historialVacio(expediente?.historialClinico) && (
+        <PanelHistorialClinico className="mt-8" pacienteId={consulta.pacienteId} historial={expediente?.historialClinico} />
+      )}
 
       {!cargandoExpediente && (
         <div className="mt-8">

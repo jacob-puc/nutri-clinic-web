@@ -367,6 +367,16 @@ export interface SubirDocumentoDto {
 export interface HistorialClinico {
   id: Guid;
   pacienteId: Guid;
+  /** Condiciones de salud; puede faltar en respuestas anteriores a su alta. */
+  enfermedades?: string[];
+  alergias: string[];
+  alimentosFavoritos: string[];
+  alimentosNoFavoritos: string[];
+}
+
+/** El PUT reemplaza el historial completo. */
+export interface CrearHistorialClinicoDto {
+  enfermedades: string[];
   alergias: string[];
   alimentosFavoritos: string[];
   alimentosNoFavoritos: string[];

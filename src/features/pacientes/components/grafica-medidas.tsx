@@ -18,6 +18,7 @@ import { AnilloImc } from "@/components/ui/anillo-imc";
 import { Card, CardContent } from "@/components/ui/card";
 import { Segmentado } from "@/components/ui/segmentado";
 import { categoriaImc } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
 import { formatearInstante } from "@/lib/zona-horaria";
 import type { MedidaAntropometrica } from "@/types/api";
 
@@ -97,6 +98,7 @@ export function GraficaMedidas({
   const ultima = ordenadas.at(-1)!;
   const cambioPeso = ultima.peso - primera.peso;
   const semanas = Math.max(1, Math.round((Date.parse(ultima.fechaMedicion) - Date.parse(primera.fechaMedicion)) / 604_800_000));
+  const categoria = categoriaImc(ultima.imc);
   const faltaObjetivo = pesoObjetivo ? ultima.peso - pesoObjetivo : null;
 
   const config = SERIES[serie];
@@ -125,9 +127,7 @@ export function GraficaMedidas({
     <Card>
       <CardContent className="px-4 py-5 md:px-6">
         {/* ---------- La conclusion, en cifras ---------- */}
-        <div className="grid items-center gap-x-10 gap-y-5 sm:grid-cols-[auto_minmax(0,1fr)]">
-          <AnilloImc imc={ultima.imc} className="mx-auto w-44 sm:mx-0 lg:w-48" />
-          <div className="grid gap-x-8 gap-y-5 lg:grid-cols-3">
+        <div className="grid items-center gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
           <Cifra etiqueta="Peso actual" valor={`${fmt(ultima.peso, 1)} kg`} detalle={formatearInstante(ultima.fechaMedicion, { day: "numeric", month: "short" })} />
           <Cifra
             etiqueta="Cambio total"
@@ -149,6 +149,22 @@ export function GraficaMedidas({
           ) : (
             <Cifra etiqueta="Para su objetivo" valor="—" detalle="Sin peso objetivo definido" />
           )}
+          <div className="flex items-center gap-3">
+            <AnilloImc imc={ultima.imc} compacto className="w-20 shrink-0" />
+            <div>
+              <p className="text-muted-foreground text-xs">IMC actual</p>
+              <p
+                className={cn(
+                  "mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+                  categoria.tono === "success" && "bg-success-soft text-success-soft-foreground",
+                  categoria.tono === "warning" && "bg-warning-soft text-warning-soft-foreground",
+                  categoria.tono === "destructive" && "bg-destructive-soft text-destructive-soft-foreground",
+                  categoria.tono === "info" && "bg-info-soft text-info-soft-foreground",
+                )}
+              >
+                {categoria.etiqueta}
+              </p>
+            </div>
           </div>
         </div>
 

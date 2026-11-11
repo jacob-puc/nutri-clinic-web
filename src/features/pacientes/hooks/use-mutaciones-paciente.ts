@@ -6,6 +6,7 @@ import { pacientesKeys } from "@/features/pacientes/hooks/use-pacientes";
 import type {
   ActualizarMedidaDto,
   ActualizarObjetivoPacienteDto,
+  CrearHistorialClinicoDto,
   CrearMedidaDto,
   CrearPacienteDto,
   Guid,
@@ -41,6 +42,17 @@ export function useActualizarPaciente(id: Guid) {
       toast.success("Cambios guardados", {
         description: paciente.nombreCompleto,
       });
+    },
+  });
+}
+
+export function useGuardarHistorial(id: Guid) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (historial: CrearHistorialClinicoDto) => pacientesApi.guardarHistorial(id, historial),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: pacientesKeys.expediente(id) });
     },
   });
 }

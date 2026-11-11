@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   Activity,
-  AlertTriangle,
-  Ban,
   CalendarPlus,
   ChevronRight,
   ClipboardList,
@@ -11,7 +9,6 @@ import {
   Contact,
   FileText,
   FolderOpen,
-  Heart,
   Ruler,
   Scale,
   Stethoscope,
@@ -36,6 +33,7 @@ import { DialogoMedida } from "@/features/pacientes/components/dialogo-medida";
 import { LineaObjetivo } from "@/features/pacientes/components/linea-objetivo";
 import { DialogoPaciente } from "@/features/pacientes/components/dialogo-paciente";
 import { GraficaMedidas } from "@/features/pacientes/components/grafica-medidas";
+import { PanelHistorialClinico } from "@/features/pacientes/components/historial-clinico";
 import { useExpediente, usePaciente } from "@/features/pacientes/hooks/use-expediente";
 import { CampoFicha, Seccion } from "@/components/ficha/seccion";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
@@ -500,7 +498,7 @@ function TabResumen({
         pacienteNombre={paciente.nombreCompleto}
       />
 
-      <PanelHistorial historial={historial} />
+      <PanelHistorialClinico pacienteId={paciente.id} historial={historial} />
 
       <PanelMediciones medidas={medidas} pesoObjetivo={paciente.pesoObjetivo} />
     </div>
@@ -602,102 +600,6 @@ function DatoFicha({
     <CampoFicha etiqueta={etiqueta}>
       {valor ?? <span className="text-muted-foreground-subtle">Sin registro</span>}
     </CampoFicha>
-  );
-}
-
-function PanelHistorial({ historial }: { historial: HistorialClinico | null }) {
-  return (
-    <Seccion
-      titulo="Historial clínico"
-      icono={Stethoscope}
-      meta="Alergias y preferencias de la dieta"
-    >
-      {!historial ? (
-        <p className="text-muted-foreground py-6 text-center text-sm">
-          Sin historial clínico capturado. Complétalo en la primera consulta.
-        </p>
-      ) : (
-        <div className="grid gap-x-8 gap-y-5 sm:grid-cols-3">
-          <GrupoHistorial
-            etiqueta="Alergias"
-            items={historial.alergias}
-            vacio="Sin alergias registradas"
-            tono="alerta"
-            icono={AlertTriangle}
-          />
-          <GrupoHistorial
-            etiqueta="Alimentos favoritos"
-            items={historial.alimentosFavoritos}
-            vacio="Sin alimentos favoritos"
-            tono="favorito"
-            icono={Heart}
-          />
-          <GrupoHistorial
-            etiqueta="Alimentos no favoritos"
-            items={historial.alimentosNoFavoritos}
-            vacio="Sin alimentos no favoritos"
-            tono="evitar"
-            icono={Ban}
-          />
-        </div>
-      )}
-    </Seccion>
-  );
-}
-
-type TonoHistorial = "alerta" | "favorito" | "evitar";
-
-/** Cada tipo de alimento se distingue por icono y tono, no solo por el texto. */
-const CHIP_HISTORIAL: Record<TonoHistorial, string> = {
-  alerta: "bg-destructive-soft text-destructive-soft-foreground ring-destructive/30",
-  favorito: "bg-success-soft text-success-soft-foreground ring-success/30",
-  evitar: "bg-secondary text-secondary-foreground ring-ring/40",
-};
-
-function GrupoHistorial({
-  etiqueta,
-  items,
-  vacio,
-  tono,
-  icono: Icono,
-}: {
-  etiqueta: string;
-  items: string[];
-  vacio: string;
-  tono: TonoHistorial;
-  icono: LucideIcon;
-}) {
-  return (
-    <div className="min-w-0">
-      <p className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
-        <Icono className="size-3.5 shrink-0" aria-hidden />
-        {etiqueta}
-        <span className="text-muted-foreground-subtle font-normal tabular-nums">
-          {items.length}
-        </span>
-      </p>
-
-      {items.length === 0 ? (
-        <p className="border-border/60 text-muted-foreground-subtle mt-2 rounded-md border border-dashed px-3 py-2 text-xs">
-          {vacio}
-        </p>
-      ) : (
-        <ul className="mt-2 flex flex-wrap gap-1.5">
-          {items.map((item) => (
-            <li
-              key={item}
-              className={cn(
-                "inline-flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1",
-                CHIP_HISTORIAL[tono],
-              )}
-            >
-              <Icono className="size-3 shrink-0" aria-hidden />
-              <span className="truncate">{item}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
   );
 }
 

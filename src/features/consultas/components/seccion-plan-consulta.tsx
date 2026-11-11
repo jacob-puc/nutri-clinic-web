@@ -75,12 +75,14 @@ export function SeccionPlanConsulta({
   medidaReferencia,
   historial,
   soloLectura,
+  titulo = "Plan nutricional",
 }: {
   pacienteId: Guid;
   /** Medida mas reciente (la de hoy o la anterior): da peso y estatura. */
   medidaReferencia?: MedidaAntropometrica;
   historial?: HistorialClinico | null;
   soloLectura: boolean;
+  titulo?: string;
 }) {
   const planes = useMenusAsignadosPorPaciente(pacienteId);
   const paciente = usePaciente(pacienteId);
@@ -132,7 +134,7 @@ export function SeccionPlanConsulta({
 
   return (
     <section aria-labelledby="titulo-plan">
-      <EncabezadoBloque id="titulo-plan" icono={ClipboardCheck} titulo="Plan nutricional" />
+      <EncabezadoBloque id="titulo-plan" icono={ClipboardCheck} titulo={titulo} />
 
       <div className="mt-3">
         {planes.isPending ? (

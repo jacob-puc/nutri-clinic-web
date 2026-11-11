@@ -1,6 +1,8 @@
 import { apiClient } from "@/lib/api-client";
 import { abrirPdf } from "@/lib/pdf";
 import type {
+  HistorialClinico,
+  CrearHistorialClinicoDto,
   ActualizarMedidaDto,
   ActualizarObjetivoPacienteDto,
   CrearMedidaDto,
@@ -129,6 +131,12 @@ export const pacientesApi = {
       formulario,
       { headers: { "Content-Type": "multipart/form-data" } },
     );
+    return data;
+  },
+
+  /** `PUT /api/pacientes/{id}/historial-clinico`: lo crea o lo reemplaza completo. */
+  guardarHistorial: async (id: Guid, dto: CrearHistorialClinicoDto): Promise<HistorialClinico> => {
+    const { data } = await apiClient.put<HistorialClinico>(`/api/pacientes/${id}/historial-clinico`, dto);
     return data;
   },
 
