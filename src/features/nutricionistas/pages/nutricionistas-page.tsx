@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useParametroUrl } from "@/hooks/use-parametro-url";
 import { Link, useNavigate } from "react-router-dom";
 import { CalendarCheck2, CalendarOff, KeyRound, Mail, Phone, Search, UserPlus, Users } from "lucide-react";
 
@@ -32,8 +33,8 @@ type Vista = "activos" | "inactivos";
 export function NutricionistasPage() {
   const { usuario } = useAuth();
   const navigate = useNavigate();
-  const [vista, setVista] = useState<Vista>("activos");
-  const [busqueda, setBusqueda] = useState("");
+  const [vista, setVista] = useParametroUrl<Vista>("vista", "activos");
+  const [busqueda, setBusqueda] = useParametroUrl<string>("q", "");
   const [creando, setCreando] = useState(false);
   const horarios = useHorarios();
   const ausencias = useAusencias();

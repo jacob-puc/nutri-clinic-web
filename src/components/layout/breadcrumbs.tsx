@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 
+import { rutaVolver } from "@/lib/ruta-volver";
 import { cn } from "@/lib/utils";
 
 export interface TramoBreadcrumbs {
@@ -54,7 +55,7 @@ export function Breadcrumbs({
               <li className={cn("min-w-0", !esUltimo && "shrink-0")}>
                 {tramo.href && !esUltimo ? (
                   <Link
-                    to={tramo.href}
+                    to={rutaVolver(tramo.href)}
                     className="rounded-sm px-1.5 py-1 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {tramo.etiqueta}

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useParametroUrl } from "@/hooks/use-parametro-url";
 import { Apple, MoreHorizontal, Pencil, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
 import { ImagenAlimento } from "@/features/menus/components/imagen-alimento";
 import { toast } from "sonner";
@@ -41,8 +42,8 @@ import { cn } from "@/lib/utils";
 import type { Alimento } from "@/types/api";
 
 export function TabAlimentos() {
-  const [busqueda, setBusqueda] = useState("");
-  const [vigencia, setVigencia] = useState<FiltroVigencia>("vigentes");
+  const [busqueda, setBusqueda] = useParametroUrl<string>("q", "");
+  const [vigencia, setVigencia] = useParametroUrl<FiltroVigencia>("vigencia", "vigentes");
   const [editando, setEditando] = useState<Alimento | null>(null);
   const [creando, setCreando] = useState(false);
   const [eliminando, setEliminando] = useState<Alimento | null>(null);

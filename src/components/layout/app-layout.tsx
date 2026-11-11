@@ -1,4 +1,5 @@
-import { Outlet } from "react-router-dom";
+import { useEffect } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 
 import { BienvenidaSistema, useBienvenida } from "@/components/layout/bienvenida-sistema";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -8,6 +9,7 @@ import { useAuth } from "@/features/auth/hooks/use-auth";
 import { usePermisos } from "@/features/auth/hooks/use-permisos";
 import { AvisoConsultaEnCurso } from "@/features/consultas/components/aviso-consulta-en-curso";
 import { useInsigniasNav } from "@/features/navegacion/hooks/use-insignias-nav";
+import { recordarVista } from "@/lib/ruta-volver";
 import { cn } from "@/lib/utils";
 
 export function AppLayout() {
@@ -17,6 +19,9 @@ export function AppLayout() {
   const permisos = usePermisos();
   const { usuario } = useAuth();
   const entrando = useBienvenida();
+  /* Cada seccion recuerda su ultima vista para que "volver" regrese ahi. */
+  const ubicacion = useLocation();
+  useEffect(() => recordarVista(ubicacion.pathname, ubicacion.search), [ubicacion.pathname, ubicacion.search]);
   const primerNombre = usuario?.nombreCompleto.replace(/^(Dra?\.|Lic\.|Mtra?\.)\s*/i, "").split(" ")[0] ?? null;
   const ocultos = new Set<string>();
   if (!permisos.verClinico) {

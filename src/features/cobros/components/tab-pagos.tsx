@@ -53,6 +53,7 @@ import { useAnularPago, useFacturas, usePagos } from "@/features/cobros/hooks/us
 import { ETIQUETA_METODO, formatearMoneda, METODOS_PAGO } from "@/features/cobros/lib/cobros";
 import { formatearHoraLocal } from "@/features/citas/lib/fechas-cita";
 import { usePeriodoUrl } from "@/hooks/use-periodo-url";
+import { useParametroUrl } from "@/hooks/use-parametro-url";
 import { mensajeDeError } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
 import { formatearInstante } from "@/lib/zona-horaria";
@@ -72,7 +73,7 @@ function abrirPdf(accion: () => Promise<void>) {
  */
 export function TabPagos() {
   const { periodo, rango, cambiar } = usePeriodoUrl("dia");
-  const [metodo, setMetodo] = useState<MetodoPago | typeof TODOS>(TODOS);
+  const [metodo, setMetodo] = useParametroUrl<MetodoPago | typeof TODOS>("metodo", TODOS);
   const filtro = useMemo<PagoFiltro>(
     () => ({
       fechaInicio: rango.desde,

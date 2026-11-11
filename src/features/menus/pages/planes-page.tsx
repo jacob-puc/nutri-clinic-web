@@ -36,6 +36,8 @@ export function PlanesPage() {
       (actuales) => {
         if (siguiente === "planes") actuales.delete("vista");
         else actuales.set("vista", siguiente);
+        actuales.delete("q");
+        actuales.delete("vigencia");
         return actuales;
       },
       { replace: true },

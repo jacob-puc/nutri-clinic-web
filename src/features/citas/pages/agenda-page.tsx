@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useParametroUrl } from "@/hooks/use-parametro-url";
 import { useSearchParams } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -89,12 +90,13 @@ export function AgendaPage() {
   }, []);
 
   const [altaAbierta, setAltaAbierta] = useState(false);
-  const [estado, setEstado] = useState<FiltroEstado>(TODOS);
+  const [estado, setEstado] = useParametroUrl<FiltroEstado>("estado", TODOS);
   /* Quien atiende abre su propia agenda; recepcion y el filtro "Todo el
      equipo" ven la de todos. Con una sola persona el selector no aparece. */
   const { usuario } = useAuth();
   const { data: equipo = [] } = useNutricionistasQueAtienden();
-  const [persona, setPersona] = useState<string>(() =>
+  const [persona, setPersona] = useParametroUrl<string>(
+    "persona",
     usuario && usuario.rol !== "Recepcion" ? usuario.id : TODOS,
   );
   const hayEquipo = equipo.length > 1;

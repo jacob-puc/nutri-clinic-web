@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { useParametroUrl } from "@/hooks/use-parametro-url";
 import { Link } from "react-router-dom";
 import {
   ChevronDown,
@@ -71,8 +72,8 @@ function desvioDelPlan(plan: MenuAsignado): number | null {
 }
 
 export function TabPlanes() {
-  const [busqueda, setBusqueda] = useState("");
-  const [vigencia, setVigencia] = useState<FiltroVigencia>("vigentes");
+  const [busqueda, setBusqueda] = useParametroUrl<string>("q", "");
+  const [vigencia, setVigencia] = useParametroUrl<FiltroVigencia>("vigencia", "vigentes");
   const [asignando, setAsignando] = useState(false);
   const [abierto, setAbierto] = useState<MenuAsignado | null>(null);
   const [duplicando, setDuplicando] = useState<MenuAsignado | null>(null);

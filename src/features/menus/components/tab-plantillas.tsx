@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useParametroUrl } from "@/hooks/use-parametro-url";
 import {
   CalendarRange,
   ClipboardCheck,
@@ -44,8 +45,8 @@ import { cn } from "@/lib/utils";
 import type { PlantillaMenu } from "@/types/api";
 
 export function TabPlantillas() {
-  const [busqueda, setBusqueda] = useState("");
-  const [vigencia, setVigencia] = useState<FiltroVigencia>("vigentes");
+  const [busqueda, setBusqueda] = useParametroUrl<string>("q", "");
+  const [vigencia, setVigencia] = useParametroUrl<FiltroVigencia>("vigencia", "vigentes");
   const [editando, setEditando] = useState<PlantillaMenu | null>(null);
   const [creando, setCreando] = useState(false);
   const [eliminando, setEliminando] = useState<PlantillaMenu | null>(null);

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { CheckCircle2, Search, X } from "lucide-react";
 
@@ -21,6 +21,7 @@ import { ETIQUETA_TIPO_CONSULTA } from "@/features/consultas/lib/etiquetas-consu
 import { useNutricionistasQueAtienden } from "@/features/nutricionistas/hooks/use-nutricionistas";
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
 import { usePeriodoUrl } from "@/hooks/use-periodo-url";
+import { useParametroUrl } from "@/hooks/use-parametro-url";
 import { formatearInstante } from "@/lib/zona-horaria";
 import type { ConsultaFiltro, Guid, TipoConsulta } from "@/types/api";
 
@@ -36,9 +37,9 @@ const normalizar = (texto: string) =>
  */
 export function HistorialConsultas() {
   const { periodo, rango, cambiar } = usePeriodoUrl("dia");
-  const [tipo, setTipo] = useState<TipoConsulta | typeof TODOS>(TODOS);
-  const [nutricionista, setNutricionista] = useState<Guid | typeof TODOS>(TODOS);
-  const [busqueda, setBusqueda] = useState("");
+  const [tipo, setTipo] = useParametroUrl<TipoConsulta | typeof TODOS>("tipo", TODOS);
+  const [nutricionista, setNutricionista] = useParametroUrl<Guid | typeof TODOS>("nutricionista", TODOS);
+  const [busqueda, setBusqueda] = useParametroUrl<string>("q", "");
 
   const nutricionistas = useNutricionistasQueAtienden();
 

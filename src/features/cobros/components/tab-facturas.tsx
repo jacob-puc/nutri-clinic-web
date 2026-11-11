@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useParametroUrl } from "@/hooks/use-parametro-url";
 import { toast } from "sonner";
 import { FileText, Search } from "lucide-react";
 
@@ -25,7 +26,7 @@ import { cn } from "@/lib/utils";
 /** Facturas emitidas, de la mas reciente a la mas antigua, con su PDF. */
 export function TabFacturas() {
   const facturas = useFacturas({});
-  const [busqueda, setBusqueda] = useState("");
+  const [busqueda, setBusqueda] = useParametroUrl<string>("q", "");
 
   const termino = normalizar(busqueda);
   const lista = useMemo(

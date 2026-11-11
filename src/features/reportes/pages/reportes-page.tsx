@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   Bar,
@@ -37,6 +37,7 @@ import { ETIQUETA_METODO, formatearMoneda } from "@/features/cobros/lib/cobros";
 import { ETIQUETA_TIPO_CONSULTA } from "@/features/consultas/lib/etiquetas-consulta";
 import { useNutricionistasQueAtienden } from "@/features/nutricionistas/hooks/use-nutricionistas";
 import { usePeriodoUrl } from "@/hooks/use-periodo-url";
+import { useParametroUrl } from "@/hooks/use-parametro-url";
 import { apiClient } from "@/lib/api-client";
 import { mensajeDeError } from "@/lib/api-error";
 import { formatearCalendario } from "@/lib/zona-horaria";
@@ -83,7 +84,7 @@ function comparacion(total: number, anterior: number) {
 /** Ingresos de la clinica por periodo, solo para el administrador. */
 export function ReportesPage() {
   const { periodo, rango, cambiar } = usePeriodoUrl("mes");
-  const [nutricionista, setNutricionista] = useState<Guid | typeof TODOS>(TODOS);
+  const [nutricionista, setNutricionista] = useParametroUrl<Guid | typeof TODOS>("nutricionista", TODOS);
   const nutricionistas = useNutricionistasQueAtienden();
 
   const parametros = useMemo(
