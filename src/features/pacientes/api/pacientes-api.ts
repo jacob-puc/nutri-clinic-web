@@ -151,4 +151,23 @@ export const pacientesApi = {
   eliminarDocumento: async (pacienteId: Guid, documentoId: Guid): Promise<void> => {
     await apiClient.delete(`/api/pacientes/${pacienteId}/documentos/${documentoId}`);
   },
+
+  /** Solo vienen los pacientes con cuenta en la app o ya invitados. */
+  estadosApp: async (): Promise<EstadoAppPaciente[]> => {
+    const { data } = await apiClient.get<EstadoAppPaciente[]>("/api/pacientes/app-estado");
+    return data;
+  },
+
+  /** Correo con los pasos para crear su cuenta en la app. */
+  invitarApp: async (pacienteId: Guid): Promise<EstadoAppPaciente> => {
+    const { data } = await apiClient.post<EstadoAppPaciente>(`/api/pacientes/${pacienteId}/invitar-app`);
+    return data;
+  },
 };
+
+export interface EstadoAppPaciente {
+  pacienteId: Guid;
+  tieneApp: boolean;
+  /** Ultima invitacion enviada (ISO), o null si nunca. */
+  invitadoEn: string | null;
+}

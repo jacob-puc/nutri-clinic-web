@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   CalendarPlus,
   ClipboardPlus,
   MoreHorizontal,
   Pencil,
+  Smartphone,
   UserRound,
   UserX,
 } from "lucide-react";
@@ -28,10 +30,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DialogoCita } from "@/features/citas/components/dialogo-cita";
 import { DialogoMedida } from "@/features/pacientes/components/dialogo-medida";
 import { DialogoPaciente } from "@/features/pacientes/components/dialogo-paciente";
 import { pacientesApi } from "@/features/pacientes/api/pacientes-api";
-import { pacientesKeys } from "@/features/pacientes/hooks/use-pacientes";
+import { pacientesKeys, useEstadosApp } from "@/features/pacientes/hooks/use-pacientes";
+import { formatearFechaCorta } from "@/lib/formatters";
 import { mensajeDeError } from "@/lib/api-error";
 import type { Guid, Paciente } from "@/types/api";
 
@@ -40,17 +44,18 @@ interface AccionesPacienteProps {
   onDarbaja?: () => void;
 }
 
-const AVISO = "Disponible en la siguiente iteracion";
-
 export function AccionesPaciente({ paciente, onDarbaja }: AccionesPacienteProps) {
+  const navigate = useNavigate();
   const [editando, setEditando] = useState(false);
   const [registrandoMedida, setRegistrandoMedida] = useState(false);
+  const [agendando, setAgendando] = useState(false);
+  const [invitando, setInvitando] = useState(false);
   const [confirmandoBaja, setConfirmandoBaja] = useState(false);
 
-  const avisar = (accion: string) =>
-    toast.info(`${accion} · ${AVISO}`, {
-      description: paciente.nombreCompleto,
-    });
+  /* La invitacion solo se ofrece a quien todavia no tiene cuenta en la app. */
+  const estados = useEstadosApp();
+  const estado = estados.data?.get(paciente.id);
+  const sinApp = estados.isSuccess && !estado?.tieneApp;
 
   return (
     <>
@@ -67,7 +72,7 @@ export function AccionesPaciente({ paciente, onDarbaja }: AccionesPacienteProps)
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem onSelect={() => avisar("Ver expediente")}>
+          <DropdownMenuItem onSelect={() => navigate(`/pacientes/${paciente.id}`)}>
             <UserRound />
             Ver expediente
           </DropdownMenuItem>
@@ -82,10 +87,17 @@ export function AccionesPaciente({ paciente, onDarbaja }: AccionesPacienteProps)
             Registrar medida
           </DropdownMenuItem>
 
-          <DropdownMenuItem onSelect={() => avisar("Agendar cita")}>
+          <DropdownMenuItem onSelect={() => setAgendando(true)}>
             <CalendarPlus />
             Agendar cita
           </DropdownMenuItem>
+
+          {sinApp && (
+            <DropdownMenuItem onSelect={() => setInvitando(true)}>
+              <Smartphone />
+              {estado?.invitadoEn ? "Reenviar invitación a la app" : "Invitar a la app"}
+            </DropdownMenuItem>
+          )}
 
           <DropdownMenuSeparator />
 
@@ -111,6 +123,20 @@ export function AccionesPaciente({ paciente, onDarbaja }: AccionesPacienteProps)
         pacienteId={paciente.id}
       />
 
+      <DialogoCita
+        abierto={agendando}
+        onOpenChange={setAgendando}
+        pacienteId={paciente.id}
+        pacienteNombre={paciente.nombreCompleto}
+      />
+
+      <ConfirmarInvitacion
+        abierto={invitando}
+        onOpenChange={setInvitando}
+        paciente={paciente}
+        invitadoEn={estado?.invitadoEn ?? null}
+      />
+
       <ConfirmarBaja
         abierto={confirmandoBaja}
         onOpenChange={setConfirmandoBaja}
@@ -118,6 +144,85 @@ export function AccionesPaciente({ paciente, onDarbaja }: AccionesPacienteProps)
         onConfirmado={onDarbaja}
       />
     </>
+  );
+}
+
+/** Confirmacion antes de mandar la invitacion: a quien llega y que dice. */
+function ConfirmarInvitacion({
+  abierto,
+  onOpenChange,
+  paciente,
+  invitadoEn,
+}: {
+  abierto: boolean;
+  onOpenChange: (abierto: boolean) => void;
+  paciente: Paciente;
+  invitadoEn: string | null;
+}) {
+  const queryClient = useQueryClient();
+  const [error, setError] = useState<string | null>(null);
+  const correo = paciente.correoElectronico?.trim();
+
+  const invitar = useMutation({
+    mutationFn: () => pacientesApi.invitarApp(paciente.id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: pacientesKeys.estadosApp() });
+      toast.success("Invitación en camino", { description: `${paciente.nombreCompleto} · ${correo}` });
+      onOpenChange(false);
+    },
+    onError: (fallo) => setError(mensajeDeError(fallo)),
+  });
+
+  return (
+    <AlertDialog
+      open={abierto}
+      onOpenChange={(valor) => {
+        if (!valor) setError(null);
+        onOpenChange(valor);
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Invitar a {paciente.nombreCompleto} a la app?</AlertDialogTitle>
+          <AlertDialogDescription>
+            {correo ? (
+              <>
+                Le enviaremos a <span className="text-foreground font-medium">{correo}</span> un correo con los pasos
+                para crear su cuenta. Al usar ese mismo correo, su cuenta se vincula sola a su expediente.
+              </>
+            ) : (
+              "Este paciente no tiene correo registrado. Agrégalo en «Editar datos» para poder invitarlo."
+            )}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        {invitadoEn && (
+          <p className="bg-info-soft text-info-soft-foreground rounded-lg px-3 py-2 text-sm">
+            Ya se le invitó el {formatearFechaCorta(invitadoEn)}. Puedes reenviarla si no la encontró.
+          </p>
+        )}
+
+        {error && (
+          <p role="alert" className="text-destructive text-sm">
+            {error}
+          </p>
+        )}
+
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={invitar.isPending}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={invitar.isPending || !correo}
+            onClick={(evento) => {
+              evento.preventDefault();
+              setError(null);
+              invitar.mutate();
+            }}
+          >
+            {invitar.isPending ? "Enviando..." : invitadoEn ? "Reenviar invitación" : "Enviar invitación"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
