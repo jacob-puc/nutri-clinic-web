@@ -35,7 +35,7 @@ export function ConsultaDetallePage() {
 
   if (esApiError(error) && error.status === 404) {
     return (
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
+      <div className="contenedor-detalle px-4 py-6 md:px-8 md:py-8">
         <EstadoError
           variante="pagina"
           className="border-border"
@@ -52,7 +52,7 @@ export function ConsultaDetallePage() {
 
   if (isError) {
     return (
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
+      <div className="contenedor-detalle px-4 py-6 md:px-8 md:py-8">
         <EstadoError
           variante="pagina"
           titulo="No pudimos cargar la consulta"
@@ -71,7 +71,7 @@ export function ConsultaDetallePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
+    <div className="contenedor-detalle px-4 py-6 md:px-8 md:py-8">
       <Breadcrumbs
         etiquetaNav="Navegación de consultas"
         className="mb-4"
@@ -269,7 +269,7 @@ function EspacioDeTrabajo({ consulta, cerrada }: { consulta: Consulta; cerrada: 
 
 function ConsultaSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
+    <div className="contenedor-detalle px-4 py-6 md:px-8 md:py-8">
       <Skeleton className="mb-4 h-5 w-28" />
       <div className="hoja rounded-[1.25rem] px-4 py-5 md:px-6">
         <div className="flex items-center gap-4">

@@ -7,6 +7,23 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Ancho del contenido dentro del sistema, en un solo lugar. Listas y
+   paneles llegan a 96rem (1536 px): en un monitor de 1920 casi no sobra
+   margen. Expedientes y detalles se quedan en 80rem (1280 px) porque tienen
+   texto y formularios, donde las lineas demasiado largas cansan. Por debajo
+   de esos anchos el contenido ocupa todo el espacio, igual que antes. */
+@utility contenedor-pagina {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 96rem;
+}
+
+@utility contenedor-detalle {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 80rem;
+}
+
 @layer base {
   * {
     @apply border-border;

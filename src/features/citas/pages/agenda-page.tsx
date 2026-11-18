@@ -229,7 +229,7 @@ export function AgendaPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
+    <div className="contenedor-pagina px-4 py-6 md:px-8 md:py-8">
       <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
         <h1 className="font-editorial text-foreground text-3xl font-normal tracking-tight md:text-4xl">Citas</h1>
 

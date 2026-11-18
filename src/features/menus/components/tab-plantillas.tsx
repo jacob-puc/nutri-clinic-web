@@ -100,7 +100,7 @@ export function TabPlantillas() {
       />
 
       {consulta.isPending && (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 min-[1760px]:grid-cols-4">
           {Array.from({ length: 6 }, (_, i) => (
             <Skeleton key={i} className="h-72 rounded-xl" />
           ))}
@@ -133,7 +133,7 @@ export function TabPlantillas() {
       )}
 
       {plantillas.length > 0 && (
-        <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 min-[1760px]:grid-cols-4">
           {plantillas.map((plantilla) => (
             <li key={plantilla.id} className="anim-entrada tarjeta-viva">
               <TarjetaPlantilla

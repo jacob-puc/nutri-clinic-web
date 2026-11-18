@@ -102,7 +102,7 @@ export function ConsultasPage() {
 
   if (citas.isError) {
     return (
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
+      <div className="contenedor-pagina px-4 py-6 md:px-8 md:py-8">
         <h1 className="font-editorial text-foreground text-3xl font-normal tracking-tight md:text-4xl">Consultas</h1>
         <div className="mt-4">
           <EstadoError
@@ -132,7 +132,7 @@ export function ConsultasPage() {
         ]}
       />
 
-      <div className="mx-auto w-full max-w-7xl px-4 pt-3 pb-8 md:px-8 md:pb-10">
+      <div className="contenedor-pagina px-4 pt-3 pb-8 md:px-8 md:pb-10">
         <TabsContent value="cola" className="anim-vista space-y-4">
         {/* Lo primero de la cola es quien ya esta adentro: una consulta que se
             dejo a medias se retoma desde aqui, no se vuelve a iniciar. */}

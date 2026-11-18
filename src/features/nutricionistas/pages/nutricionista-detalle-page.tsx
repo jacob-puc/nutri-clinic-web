@@ -60,7 +60,7 @@ export function NutricionistaDetallePage() {
   if (consulta.isError || !consulta.data) {
     const noExiste = esApiError(consulta.error) && consulta.error.status === 404;
     return (
-      <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-8">
+      <div className="contenedor-detalle px-4 py-6 md:px-8 md:py-8">
         <EstadoError
           variante="pagina"
           titulo={noExiste ? "No encontramos a esta persona" : "No pudimos cargar la ficha"}
@@ -93,7 +93,7 @@ function Ficha({ persona, esPropia }: { persona: Nutricionista; esPropia: boolea
     });
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-8">
+    <div className="contenedor-detalle px-4 py-6 md:px-8 md:py-8">
       <Breadcrumbs
         etiquetaNav="Navegación del equipo"
         className="mb-4"
@@ -487,7 +487,7 @@ function QuePuedeHacer({ persona }: { persona: Nutricionista }) {
 
 function FichaSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-8">
+    <div className="contenedor-detalle px-4 py-6 md:px-8 md:py-8">
       <Skeleton className="mb-4 h-4 w-40" />
       <Skeleton className="h-48 w-full rounded-xl" />
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">

@@ -51,7 +51,7 @@ export function PlanesPage() {
         opciones={VISTAS}
       />
 
-      <div className="mx-auto w-full max-w-7xl px-4 pt-3 pb-8 md:px-8 md:pb-10">
+      <div className="contenedor-pagina px-4 pt-3 pb-8 md:px-8 md:pb-10">
         {/* Cada pestaña pide sus datos al montarse; Radix desmonta las
             inactivas, asi que solo se consulta lo que se esta viendo. */}
         <TabsContent value="planes">

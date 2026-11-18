@@ -103,7 +103,7 @@ export function ResumenPage() {
   const fechaLarga = formatearInstante(ahora, { weekday: "long", day: "numeric", month: "long" });
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
+    <div className="contenedor-pagina px-4 py-6 md:px-8 md:py-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-muted-foreground text-sm first-letter:uppercase">{fechaLarga}</p>

@@ -26,7 +26,7 @@ export function AvisoConsultaEnCurso() {
 
   return (
     <div className="bg-warning-soft text-warning-soft-foreground border-warning/30 sticky top-0 z-20 border-b">
-      <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 md:px-8">
+      <div className="contenedor-pagina flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 md:px-8">
         <span className="relative flex size-2.5 shrink-0" aria-hidden>
           <span className="bg-warning absolute inline-flex size-full animate-ping rounded-full opacity-60 motion-reduce:animate-none" />
           <span className="bg-warning relative inline-flex size-2.5 rounded-full" />

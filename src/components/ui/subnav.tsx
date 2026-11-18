@@ -34,7 +34,7 @@ export function Subnav({
 }) {
   return (
     <div className="bg-background/85 supports-[backdrop-filter]:bg-background/65 sticky top-0 z-20 backdrop-blur-md">
-      <div className="mx-auto grid w-full max-w-7xl items-center gap-x-4 px-4 py-2.5 md:px-8 lg:grid-cols-[1fr_auto_1fr]">
+      <div className="contenedor-pagina grid items-center gap-x-4 px-4 py-2.5 md:px-8 lg:grid-cols-[1fr_auto_1fr]">
         <div className="sr-only flex items-center gap-1.5 lg:not-sr-only lg:flex">
           <div>
             <h1 className="font-editorial text-foreground text-[1.75rem] leading-tight font-normal tracking-tight whitespace-nowrap">{titulo}</h1>

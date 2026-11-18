@@ -87,7 +87,7 @@ export function PacientesPage() {
   const hayDatos = (data?.length ?? 0) > 0;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
+    <div className="contenedor-pagina px-4 py-6 md:px-8 md:py-8">
       <EncabezadoPacientes total={data?.length ?? 0} onNuevo={() => setAltaAbierta(true)} />
 
       <DialogoPaciente abierto={altaAbierta} onOpenChange={setAltaAbierta} />

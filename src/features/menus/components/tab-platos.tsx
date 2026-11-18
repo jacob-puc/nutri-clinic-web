@@ -112,7 +112,7 @@ export function TabPlatos() {
       />
 
       {consulta.isPending && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 min-[1760px]:grid-cols-5">
           {Array.from({ length: 8 }, (_, i) => (
             <Skeleton key={i} className="h-72 rounded-xl" />
           ))}
@@ -145,7 +145,7 @@ export function TabPlatos() {
       )}
 
       {platos.length > 0 && (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 min-[1760px]:grid-cols-5">
           {platos.map((plato) => (
             <li key={plato.id} className="anim-entrada tarjeta-viva">
               <TarjetaPlato

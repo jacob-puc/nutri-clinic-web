@@ -71,7 +71,7 @@ export function NutricionistasPage() {
   const totalHoy = [...citasPorPersona.values()].reduce((s, l) => s + l.length, 0);
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
+    <div className="contenedor-pagina px-4 py-6 md:px-8 md:py-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-editorial text-foreground text-3xl font-normal tracking-tight md:text-4xl">Equipo</h1>
@@ -118,7 +118,7 @@ export function NutricionistasPage() {
 
       <div className="mt-5">
         {consulta.isPending && (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 min-[1760px]:grid-cols-4">
             {[0, 1, 2].map((i) => (
               <Skeleton key={i} className="h-52 rounded-xl" />
             ))}
@@ -148,7 +148,7 @@ export function NutricionistasPage() {
         )}
 
         {visibles.length > 0 && (
-          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 min-[1760px]:grid-cols-4">
             {visibles.map((persona) => (
               <li key={persona.id} className="anim-entrada tarjeta-viva">
                 <TarjetaPersona

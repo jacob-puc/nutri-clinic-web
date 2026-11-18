@@ -36,7 +36,7 @@ export function ConfiguracionPage() {
         opciones={VISTAS}
       />
 
-      <div className="mx-auto w-full max-w-7xl px-4 pt-3 pb-8 md:px-8 md:pb-10">
+      <div className="contenedor-pagina px-4 pt-3 pb-8 md:px-8 md:pb-10">
         <TabsContent value="fiscales" className="anim-vista">
           <SeccionDatosFiscales />
         </TabsContent>
