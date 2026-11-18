@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
+  ArrowUpRight,
   Check,
   Clock,
   Mail,
@@ -11,6 +12,7 @@ import {
 import imagenConsulta from "@/assets/sitio/consulta-nutriologa.jpg";
 import imagenHero from "@/assets/sitio/hero-alimentos.jpg";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CLINICA, URL_COMO_LLEGAR } from "@/config/clinica";
 import { AvatarPersona } from "@/features/nutricionistas/components/comunes";
 import { resumenSemana } from "@/features/nutricionistas/lib/horario";
 import { Revelar, type OrigenRevelar } from "@/features/sitio/components/revelar";
@@ -19,7 +21,10 @@ import { VistaDeServicio, type VistaServicio } from "@/features/sitio/components
 import { formatearTelefono, useOpcionesPublicas } from "@/features/sitio/hooks/use-opciones-publicas";
 import { HERO, PASOS, SERVICIOS } from "@/features/sitio/contenido";
 import { cn } from "@/lib/utils";
-import type { ClinicaPublica, OpcionesReserva } from "@/types/api";
+import type { OpcionesReserva } from "@/types/api";
+
+/* Leaflet solo se descarga al llegar a esta pagina (no pesa en el panel). */
+const MapaClinica = lazy(() => import("@/features/sitio/components/mapa-clinica"));
 
 /**
  * Pagina de inicio publica: presenta la clinica y lleva a reservar. El equipo,
@@ -364,7 +369,6 @@ function Equipo({ opciones, cargando }: { opciones?: OpcionesReserva; cargando: 
 
 function Contacto({ opciones }: { opciones?: OpcionesReserva }) {
   const horario = resumenSemana(opciones?.horarioClinica ?? []);
-  const clinica = opciones?.clinica;
 
   return (
     <Seccion id="contacto" etiqueta="Contacto" titulo="Visítanos o escríbenos">
@@ -395,76 +399,82 @@ function Contacto({ opciones }: { opciones?: OpcionesReserva }) {
         </div>
         </Revelar>
 
-        {clinica && (
-          <Revelar desde="derecha">
-            <DatosContacto clinica={clinica} />
-          </Revelar>
-        )}
+        <Revelar desde="derecha">
+          <DatosContacto />
+        </Revelar>
       </div>
     </Seccion>
   );
 }
 
-/** Mapa a la izquierda y las formas de contacto a la derecha. */
-function DatosContacto({ clinica }: { clinica: ClinicaPublica }) {
-  const consulta = clinica.direccion ? encodeURIComponent(clinica.direccion) : null;
+/**
+ * Mapa de la marca a todo lo ancho y, encima, la tarjeta con la direccion y
+ * las formas de contacto. Los datos son fijos (src/config/clinica.ts): la
+ * seccion se ve al instante aunque el servidor este dormido.
+ */
+function DatosContacto() {
   const filas = [
-    clinica.telefono && {
+    {
       icono: Phone,
       etiqueta: "Teléfono",
-      valor: formatearTelefono(clinica.telefono),
-      href: `tel:${clinica.telefono}`,
+      valor: formatearTelefono(CLINICA.telefono),
+      href: `tel:${CLINICA.telefono}`,
     },
-    clinica.correo && {
+    {
       icono: Mail,
       etiqueta: "Correo",
-      valor: clinica.correo,
-      href: `mailto:${clinica.correo}`,
+      valor: CLINICA.correo,
+      href: `mailto:${CLINICA.correo}`,
     },
-  ].filter(Boolean) as { icono: typeof Phone; etiqueta: string; valor: string; href: string }[];
+  ];
 
   return (
-    <div className="border-border/70 bg-card grid h-full overflow-hidden rounded-[1.75rem] border sm:grid-cols-2">
-      {consulta && (
-        <iframe
-          title={`Ubicación de ${clinica.nombre} en el mapa`}
-          src={`https://www.google.com/maps?q=${consulta}&hl=es&z=16&output=embed`}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          className="h-64 w-full border-0 sm:h-full sm:min-h-72"
-        />
-      )}
+    <div className="border-border/70 bg-card relative isolate flex h-full flex-col overflow-hidden rounded-[1.75rem] border sm:min-h-[28rem]">
+      <Suspense fallback={<div className="bg-primary-soft/60 h-64 w-full sm:absolute sm:inset-0 sm:h-auto" />}>
+        <MapaClinica className="h-64 w-full sm:absolute sm:inset-0 sm:h-auto" />
+      </Suspense>
 
-      <div className="flex flex-col gap-5 p-6">
-        <h3 className="font-editorial text-2xl font-normal">{clinica.nombre}</h3>
-        <ul className="space-y-4">
+      {/* Velo que da contraste a la tarjeta sin tapar el pin. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-[400] hidden bg-[linear-gradient(60deg,color-mix(in_oklab,var(--card)_55%,transparent)_0%,transparent_45%)] sm:block"
+      />
+
+      <div className="relative z-[500] flex flex-col gap-4 p-6 sm:absolute sm:bottom-5 sm:left-5 sm:w-[19rem] sm:rounded-[1.5rem] sm:border sm:border-border/70 sm:bg-card/95 sm:p-5 sm:shadow-overlay sm:backdrop-blur-md">
+        <div>
+          <p className="text-primary text-xs font-bold tracking-[0.14em] uppercase">Encuéntranos</p>
+          <h3 className="font-editorial mt-1 text-2xl font-normal">{CLINICA.nombre}</h3>
+          <p className="text-muted-foreground mt-1 flex gap-1.5 text-sm leading-snug">
+            <MapPin className="text-primary mt-0.5 size-4 shrink-0" aria-hidden />
+            {CLINICA.direccion}
+          </p>
+        </div>
+        <ul className="space-y-3">
           {filas.map((f) => {
             const Icono = f.icono;
             return (
               <li key={f.etiqueta}>
                 <a href={f.href} className="group flex items-center gap-3">
-                  <span className="bg-primary-soft text-primary-soft-foreground grid size-10 shrink-0 place-items-center rounded-full">
+                  <span className="bg-primary-soft text-primary-soft-foreground grid size-9 shrink-0 place-items-center rounded-full">
                     <Icono className="size-4" aria-hidden />
                   </span>
                   <span className="min-w-0">
-                    <span className="text-muted-foreground block text-sm">{f.etiqueta}</span>
-                    <span className="block text-base font-medium break-words group-hover:underline">{f.valor}</span>
+                    <span className="text-muted-foreground block text-xs">{f.etiqueta}</span>
+                    <span className="block text-[15px] font-medium break-words group-hover:underline">{f.valor}</span>
                   </span>
                 </a>
               </li>
             );
           })}
         </ul>
-        {consulta && (
-          <a
-            href={`https://www.google.com/maps/search/?api=1&query=${consulta}`}
-            target="_blank"
-            rel="noreferrer"
-            className="border-border hover:bg-surface-subtle mt-auto inline-flex h-11 items-center justify-center gap-2 rounded-full border text-base font-semibold transition-colors"
-          >
-            <MapPin className="size-4" aria-hidden /> Cómo llegar
-          </a>
-        )}
+        <a
+          href={URL_COMO_LLEGAR}
+          target="_blank"
+          rel="noreferrer"
+          className="bg-primary text-primary-foreground hover:bg-primary-hover inline-flex h-11 items-center justify-center gap-2 rounded-full text-[15px] font-semibold transition-colors"
+        >
+          Cómo llegar <ArrowUpRight className="size-4" aria-hidden />
+        </a>
       </div>
     </div>
   );
