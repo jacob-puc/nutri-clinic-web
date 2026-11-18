@@ -12,6 +12,7 @@ import {
 import {
   BarChart3,
   CreditCard,
+  FileDown,
   Receipt,
   Stethoscope,
   TrendingUp,
@@ -22,6 +23,7 @@ import {
 } from "lucide-react";
 
 import { Seccion } from "@/components/ficha/seccion";
+import { Button } from "@/components/ui/button";
 import { EstadoError } from "@/components/states/estado-error";
 import { EstadoVacio } from "@/components/states/estado-vacio";
 import { FiltroPeriodo } from "@/components/ui/filtro-periodo";
@@ -40,6 +42,7 @@ import { usePeriodoUrl } from "@/hooks/use-periodo-url";
 import { useParametroUrl } from "@/hooks/use-parametro-url";
 import { apiClient } from "@/lib/api-client";
 import { mensajeDeError } from "@/lib/api-error";
+import { abrirPdfConAviso, abrirPdf } from "@/lib/pdf";
 import { formatearCalendario } from "@/lib/zona-horaria";
 import type { AgrupacionReporte, Guid, PuntoIngresos, ReporteIngresos } from "@/types/api";
 
@@ -110,7 +113,7 @@ export function ReportesPage() {
   const sinCobros = datos !== undefined && datos.cobros === 0;
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5 px-4 py-6 md:px-8 md:py-8">
+    <div className="contenedor-pagina space-y-5 px-4 py-6 md:px-8 md:py-8">
       <div>
         <h1 className="font-editorial text-foreground text-3xl font-normal tracking-tight md:text-4xl">Reportes</h1>
         <p className="text-muted-foreground mt-1 text-sm">Ingresos de la clínica por periodo.</p>
@@ -131,6 +134,19 @@ export function ReportesPage() {
             ))}
           </SelectContent>
         </Select>
+        <Button
+          variant="outline"
+          className="h-10"
+          disabled={!datos}
+          onClick={() =>
+            abrirPdfConAviso(() =>
+              abrirPdf(`/api/reportes/ingresos/pdf?${new URLSearchParams(parametros as Record<string, string>)}`),
+            )
+          }
+        >
+          <FileDown className="size-4" />
+          Descargar PDF
+        </Button>
       </div>
 
       {reporte.isError ? (
