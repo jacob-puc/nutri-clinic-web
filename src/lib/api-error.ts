@@ -1,8 +1,12 @@
 export type ApiErrorCode =
   | "NO_ENCONTRADO"
   | "VALIDACION"
+  | "NO_AUTORIZADO"
+  | "CORREO_NO_VERIFICADO"
+  | "CAMBIO_CONTRASENA_REQUERIDO"
   | "CONFLICTO"
   | "ERROR_BD"
+  | "STORAGE_NO_CONFIGURADO"
   | "ERROR_INTERNO"
   | "ERROR_DE_RED"
   | "ERROR_DESCONOCIDO"
@@ -56,8 +60,12 @@ export class ApiError extends Error {
 const CODIGOS_VALIDOS: ReadonlySet<string> = new Set<ApiErrorCode>([
   "NO_ENCONTRADO",
   "VALIDACION",
+  "NO_AUTORIZADO",
+  "CORREO_NO_VERIFICADO",
+  "CAMBIO_CONTRASENA_REQUERIDO",
   "CONFLICTO",
   "ERROR_BD",
+  "STORAGE_NO_CONFIGURADO",
   "ERROR_INTERNO",
   "ERROR_DE_RED",
   "ERROR_DESCONOCIDO",
@@ -98,19 +106,26 @@ export function construirApiError(status: number, cuerpo: unknown): ApiError {
     const cuerpoMedio = cuerpo as MiddlewareErrorBody & AspNetValidationBody;
 
     const codigo = aCadena(cuerpoMedio.codigo);
+    const mensaje = aCadena(cuerpoMedio.mensaje);
+
+    /* Un codigo nuevo del backend no debe ocultar el mensaje que trae. */
+    if (mensaje && !(codigo && CODIGOS_VALIDOS.has(codigo))) {
+      return new ApiError(mensaje, { status, codigo: "ERROR_DESCONOCIDO" });
+    }
+
     if (codigo && CODIGOS_VALIDOS.has(codigo)) {
       const detalles = Array.isArray(cuerpoMedio.errores)
         ? cuerpoMedio.errores.flatMap((item) => {
             if (typeof item !== "object" || item === null) return [];
             const detalle = item as Partial<ApiErrorDetail>;
             const campo = aCadena(detalle.campo);
-            const mensaje = aCadena(detalle.mensaje);
-            return campo && mensaje ? [{ campo, mensaje }] : [];
+            const mensajeDetalle = aCadena(detalle.mensaje);
+            return campo && mensajeDetalle ? [{ campo, mensaje: mensajeDetalle }] : [];
           })
         : [];
 
       return new ApiError(
-        aCadena(cuerpoMedio.mensaje) ?? "Algo salió mal. Inténtalo de nuevo en un momento.",
+        mensaje ?? "Algo salió mal. Inténtalo de nuevo en un momento.",
         {
           status,
           codigo: codigo as ApiErrorCode,
