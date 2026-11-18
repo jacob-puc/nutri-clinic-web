@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, ClipboardCheck, Copy, Loader2, MoreHorizontal, Pencil, Play, Plus, Printer, RefreshCw, X } from "lucide-react";
+import { AlertTriangle, ClipboardCheck, Copy, Loader2, MoreHorizontal, Pencil, Play, Plus, RefreshCw, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -51,7 +51,7 @@ import {
 } from "@/features/menus/lib/menus";
 import { usePaciente } from "@/features/pacientes/hooks/use-expediente";
 import { mensajeDeError } from "@/lib/api-error";
-import { abrirPdfConAviso } from "@/lib/pdf";
+import { BotonDocumento } from "@/features/envios/components/boton-documento";
 import { menusApi } from "@/features/menus/api/menus-api";
 import { formatearFechaCorta } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -285,10 +285,18 @@ function TarjetaPlan({
         {/* Imprimir siempre esta disponible, tambien con la consulta cerrada:
             el menu se entrega al paciente al final de la atencion o despues. */}
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="outline" onClick={() => abrirPdfConAviso(() => menusApi.abrirMenuPdf(plan.id))}>
-            <Printer className="size-4" />
-            Imprimir
-          </Button>
+          <BotonDocumento
+            etiqueta="Plan"
+            size="sm"
+            variant="outline"
+            imprimir={() => menusApi.abrirMenuPdf(plan.id)}
+            envio={{
+              tipo: "plan",
+              referenciaId: plan.id,
+              pacienteId: plan.pacienteId,
+              documento: `Plan ${plan.nombre} · ${plan.pacienteNombre}`,
+            }}
+          />
           {!soloLectura && (
           <>
             {plan.estado === "Borrador" && (

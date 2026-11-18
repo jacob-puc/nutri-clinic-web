@@ -10,7 +10,6 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
-  Printer,
   RotateCcw,
   Search,
   Target,
@@ -59,7 +58,7 @@ import {
 import { menusApi } from "@/features/menus/api/menus-api";
 import { mensajeDeError } from "@/lib/api-error";
 import { formatearFechaCorta, normalizar } from "@/lib/formatters";
-import { abrirPdfConAviso } from "@/lib/pdf";
+import { BotonDocumento } from "@/features/envios/components/boton-documento";
 import { cn } from "@/lib/utils";
 import { hoyEnClinica } from "@/lib/zona-horaria";
 import type { DiaSemana, MenuAsignado } from "@/types/api";
@@ -132,7 +131,7 @@ export function TabPlanes() {
   const buscando = termino !== "";
 
   const tarjetas = (lista: MenuAsignado[]) => (
-    <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 min-[1760px]:grid-cols-4">
       {lista.map((plan) => (
         <li key={plan.id} className="anim-entrada tarjeta-viva">
           <TarjetaPlan
@@ -195,7 +194,7 @@ export function TabPlanes() {
       />
 
       {consulta.isPending && (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 min-[1760px]:grid-cols-4">
           {Array.from({ length: 6 }, (_, i) => (
             <Skeleton key={i} className="h-80 rounded-xl" />
           ))}
@@ -404,16 +403,24 @@ function TarjetaPlan({
           {editable ? <Pencil className="size-4" /> : <Eye className="size-4" />}
           {editable ? "Editar" : "Ver"}
         </Button>
-        <Button
+        <BotonDocumento
+          etiqueta="PDF"
           variant="ghost"
           size="sm"
           className="text-muted-foreground"
-          aria-label={`Imprimir el plan de ${plan.pacienteNombre}`}
-          onClick={() => abrirPdfConAviso(() => menusApi.abrirMenuPdf(plan.id))}
-        >
-          <Printer className="size-4" />
-          PDF
-        </Button>
+          aria-label={`Documento del plan de ${plan.pacienteNombre}`}
+          imprimir={() => menusApi.abrirMenuPdf(plan.id)}
+          envio={
+            plan.isActive
+              ? {
+                  tipo: "plan",
+                  referenciaId: plan.id,
+                  pacienteId: plan.pacienteId,
+                  documento: `Plan ${plan.nombre} · ${plan.pacienteNombre}`,
+                }
+              : undefined
+          }
+        />
         {plan.isActive && (
           <Button
             variant="ghost"

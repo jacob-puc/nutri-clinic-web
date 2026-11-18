@@ -14,7 +14,6 @@ import {
   Stethoscope,
   Target,
   TrendingDown,
-  Printer,
   TrendingUp,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -22,7 +21,7 @@ import type { LucideIcon } from "lucide-react";
 import { usePermisos } from "@/features/auth/hooks/use-permisos";
 import { AvatarPaciente } from "@/features/pacientes/components/avatar-paciente";
 import { EliminarArchivo } from "@/features/pacientes/components/eliminar-archivo";
-import { abrirPdfConAviso } from "@/lib/pdf";
+import { BotonDocumento } from "@/features/envios/components/boton-documento";
 import { pacientesApi } from "@/features/pacientes/api/pacientes-api";
 import { BadgeEstadoCita } from "@/features/citas/components/badge-estado-cita";
 import { CitasPaciente } from "@/features/citas/components/citas-paciente";
@@ -180,7 +179,7 @@ export function PacienteDetallePage() {
     .sort((a, b) => b.fechaMedicion.localeCompare(a.fechaMedicion))[0]?.estatura;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-8">
+    <div className="contenedor-detalle px-4 py-6 md:px-8 md:py-8">
       <Breadcrumbs
         etiquetaNav="Navegación del expediente"
         className="mb-4"
@@ -335,14 +334,18 @@ function EncabezadoFicha({
         </div>
 
         <div className="flex flex-wrap gap-2 pb-2">
-          <Button
+          <BotonDocumento
+            etiqueta="Historial"
             variant="outline"
             size="sm"
-            onClick={() => abrirPdfConAviso(() => pacientesApi.abrirHistorialPdf(paciente.id))}
-          >
-            <Printer className="size-4" />
-            <span className="hidden sm:inline">Imprimir historial</span>
-          </Button>
+            imprimir={() => pacientesApi.abrirHistorialPdf(paciente.id)}
+            envio={{
+              tipo: "historial",
+              referenciaId: paciente.id,
+              pacienteId: paciente.id,
+              documento: `Historial clínico · ${paciente.nombreCompleto}`,
+            }}
+          />
           <Button variant="outline" size="sm" onClick={onEditar}>
             Editar
           </Button>
@@ -513,7 +516,7 @@ function FichaAdministrativa({ paciente }: { paciente: Paciente }) {
   const [editando, setEditando] = useState(false);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-8">
+    <div className="contenedor-detalle px-4 py-6 md:px-8 md:py-8">
       <Breadcrumbs
         etiquetaNav="Navegación del paciente"
         className="mb-4"
@@ -1428,7 +1431,7 @@ function ContenidoSkeleton() {
 
 function FichaSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-8">
+    <div className="contenedor-detalle px-4 py-6 md:px-8 md:py-8">
       <Skeleton className="h-8 w-36" />
       <Card className="mt-4">
         <CardContent className="flex gap-4 px-4 py-5 md:px-6">

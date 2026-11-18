@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, FileText, Loader2, Receipt, Wallet } from "lucide-react";
+import { CheckCircle2, FileText, Loader2, Wallet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { cobrosApi } from "@/features/cobros/api/cobros-api";
 import { FormularioFactura } from "@/features/cobros/components/formulario-factura";
+import { BotonDocumento } from "@/features/envios/components/boton-documento";
 import { useCrearPago, usePagoDeConsulta, usePagos } from "@/features/cobros/hooks/use-cobros";
 import { ETIQUETA_METODO, formatearMoneda, METODOS_PAGO, MONTO_MAXIMO } from "@/features/cobros/lib/cobros";
 import { useConsultas } from "@/features/consultas/hooks/use-consultas";
@@ -127,10 +128,21 @@ function Contenido({ consulta, onCerrar }: { consulta: Consulta; onCerrar: () =>
             detalle={`${factura.nombreRazonSocial} · ${factura.rfc} · ${formatearMoneda(factura.total)}`}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => abrir(() => cobrosApi.abrirFacturaPdf(factura.id))}>
-              <FileText className="size-4" />
-              Ver factura
-            </Button>
+            <BotonDocumento
+              etiqueta="Factura"
+              variant="outline"
+              imprimir={() => cobrosApi.abrirFacturaPdf(factura.id)}
+              envio={
+                vigente
+                  ? {
+                      tipo: "factura",
+                      referenciaId: factura.id,
+                      pacienteId: vigente.pacienteId,
+                      documento: `Factura ${factura.serie}-${String(factura.folio).padStart(4, "0")} · ${factura.nombreRazonSocial}`,
+                    }
+                  : undefined
+              }
+            />
             <Button onClick={onCerrar}>Terminar</Button>
           </DialogFooter>
         </>
@@ -287,10 +299,17 @@ function PasoCobrado({
         detalle={`Recibo ${pago.numeroRecibo}`}
       />
       <DialogFooter>
-        <Button variant="outline" onClick={() => abrir(() => cobrosApi.abrirComprobante(pago.id))}>
-          <Receipt className="size-4" />
-          Ver recibo
-        </Button>
+        <BotonDocumento
+          etiqueta="Recibo"
+          variant="outline"
+          imprimir={() => cobrosApi.abrirComprobante(pago.id)}
+          envio={{
+            tipo: "comprobante",
+            referenciaId: pago.id,
+            pacienteId: pago.pacienteId,
+            documento: `Recibo ${pago.numeroRecibo} · ${pago.pacienteNombre}`,
+          }}
+        />
         <Button variant="outline" onClick={onFacturar}>
           <FileText className="size-4" />
           Facturar
@@ -311,9 +330,4 @@ function Confirmacion({ titulo, detalle }: { titulo: string; detalle: string }) 
       </div>
     </div>
   );
-}
-
-/** Abre un PDF y avisa si falla (p. ej. el backend no pudo generarlo). */
-function abrir(accion: () => Promise<void>) {
-  accion().catch((error) => toast.error("No se pudo abrir el PDF", { description: mensajeDeError(error) }));
 }

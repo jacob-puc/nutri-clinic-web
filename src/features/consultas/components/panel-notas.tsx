@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { CheckCircle2, FileText, Loader2, NotebookPen, ReceiptText, Wallet } from "lucide-react";
+import { CheckCircle2, FileText, Loader2, NotebookPen, Wallet } from "lucide-react";
 
 import { AlertaFormulario } from "@/components/ui/grupo-campos";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { formatearFechaLargaLocal, formatearHoraLocal } from "@/features/citas/lib/fechas-cita";
 import { cobrosApi } from "@/features/cobros/api/cobros-api";
+import { BotonDocumento } from "@/features/envios/components/boton-documento";
 import { DialogoCobro } from "@/features/cobros/components/dialogo-cobro";
 import { useFacturas, usePagoDeConsulta } from "@/features/cobros/hooks/use-cobros";
 import { ETIQUETA_METODO, formatearMoneda } from "@/features/cobros/lib/cobros";
@@ -203,9 +203,6 @@ function EstadoCobro({ consulta, onCobrar }: { consulta: Consulta; onCobrar: () 
   const facturas = useFacturas({ pacienteId: consulta.pacienteId }, { enabled: Boolean(pago) });
   const factura = pago ? facturas.data?.find((f) => f.pagoId === pago.id && f.estatus !== "Anulada") : undefined;
 
-  const abrir = (accion: () => Promise<void>) =>
-    accion().catch((error) => toast.error("No se pudo abrir el PDF", { description: mensajeDeError(error) }));
-
   if (isPending) return null;
 
   if (!pago) {
@@ -230,16 +227,33 @@ function EstadoCobro({ consulta, onCobrar }: { consulta: Consulta; onCobrar: () 
           {factura && ` · Factura ${factura.serie}-${String(factura.folio).padStart(4, "0")}`}
         </span>
       </p>
+      {/* Un boton por documento: queda claro si se imprime o envia el recibo o la factura. */}
       <div className="flex flex-wrap gap-1.5">
-        <Button size="sm" variant="outline" onClick={() => abrir(() => cobrosApi.abrirComprobante(pago.id))}>
-          <ReceiptText className="size-4" />
-          Recibo
-        </Button>
+        <BotonDocumento
+          etiqueta="Recibo"
+          size="sm"
+          variant="outline"
+          imprimir={() => cobrosApi.abrirComprobante(pago.id)}
+          envio={{
+            tipo: "comprobante",
+            referenciaId: pago.id,
+            pacienteId: pago.pacienteId,
+            documento: `Recibo ${pago.numeroRecibo} · ${pago.pacienteNombre}`,
+          }}
+        />
         {factura ? (
-          <Button size="sm" variant="outline" onClick={() => abrir(() => cobrosApi.abrirFacturaPdf(factura.id))}>
-            <FileText className="size-4" />
-            Factura
-          </Button>
+          <BotonDocumento
+            etiqueta="Factura"
+            size="sm"
+            variant="outline"
+            imprimir={() => cobrosApi.abrirFacturaPdf(factura.id)}
+            envio={{
+              tipo: "factura",
+              referenciaId: factura.id,
+              pacienteId: pago.pacienteId,
+              documento: `Factura ${factura.serie}-${String(factura.folio).padStart(4, "0")} · ${factura.nombreRazonSocial}`,
+            }}
+          />
         ) : (
           <Button size="sm" variant="outline" onClick={onCobrar}>
             <FileText className="size-4" />

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Lock, NotebookPen, Printer } from "lucide-react";
+import { Loader2, Lock, NotebookPen } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -39,7 +39,7 @@ import {
   type LineaSemana,
 } from "@/features/menus/lib/menus";
 import { mensajeDeError } from "@/lib/api-error";
-import { abrirPdfConAviso } from "@/lib/pdf";
+import { BotonDocumento } from "@/features/envios/components/boton-documento";
 import { menusApi } from "@/features/menus/api/menus-api";
 import { dateOnlyDe, fechaDeDateOnly } from "@/lib/fechas";
 import { formatearFechaCorta } from "@/lib/formatters";
@@ -282,15 +282,23 @@ function Contenido({ plan, onCerrar }: { plan: MenuAsignado; onCerrar: () => voi
 
         <DialogFooter>
           {/* Imprime lo guardado: los cambios sin guardar no salen en el PDF. */}
-          <Button
-            type="button"
+          {/* Imprime y envia lo guardado: los cambios sin guardar no salen en el PDF. */}
+          <BotonDocumento
+            etiqueta="Plan"
             variant="ghost"
             className="sm:mr-auto"
-            onClick={() => abrirPdfConAviso(() => menusApi.abrirMenuPdf(plan.id))}
-          >
-            <Printer className="size-4" />
-            Imprimir menú
-          </Button>
+            imprimir={() => menusApi.abrirMenuPdf(plan.id)}
+            envio={
+              plan.isActive
+                ? {
+                    tipo: "plan",
+                    referenciaId: plan.id,
+                    pacienteId: plan.pacienteId,
+                    documento: `Plan ${plan.nombre} · ${plan.pacienteNombre}`,
+                  }
+                : undefined
+            }
+          />
           {soloLectura ? (
             <Button type="button" variant="outline" onClick={onCerrar}>
               Cerrar

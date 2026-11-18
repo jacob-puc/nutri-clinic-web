@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Ban, FileText, MoreHorizontal, Receipt, ReceiptText } from "lucide-react";
+import { Ban, FileText, MoreHorizontal, Receipt, ReceiptText, Send } from "lucide-react";
 
 import { EstadoError } from "@/components/states/estado-error";
 import { EstadoVacio } from "@/components/states/estado-vacio";
@@ -57,7 +57,8 @@ import { useParametroUrl } from "@/hooks/use-parametro-url";
 import { mensajeDeError } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
 import { formatearInstante } from "@/lib/zona-horaria";
-import type { Factura, MetodoPago, Pago, PagoFiltro } from "@/types/api";
+import type { Factura, Guid, MetodoPago, Pago, PagoFiltro } from "@/types/api";
+import { DialogoEnviarDocumento } from "@/features/envios/components/dialogo-enviar-documento";
 
 const TODOS = "todos";
 
@@ -88,6 +89,12 @@ export function TabPagos() {
   const facturas = useFacturas({});
   const [facturando, setFacturando] = useState<Pago | null>(null);
   const [anulando, setAnulando] = useState<Pago | null>(null);
+  const [enviando, setEnviando] = useState<{
+    tipo: "comprobante" | "factura";
+    referenciaId: Guid;
+    pacienteId: Guid;
+    documento: string;
+  } | null>(null);
 
   const facturaPorPago = useMemo(
     () => new Map((facturas.data ?? []).filter((f) => f.estatus !== "Anulada").map((f) => [f.pagoId, f])),
@@ -221,11 +228,41 @@ export function TabPagos() {
                             <ReceiptText />
                             Ver recibo
                           </DropdownMenuItem>
-                          {factura ? (
-                            <DropdownMenuItem onSelect={() => abrirPdf(() => cobrosApi.abrirFacturaPdf(factura.id))}>
-                              <FileText />
-                              Ver factura {folio(factura)}
+                          {!anulado && (
+                            <DropdownMenuItem
+                              onSelect={() =>
+                                setEnviando({
+                                  tipo: "comprobante",
+                                  referenciaId: pago.id,
+                                  pacienteId: pago.pacienteId,
+                                  documento: `Recibo ${pago.numeroRecibo} · ${pago.pacienteNombre}`,
+                                })
+                              }
+                            >
+                              <Send />
+                              Enviar recibo por correo
                             </DropdownMenuItem>
+                          )}
+                          {factura ? (
+                            <>
+                              <DropdownMenuItem onSelect={() => abrirPdf(() => cobrosApi.abrirFacturaPdf(factura.id))}>
+                                <FileText />
+                                Ver factura {folio(factura)}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() =>
+                                  setEnviando({
+                                    tipo: "factura",
+                                    referenciaId: factura.id,
+                                    pacienteId: pago.pacienteId,
+                                    documento: `Factura ${folio(factura)} · ${factura.nombreRazonSocial}`,
+                                  })
+                                }
+                              >
+                                <Send />
+                                Enviar factura por correo
+                              </DropdownMenuItem>
+                            </>
                           ) : (
                             !anulado && (
                               <DropdownMenuItem onSelect={() => setFacturando(pago)}>
@@ -281,6 +318,17 @@ export function TabPagos() {
       </Dialog>
 
       <DialogoAnular pago={anulando} onOpenChange={(a) => !a && setAnulando(null)} />
+
+      {enviando && (
+        <DialogoEnviarDocumento
+          abierto
+          onOpenChange={(a) => !a && setEnviando(null)}
+          tipo={enviando.tipo}
+          referenciaId={enviando.referenciaId}
+          pacienteId={enviando.pacienteId}
+          documento={enviando.documento}
+        />
+      )}
     </div>
   );
 }
