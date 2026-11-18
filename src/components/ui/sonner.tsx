@@ -36,8 +36,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme={theme}
       className="toaster group"
       gap={10}
-      offset={{ top: 76, right: 20 }}
-      mobileOffset={{ top: 72, left: 12, right: 12 }}
+      offset={{ bottom: 24, right: 24 }}
+      mobileOffset={{ bottom: 16, left: 12, right: 12 }}
       icons={{
         success: <CircleCheckIcon className="size-4" />,
         info: <InfoIcon className="size-4" />,
@@ -49,20 +49,24 @@ const Toaster = ({ ...props }: ToasterProps) => {
         unstyled: true,
         classNames: {
           toast: cn(
-            "group/aviso relative flex w-[var(--width)] items-start gap-3 overflow-hidden rounded-xl border py-3 pr-9 pl-4",
-            "bg-popover text-popover-foreground border-border shadow-overlay",
+            "group/aviso relative flex w-[var(--width)] items-start gap-3 overflow-hidden rounded-2xl border py-3.5 pr-10 pl-3.5",
+            "bg-popover text-popover-foreground shadow-overlay",
             /* Valores por defecto (avisos neutros y de carga): color de marca. */
             "[--tono:var(--primary)] [--tono-suave:var(--primary-soft)] [--tono-texto:var(--primary-soft-foreground)]",
             TONO,
-            /* Franja de estado en el borde izquierdo. */
-            "before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[var(--tono)]",
+            /* Borde y un velo muy suave del color del aviso, como las tarjetas del sitio. */
+            "border-[color-mix(in_oklab,var(--tono)_28%,transparent)]",
+            "bg-[linear-gradient(135deg,color-mix(in_oklab,var(--tono-suave)_55%,transparent),transparent_60%)]",
+            /* Hilo del color del aviso en la base: el sello de la tarjeta. */
+            "after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:bg-[var(--tono)] after:opacity-80",
           ),
           icon: cn(
-            "mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg",
-            "bg-[var(--tono-suave)] text-[var(--tono-texto)]",
+            "grid size-9 shrink-0 place-items-center rounded-full",
+            "bg-[var(--tono)] text-white shadow-[0_6px_14px_-6px_var(--tono)]",
+            "[&_svg]:size-[18px]",
           ),
-          content: "flex min-w-0 flex-1 flex-col gap-0.5 pt-0.5",
-          title: "text-foreground text-sm leading-snug font-semibold",
+          content: "flex min-w-0 flex-1 flex-col gap-0.5 pt-1",
+          title: "text-foreground text-[14px] leading-snug font-semibold",
           description: "text-muted-foreground text-[13px] leading-snug",
           actionButton: cn(
             "bg-primary text-primary-foreground hover:bg-primary-hover mt-0.5 h-7 shrink-0 cursor-pointer self-center rounded-md px-2.5 text-xs font-semibold",
