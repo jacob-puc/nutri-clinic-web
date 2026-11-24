@@ -225,7 +225,7 @@ function FormularioCita({
   const actualizar = useActualizarCita(cita?.id ?? "");
   const guardando = cita ? actualizar.isPending : crear.isPending;
 
-  const { data: nutricionistas = [] } = useNutricionistasQueAtienden();
+  const { data: nutricionistas = [], isPending: cargandoNutricionistas } = useNutricionistasQueAtienden();
   /* Horario de atencion y ausencias: las horas fuera de horario no se
      ofrecen y los dias de ausencia no se pueden elegir (el backend tambien
      los rechaza con 409). */
@@ -241,7 +241,7 @@ function FormularioCita({
   const nombrePaciente = cita?.pacienteNombre ?? pacienteNombre ?? "";
 
   const esquema = construirEsquema();
-  const nutricionistaInicial = cita?.nutricionistaId ?? (usuario && usuario.rol !== "Recepcion" ? usuario.id : "");
+  const nutricionistaInicial = cita?.nutricionistaId ?? (usuario?.rol === "Nutricionista" ? usuario.id : "");
   const franja = (() => {
     const base = franjaPorDefecto();
     /* Cita nueva: dura lo que acostumbra quien atiende (si ya se conoce). */
@@ -254,7 +254,6 @@ function FormularioCita({
     mode: "onBlur",
     defaultValues: {
       pacienteId: pacienteIdFijo,
-      /* Quien atiende se propone a si mismo; recepcion elige a quien. */
       nutricionistaId: nutricionistaInicial,
       fechaInicio: cita ? aValorLocal(cita.fechaInicio) : franja.inicio,
       fechaFin: cita ? aValorLocal(cita.fechaFin) : franja.fin,
@@ -265,7 +264,10 @@ function FormularioCita({
   const fechaInicioVigente = useWatch({ control: form.control, name: "fechaInicio" });
   const fechaFinVigente = useWatch({ control: form.control, name: "fechaFin" });
   const motivoVigente = useWatch({ control: form.control, name: "motivo" });
-  const nutricionistaVigente = useWatch({ control: form.control, name: "nutricionistaId" });
+  const nutricionistaSeleccionado = useWatch({ control: form.control, name: "nutricionistaId" });
+  const nutricionistaVigente = nutricionistas.some((n) => n.id === nutricionistaSeleccionado)
+    ? nutricionistaSeleccionado
+    : "";
   const pacienteVigente = useWatch({ control: form.control, name: "pacienteId" });
 
   const dia = fechaDe(fechaInicioVigente);
@@ -395,6 +397,10 @@ function FormularioCita({
 
   const alEnviar = form.handleSubmit((values) => {
     setErrorGeneral(null);
+    if (!nutricionistas.some((n) => n.id === values.nutricionistaId)) {
+      form.setError("nutricionistaId", { message: "Selecciona un nutricionista activo." });
+      return;
+    }
     if (bloqueado) return;
 
     const motivo = values.motivo.trim();
@@ -479,7 +485,7 @@ function FormularioCita({
                 <FormItem>
                   <FormLabel>Nutricionista</FormLabel>
                   <Select
-                    value={field.value || undefined}
+                    value={nutricionistaVigente}
                     onValueChange={(id) => {
                       field.onChange(id);
                       /* Cita nueva: la duracion pasa a la de quien atiende. */
@@ -670,7 +676,7 @@ function FormularioCita({
           <Button type="button" variant="outline" onClick={onCerrar} disabled={guardando}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={guardando || bloqueado}>
+          <Button type="submit" disabled={guardando || cargandoNutricionistas || bloqueado}>
             {guardando && <Loader2 className="size-4 animate-spin" />}
             {cita ? "Guardar cambios" : "Agendar cita"}
           </Button>

@@ -91,16 +91,15 @@ export function AgendaPage() {
 
   const [altaAbierta, setAltaAbierta] = useState(false);
   const [estado, setEstado] = useParametroUrl<FiltroEstado>("estado", TODOS);
-  /* Quien atiende abre su propia agenda; recepcion y el filtro "Todo el
-     equipo" ven la de todos. Con una sola persona el selector no aparece. */
+  /* Los nutricionistas abren su propia agenda por defecto. */
   const { usuario } = useAuth();
   const { data: equipo = [] } = useNutricionistasQueAtienden();
   const [persona, setPersona] = useParametroUrl<string>(
     "persona",
-    usuario && usuario.rol !== "Recepcion" ? usuario.id : TODOS,
+    usuario?.rol === "Nutricionista" ? usuario.id : TODOS,
   );
   const hayEquipo = equipo.length > 1;
-  const nutricionistaId = hayEquipo && persona !== TODOS ? persona : undefined;
+  const nutricionistaId = hayEquipo && equipo.some((n) => n.id === persona) ? persona : undefined;
 
   /* Horas habiles del calendario: las de la persona filtrada o, con todo el
      equipo, las de la clinica. Lo de fuera se ve sombreado. */
@@ -264,7 +263,7 @@ export function AgendaPage() {
           </div>
 
           {hayEquipo && (
-            <Select value={persona} onValueChange={setPersona}>
+            <Select value={nutricionistaId ?? TODOS} onValueChange={setPersona}>
               <SelectTrigger className="w-[200px]" aria-label="Agenda de">
                 <SelectValue />
               </SelectTrigger>

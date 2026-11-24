@@ -31,7 +31,7 @@ export function useNutricionistas(incluirInactivos = false) {
   });
 }
 
-/** Solo quienes atienden pacientes: recepcion no recibe citas. */
+/** Catálogo de nutricionistas activos para citas y filtros. */
 export function useNutricionistasQueAtienden() {
   const consulta = useNutricionistas();
   return { ...consulta, data: consulta.data?.filter(atiendePacientes) };

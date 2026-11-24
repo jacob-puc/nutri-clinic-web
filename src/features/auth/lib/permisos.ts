@@ -42,7 +42,7 @@ export const DESCRIPCION_ROL: Record<RolUsuario, string> = {
 
 /** Puede recibir citas: los selectores de agenda solo muestran a estos. */
 export function atiendePacientes(persona: { rol: RolUsuario; isActive: boolean }) {
-  return persona.isActive && persona.rol !== "Recepcion";
+  return persona.isActive && persona.rol === "Nutricionista";
 }
 
 /** Reglas de contraseña del backend (NutricionistaService.ValidarContrasena). */
