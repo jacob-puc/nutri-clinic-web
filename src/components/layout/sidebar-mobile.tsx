@@ -1,3 +1,4 @@
+import { CLINICA } from "@/config/clinica";
 import { useSidebar } from "@/components/layout/sidebar-context";
 import { SidebarNav, SidebarPie } from "@/components/layout/sidebar-nav";
 import { MarcaSidebar } from "@/components/layout/sidebar";
@@ -22,7 +23,7 @@ export function SidebarMobile({ insignias, ocultos }: { insignias?: InsigniasNav
         <SheetHeader className="border-sidebar-border border-b px-4 py-4 text-left">
           <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
           <SheetDescription className="sr-only">
-            Navega entre los módulos de NutriClinica
+            Navega entre los módulos de {CLINICA.nombre}
           </SheetDescription>
           <MarcaSidebar />
         </SheetHeader>

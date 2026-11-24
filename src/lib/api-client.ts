@@ -27,7 +27,7 @@ apiClient.interceptors.response.use(
   async (error: unknown) => {
     if (axios.isAxiosError(error) && !error.response) {
       return Promise.reject(
-        new ApiError("No pudimos conectar con NutriClínica. Revisa tu conexión e inténtalo de nuevo.", {
+        new ApiError("No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.", {
           status: 0,
           codigo: "ERROR_DE_RED",
         }),

@@ -887,13 +887,13 @@ body .fc .fc-popover-header {
   border: 3px solid #fff;
   box-shadow: 0 12px 22px -8px rgb(0 53 49 / 0.65);
 }
-.mapa-pin svg {
+.mapa-pin img {
   position: absolute;
   inset: 0;
   margin: auto;
   width: 24px;
   height: 24px;
-  color: #fff;
+  border-radius: 6px;
 }
 @keyframes mapa-latido {
   from {

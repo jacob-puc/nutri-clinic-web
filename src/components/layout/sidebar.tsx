@@ -1,6 +1,7 @@
+import { CLINICA } from "@/config/clinica";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
-import { LogoNutriClinica } from "@/components/layout/logo";
+import { LogoClinica } from "@/components/layout/logo";
 import { SidebarNav, SidebarPie } from "@/components/layout/sidebar-nav";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/layout/sidebar-context";
@@ -11,12 +12,12 @@ import type { InsigniasNav, ModulosOcultos } from "@/components/layout/nav-items
 export function MarcaSidebar({ collapsed = false }: { collapsed?: boolean }) {
   return (
     <span className="flex items-center gap-2.5">
-      <LogoNutriClinica className="size-9 shrink-0 rounded-[10px] shadow-[inset_0_1px_0_0_oklch(1_0_0/0.3),0_4px_14px_-4px_var(--sidebar-glow)]" />
+      <LogoClinica className="size-9 shrink-0 rounded-[10px] shadow-[inset_0_1px_0_0_oklch(1_0_0/0.3),0_4px_14px_-4px_var(--sidebar-glow)]" />
       {!collapsed && (
         <span className="flex flex-col leading-none">
-          <span className="font-editorial text-sidebar-foreground text-xl tracking-tight">NutriClínica</span>
+          <span className="font-editorial text-sidebar-foreground text-xl tracking-tight">{CLINICA.nombre}</span>
           <span className="text-sidebar-muted-foreground mt-1 text-[11px] font-medium">
-            Consulta nutricional
+            Gestión clínica
           </span>
         </span>
       )}

@@ -1,3 +1,4 @@
+import { CLINICA } from "@/config/clinica";
 import { useState } from "react";
 import { Check, Copy, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -144,7 +145,7 @@ export function CredencialesAcceso({ correo, contrasena }: { correo: string; con
   const [copiado, setCopiado] = useState(false);
 
   const copiar = async () => {
-    const texto = `NutriClínica\nCorreo: ${correo}\nContraseña temporal: ${contrasena}\nAl entrar se te pedirá elegir una contraseña propia.`;
+    const texto = `${CLINICA.nombre}\nCorreo: ${correo}\nContraseña temporal: ${contrasena}\nAl entrar se te pedirá elegir una contraseña propia.`;
     try {
       await navigator.clipboard.writeText(texto);
       setCopiado(true);

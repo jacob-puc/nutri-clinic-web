@@ -8,7 +8,7 @@
  * primer renglon del menu son "latitud, longitud" (se copian con un clic).
  */
 export const CLINICA = {
-  nombre: "NutriClínica",
+  nombre: "Nourish Clinic",
   direccion: "Av. Constitución 1000, Centro, Monterrey, N.L.",
   telefono: "8180000000",
   correo: "contacto@nutriclinica.cl",

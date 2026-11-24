@@ -1,8 +1,9 @@
+import { CLINICA } from "@/config/clinica";
 import { useState, type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { LayoutDashboard, MapPin, Menu, Phone, X } from "lucide-react";
 
-import { LogoNutriClinica } from "@/components/layout/logo";
+import { LogoClinica } from "@/components/layout/logo";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { formatearTelefono, useOpcionesPublicas } from "@/features/sitio/hooks/use-opciones-publicas";
 import { cn } from "@/lib/utils";
@@ -49,8 +50,8 @@ function NavbarPublico() {
           onClick={() => setAbierto(false)}
           className="focus-visible:ring-ring flex min-w-0 items-center gap-2.5 rounded-full outline-none focus-visible:ring-2"
         >
-          <LogoNutriClinica className="size-11 shrink-0 rounded-full" />
-          <span className="font-editorial truncate text-2xl leading-none tracking-tight">NutriClínica</span>
+          <LogoClinica className="size-11 shrink-0 rounded-[11px]" />
+          <span className="font-editorial truncate text-2xl leading-none tracking-tight">{CLINICA.nombre}</span>
         </Link>
 
         <ul className="ml-auto hidden items-center gap-7 lg:flex">
@@ -143,7 +144,7 @@ function PiePublico() {
       <div className="mx-auto flex max-w-[84rem] flex-col gap-3 px-4 py-8 text-xs sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <p>
-            © {new Date().getFullYear()} {clinica?.nombre ?? "NutriClínica"}
+            © {new Date().getFullYear()} {CLINICA.nombre}
           </p>
           {clinica?.direccion && (
             <p className="flex items-center gap-1.5">

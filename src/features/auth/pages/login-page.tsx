@@ -1,3 +1,4 @@
+import { CLINICA } from "@/config/clinica";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AlertCircle, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
@@ -5,7 +6,7 @@ import { toast } from "sonner";
 
 import imagenLogin from "@/assets/sitio/login-verduras.jpg";
 import { marcarBienvenida } from "@/components/layout/bienvenida-sistema";
-import { LogoNutriClinica } from "@/components/layout/logo";
+import { LogoClinica } from "@/components/layout/logo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/features/auth/hooks/use-auth";
@@ -97,8 +98,8 @@ export function LoginPage() {
       <div className="relative flex flex-col px-6 pb-8 sm:px-10 lg:min-h-dvh lg:px-12 lg:pt-5">
         <header className="flex items-center justify-between gap-4">
           <Link to="/" className="focus-visible:ring-ring flex min-w-0 items-center gap-2.5 rounded-full outline-none focus-visible:ring-2">
-            <LogoNutriClinica className="size-11 shrink-0 rounded-full" />
-            <span className="font-editorial truncate text-2xl leading-none tracking-tight">NutriClínica</span>
+            <LogoClinica className="size-11 shrink-0 rounded-[11px]" />
+            <span className="font-editorial truncate text-2xl leading-none tracking-tight">{CLINICA.nombre}</span>
           </Link>
           <Link to="/" className="text-foreground/75 hover:text-foreground shrink-0 text-[15px] font-medium transition-colors">
             Volver al sitio
@@ -127,7 +128,7 @@ export function LoginPage() {
                     type="email"
                     autoComplete="email"
                     autoFocus={!import.meta.env.DEV}
-                    placeholder="nombre@nutriclinica.cl"
+                    placeholder="nombre@ejemplo.com"
                     value={correoElectronico}
                     onChange={(e) => setCorreoElectronico(e.target.value)}
                     aria-invalid={error ? true : undefined}

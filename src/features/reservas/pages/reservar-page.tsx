@@ -1,3 +1,4 @@
+import { CLINICA } from "@/config/clinica";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
@@ -716,7 +717,7 @@ function Confirmacion({ reserva, onOtra }: { reserva: ReservaConfirmada; onOtra:
 function DatosClinica({ clinica }: { clinica: ClinicaPublica }) {
   return (
     <div className="border-border text-muted-foreground space-y-1.5 border-t pt-3 text-sm">
-      <p className="text-foreground font-medium">{clinica.nombre}</p>
+      <p className="text-foreground font-medium">{CLINICA.nombre}</p>
       {clinica.direccion && (
         <p className="flex items-start gap-2">
           <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden /> {clinica.direccion}
@@ -743,13 +744,13 @@ function descargarIcs(reserva: ReservaConfirmada) {
   const lineas = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//NutriClinica//Reservacion//ES",
+    `PRODID:-//${CLINICA.nombre}//Reservacion//ES`,
     "BEGIN:VEVENT",
-    `UID:${utc(reserva.fechaInicio)}-${Math.random().toString(36).slice(2)}@nutriclinica`,
+    `UID:${utc(reserva.fechaInicio)}-${Math.random().toString(36).slice(2)}@nourish-clinic`,
     `DTSTAMP:${utc(new Date().toISOString())}`,
     `DTSTART:${utc(reserva.fechaInicio)}`,
     `DTEND:${utc(reserva.fechaFin)}`,
-    `SUMMARY:${escapar(`Consulta de nutrición · ${reserva.clinica.nombre}`)}`,
+    `SUMMARY:${escapar(`Consulta de nutrición · ${CLINICA.nombre}`)}`,
     `DESCRIPTION:${escapar(`Con ${reserva.nutricionistaNombre}. Por confirmar por la clínica.`)}`,
     ...(reserva.clinica.direccion ? [`LOCATION:${escapar(reserva.clinica.direccion)}`] : []),
     "END:VEVENT",

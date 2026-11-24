@@ -159,7 +159,7 @@ export function construirApiError(status: number, cuerpo: unknown): ApiError {
 export function mensajeDeError(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.esRed) {
-      return "No pudimos conectar con NutriClínica. Revisa tu conexión e inténtalo de nuevo.";
+      return "No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.";
     }
     return error.primerDetalle ?? error.message;
   }

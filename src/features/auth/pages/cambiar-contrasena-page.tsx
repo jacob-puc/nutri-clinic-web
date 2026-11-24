@@ -1,7 +1,9 @@
-import { KeyRound, Leaf, LogOut } from "lucide-react";
+import { CLINICA } from "@/config/clinica";
+import { KeyRound, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
+import { LogoClinica } from "@/components/layout/logo";
 import { Button } from "@/components/ui/button";
 import { FormularioContrasena } from "@/features/auth/components/formulario-contrasena";
 import { useAuth } from "@/features/auth/hooks/use-auth";
@@ -26,10 +28,8 @@ export function CambiarContrasenaPage() {
 
       <div className="relative w-full max-w-md">
         <div className="mb-6 flex items-center justify-center gap-2.5">
-          <span className="grid size-9 place-items-center rounded-xl bg-[linear-gradient(145deg,var(--brand-500),var(--brand-800))] text-white">
-            <Leaf className="size-4.5" strokeWidth={2.25} aria-hidden />
-          </span>
-          <span className="text-foreground text-lg font-semibold tracking-tight">NutriClínica</span>
+          <LogoClinica className="size-9" />
+          <span className="text-foreground text-lg font-semibold tracking-tight">{CLINICA.nombre}</span>
         </div>
 
         <div className="hoja rounded-2xl p-6 shadow-[0_24px_48px_-24px_rgb(0_0_0/0.18)] sm:p-8">
@@ -49,7 +49,7 @@ export function CambiarContrasenaPage() {
             textoBoton="Guardar y entrar"
             onGuardar={async (dto) => {
               await cambiarContrasena(dto);
-              toast.success("Contraseña actualizada", { description: "Ya puedes usar NutriClínica." });
+              toast.success("Contraseña actualizada", { description: `Ya puedes usar ${CLINICA.nombre}.` });
             }}
           />
         </div>
